@@ -65,11 +65,10 @@ export function TabStackProvider({ children }) {
         setStacks((prev) => ({ ...prev, [root]: [root] }));
         if (location.pathname !== root) navigate(root);
       } else {
-        // Switching tabs: restore the saved top of that tab's stack.
-        const stack = stacksRef.current[root] || [root];
-        const top = stack[stack.length - 1];
+        // Switching tabs: show the tab's root list, not a previously-opened child.
         activeTabRef.current = root;
-        navigate(top);
+        setStacks((prev) => ({ ...prev, [root]: [root] }));
+        navigate(root);
       }
     },
     [navigate, location.pathname]
