@@ -157,8 +157,8 @@ export default function NewCampaign() {
   return (
     <div className="min-h-screen bg-stone-950 text-stone-200 flex flex-col">
       <div className="border-b border-stone-800 px-4 py-3 flex items-center gap-3 bg-stone-900/50">
-        <Link to="/" className="text-stone-400 hover:text-amber-300"><ArrowLeft className="w-5 h-5" /></Link>
-        <Sparkles className="w-5 h-5 text-amber-500" />
+        <Link to="/" aria-label="Back to dashboard" className="text-stone-400 hover:text-amber-300"><ArrowLeft className="w-5 h-5" /></Link>
+        <Sparkles className="w-5 h-5 text-amber-500" aria-hidden="true" />
         <h1 className="font-serif text-amber-200">Campaign Setup</h1>
         <span className="text-xs text-stone-500 capitalize">· Stage: {stage}</span>
       </div>
@@ -184,9 +184,10 @@ export default function NewCampaign() {
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
             placeholder="Respond to the Dungeon Master..."
             rows={1}
-            className="flex-1 px-4 py-3 bg-stone-950 border border-amber-900/40 rounded-lg text-stone-200 placeholder-stone-500 resize-none focus:outline-none focus:border-amber-700"
+            aria-label="Type your response"
+            className="flex-1 px-4 py-3 bg-stone-950 border border-amber-900/40 rounded-lg text-stone-200 placeholder-stone-500 resize-none focus:outline-none focus:ring-2 focus:ring-amber-700/50 focus:border-amber-700"
           />
-          <button onClick={send} disabled={loading || !input.trim()} className="px-4 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-amber-50 rounded-lg transition-all">
+          <button onClick={send} disabled={loading || !input.trim()} aria-label="Send message" className="px-4 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-amber-50 rounded-lg transition-all">
             <Send className="w-5 h-5" />
           </button>
         </div>

@@ -28,7 +28,7 @@ export default function CampaignCard({ campaign, character, onArchive, onDelete 
             {campaign.status}
           </span>
           <div className="relative">
-            <button onClick={() => setMenuOpen(!menuOpen)} className="p-1 text-stone-500 hover:text-amber-300">
+            <button onClick={() => setMenuOpen(!menuOpen)} aria-label="Campaign options" aria-expanded={menuOpen} className="p-1 text-stone-500 hover:text-amber-300">
               <MoreVertical className="w-4 h-4" />
             </button>
             {menuOpen && (

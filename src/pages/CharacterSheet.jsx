@@ -36,8 +36,8 @@ export default function CharacterSheet() {
     <div className="min-h-screen bg-stone-950 text-stone-200">
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-6">
-          <Link to="/" className="text-stone-400 hover:text-amber-300"><ArrowLeft className="w-5 h-5" /></Link>
-          <h1 className="text-2xl font-serif text-amber-200 flex-1">Character Sheet</h1>
+          <Link to="/" aria-label="Back to dashboard" className="text-stone-400 hover:text-amber-300"><ArrowLeft className="w-5 h-5" /></Link>
+          <h1 className="text-xl md:text-2xl font-serif text-amber-200 flex-1 truncate">Character Sheet</h1>
           {editing ? (
             <button onClick={save} className="flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold"><Save className="w-4 h-4" /> Save</button>
           ) : (
@@ -61,7 +61,7 @@ export default function CharacterSheet() {
               <p className="text-sm text-stone-500">Level {character.level} · {character.background} · {character.alignment}</p>
             </div>
           </div>
-          <div className="grid grid-cols-4 gap-3 mt-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
             <Stat label="HP" value={`${character.hp}/${character.max_hp}`} icon={<Heart className="w-3 h-3" />} color="text-rose-300" />
             <Stat label="AC" value={character.ac} icon={<Shield className="w-3 h-3" />} color="text-sky-300" />
             <Stat label="Speed" value={character.speed} color="text-stone-300" />
@@ -114,7 +114,7 @@ export default function CharacterSheet() {
 
         {/* Saving Throws */}
         <Section title="Saving Throws">
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {Object.entries(ABILITY_LABELS).map(([key, label]) => {
               const mod = abilityModifier(scores[key] || 10);
               const proficient = (character.saving_throws || []).includes(key) || (character.saving_throws || []).includes(label);

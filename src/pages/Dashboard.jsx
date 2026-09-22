@@ -74,8 +74,8 @@ export default function Dashboard() {
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="text-4xl font-serif font-bold text-amber-200 mb-2 flex items-center justify-center gap-3">
-            <Swords className="w-8 h-8 text-amber-500" />
+          <h1 className="text-3xl md:text-4xl font-serif font-bold text-amber-200 mb-2 flex items-center justify-center gap-3">
+            <Swords className="w-7 h-7 md:w-8 md:h-8 text-amber-500" />
             The Adventure Awaits
           </h1>
           <p className="text-stone-400">Your campaigns, characters, and stories — all in one place.</p>
@@ -93,7 +93,7 @@ export default function Dashboard() {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 border-b border-stone-800">
+        <div className="flex gap-2 mb-6 border-b border-stone-800 overflow-x-auto" role="tablist">
           <TabButton active={tab === 'campaigns'} onClick={() => setTab('campaigns')} icon={<Scroll className="w-4 h-4" />} label="Campaigns" count={campaigns.length} />
           <TabButton active={tab === 'characters'} onClick={() => setTab('characters')} icon={<Users className="w-4 h-4" />} label="Characters" count={characters.length} />
           <TabButton active={tab === 'stories'} onClick={() => setTab('stories')} icon={<BookOpen className="w-4 h-4" />} label="Saved Stories" count={stories.length} />
@@ -169,7 +169,9 @@ function TabButton({ active, onClick, icon, label, count }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-all ${
+      role="tab"
+      aria-selected={active}
+      className={`flex items-center gap-2 px-3 md:px-4 py-2.5 text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${
         active ? 'border-amber-500 text-amber-200' : 'border-transparent text-stone-500 hover:text-stone-300'
       }`}
     >

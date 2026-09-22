@@ -323,19 +323,29 @@ export default function CampaignGame() {
     <div className="h-screen bg-stone-950 text-stone-200 flex flex-col overflow-hidden">
       {/* Top bar */}
       <div className="border-b border-stone-800 px-4 py-2.5 flex items-center gap-3 bg-stone-900/70 flex-shrink-0">
-        <Link to="/" className="text-stone-400 hover:text-amber-300"><ArrowLeft className="w-5 h-5" /></Link>
-        <Swords className="w-5 h-5 text-amber-500" />
+        <Link to="/" aria-label="Back to dashboard" className="text-stone-400 hover:text-amber-300"><ArrowLeft className="w-5 h-5" /></Link>
+        <Swords className="w-5 h-5 text-amber-500" aria-hidden="true" />
         <h1 className="font-serif text-amber-200 flex-1 truncate">{campaign.name}</h1>
         {campaign.in_combat && <span className="text-xs px-2 py-1 bg-red-900/50 text-red-300 border border-red-700/40 rounded-full">⚔ Combat</span>}
-        <button onClick={() => setDiceOpen(true)} className="p-2 text-stone-400 hover:text-amber-300 hover:bg-stone-800 rounded-lg transition-all" title="Dice Roller">
+        <button onClick={() => setDiceOpen(true)} aria-label="Open dice roller" className="p-2 text-stone-400 hover:text-amber-300 hover:bg-stone-800 rounded-lg transition-all" title="Dice Roller">
           <Dices className="w-5 h-5" />
         </button>
-        <button onClick={saveStory} className="p-2 text-stone-400 hover:text-amber-300 hover:bg-stone-800 rounded-lg transition-all" title="Save Story">
+        <button onClick={saveStory} aria-label="Save story" className="p-2 text-stone-400 hover:text-amber-300 hover:bg-stone-800 rounded-lg transition-all" title="Save Story">
           <Bookmark className="w-5 h-5" />
         </button>
-        <button onClick={() => setRightOpen(!rightOpen)} className="p-2 text-stone-400 hover:text-amber-300 hover:bg-stone-800 rounded-lg transition-all md:hidden" title="Info">
+        <button onClick={() => setRightOpen(!rightOpen)} aria-label="Open campaign info" className="p-2 text-stone-400 hover:text-amber-300 hover:bg-stone-800 rounded-lg transition-all md:hidden" title="Info">
           <Menu className="w-5 h-5" />
         </button>
+      </div>
+
+      {/* Mobile panel nav */}
+      <div className="md:hidden border-b border-stone-800 px-2 py-1.5 flex gap-1 overflow-x-auto bg-stone-900/70 flex-shrink-0" role="navigation" aria-label="Game panels">
+        <MobileNavButton active={leftPanel === 'sheet'} onClick={() => setLeftPanel(leftPanel === 'sheet' ? null : 'sheet')} icon={<Users className="w-4 h-4" />} label="Sheet" />
+        <MobileNavButton active={leftPanel === 'inventory'} onClick={() => setLeftPanel(leftPanel === 'inventory' ? null : 'inventory')} icon={<BookOpen className="w-4 h-4" />} label="Bag" />
+        <MobileNavButton active={leftPanel === 'spells'} onClick={() => setLeftPanel(leftPanel === 'spells' ? null : 'spells')} icon={<Star className="w-4 h-4" />} label="Spells" />
+        <MobileNavButton active={leftPanel === 'quests'} onClick={() => setLeftPanel(leftPanel === 'quests' ? null : 'quests')} icon={<Scroll className="w-4 h-4" />} label="Quests" />
+        <MobileNavButton active={leftPanel === 'npcs'} onClick={() => setLeftPanel(leftPanel === 'npcs' ? null : 'npcs')} icon={<Users className="w-4 h-4" />} label="NPCs" />
+        <MobileNavButton active={leftPanel === 'map'} onClick={() => setLeftPanel(leftPanel === 'map' ? null : 'map')} icon={<MapPin className="w-4 h-4" />} label="Map" />
       </div>
 
       <div className="flex-1 flex overflow-hidden">
@@ -378,9 +388,10 @@ export default function CampaignGame() {
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
                 placeholder="What do you do?"
                 rows={1}
-                className="flex-1 px-4 py-3 bg-stone-950 border border-amber-900/40 rounded-lg text-stone-200 placeholder-stone-500 resize-none focus:outline-none focus:border-amber-700 max-h-32"
+                aria-label="Type your action"
+                className="flex-1 px-4 py-3 bg-stone-950 border border-amber-900/40 rounded-lg text-stone-200 placeholder-stone-500 resize-none focus:outline-none focus:ring-2 focus:ring-amber-700/50 focus:border-amber-700 max-h-32"
               />
-              <button onClick={send} disabled={loading || !input.trim()} className="px-4 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-amber-50 rounded-lg transition-all">
+              <button onClick={send} disabled={loading || !input.trim()} aria-label="Send message" className="px-4 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-amber-50 rounded-lg transition-all">
                 <Send className="w-5 h-5" />
               </button>
             </div>
@@ -398,7 +409,7 @@ export default function CampaignGame() {
         <div className="md:hidden fixed inset-0 z-40 flex">
           <div className="absolute inset-0 bg-black/60" onClick={() => setRightOpen(false)} />
           <div className="relative w-72 bg-stone-900 border-l border-stone-800 overflow-y-auto ml-auto">
-            <button onClick={() => setRightOpen(false)} className="absolute top-2 right-2 p-1 text-stone-400"><X className="w-5 h-5" /></button>
+            <button onClick={() => setRightOpen(false)} aria-label="Close panel" className="absolute top-2 right-2 p-1 text-stone-400"><X className="w-5 h-5" /></button>
             <div className="p-4 pt-12">
               <RightSidebar campaign={campaign} character={character} quests={quests} npcs={npcs} />
             </div>
@@ -411,7 +422,7 @@ export default function CampaignGame() {
         <div className="fixed inset-0 z-40 flex">
           <div className="absolute inset-0 bg-black/60" onClick={() => setLeftPanel(null)} />
           <div className="relative w-80 bg-stone-900 border-r border-stone-800 overflow-y-auto max-h-full">
-            <button onClick={() => setLeftPanel(null)} className="absolute top-2 right-2 p-1 text-stone-400 z-10"><X className="w-5 h-5" /></button>
+            <button onClick={() => setLeftPanel(null)} aria-label="Close panel" className="absolute top-2 right-2 p-1 text-stone-400 z-10"><X className="w-5 h-5" /></button>
             <LeftSidebarContent character={character} campaign={campaign} panel={leftPanel} npcs={npcs} quests={quests} locations={locations} />
           </div>
         </div>
@@ -424,7 +435,7 @@ export default function CampaignGame() {
           <div className="relative bg-stone-900 border border-amber-900/40 rounded-t-2xl md:rounded-2xl p-5 w-full max-w-sm">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-serif text-amber-200 flex items-center gap-2"><Dices className="w-5 h-5" /> Dice Roller</h3>
-              <button onClick={() => setDiceOpen(false)} className="text-stone-400"><X className="w-5 h-5" /></button>
+              <button onClick={() => setDiceOpen(false)} aria-label="Close dice roller" className="text-stone-400"><X className="w-5 h-5" /></button>
             </div>
             <DiceRoller onRoll={handleManualRoll} />
           </div>
@@ -651,6 +662,14 @@ function RightSidebar({ campaign, character, quests, npcs }) {
 function NavButton({ active, onClick, icon, label }) {
   return (
     <button onClick={onClick} className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${active ? 'bg-amber-900/30 text-amber-200 border border-amber-800/40' : 'text-stone-400 hover:bg-stone-800/50 hover:text-stone-200'}`}>
+      {icon} {label}
+    </button>
+  );
+}
+
+function MobileNavButton({ active, onClick, icon, label }) {
+  return (
+    <button onClick={onClick} aria-label={label} aria-pressed={active} className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${active ? 'bg-amber-900/40 text-amber-200 border border-amber-800/50' : 'text-stone-400 hover:bg-stone-800/50'}`}>
       {icon} {label}
     </button>
   );

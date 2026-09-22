@@ -46,8 +46,8 @@ export default function CampaignDetails() {
     <div className="min-h-screen bg-stone-950 text-stone-200">
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-6">
-          <Link to="/" className="text-stone-400 hover:text-amber-300"><ArrowLeft className="w-5 h-5" /></Link>
-          <h1 className="text-2xl font-serif text-amber-200 flex-1">Campaign Details</h1>
+          <Link to="/" aria-label="Back to dashboard" className="text-stone-400 hover:text-amber-300"><ArrowLeft className="w-5 h-5" /></Link>
+          <h1 className="text-xl md:text-2xl font-serif text-amber-200 flex-1 truncate">Campaign Details</h1>
           {editing ? (
             <button onClick={save} className="flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold"><Save className="w-4 h-4" /> Save</button>
           ) : (
@@ -75,7 +75,7 @@ export default function CampaignDetails() {
               <h2 className="text-xl font-serif text-amber-200">{campaign.name}</h2>
               <p className="text-stone-400 mt-1">{campaign.description || 'No description'}</p>
               {campaign.setting && <p className="text-sm text-stone-500 mt-2">Setting: {campaign.setting}</p>}
-              <div className="flex gap-3 mt-3 text-xs">
+              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-xs">
                 <span className="text-stone-500">Difficulty: <span className="text-amber-300">{campaign.difficulty}</span></span>
                 <span className="text-stone-500">DM Style: <span className="text-amber-300">{campaign.dm_style}</span></span>
                 <span className="text-stone-500">Status: <span className="text-amber-300 capitalize">{campaign.status}</span></span>
