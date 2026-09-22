@@ -7,6 +7,7 @@ import { parseDMReply } from '@/lib/dndClient';
 import ScreenHeader from '@/components/ScreenHeader';
 import MatureToggle from '@/components/MatureToggle';
 import CharacterSetup from '@/components/CharacterSetup';
+import CampaignSetup from '@/components/CampaignSetup';
 
 export default function NewCampaign() {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ export default function NewCampaign() {
   const [mature, setMature] = useState(false);
   const [step, setStep] = useState('character');
   const [creating, setCreating] = useState(false);
+  const [character, setCharacter] = useState(null);
   const messagesEndRef = useRef(null);
   // Guards against duplicate campaign creation (StrictMode/HMR re-mounts) and
   // tracks the in-flight campaign so abandoned setups can be cleaned up.
@@ -205,13 +207,18 @@ export default function NewCampaign() {
     }
   };
 
-  const transitionToActive = async (worldData) => {
+  const transitionToActive = async (payload) => {
     completedRef.current = true; // mark setup finished so cleanup keeps the record
     const updates = { status: 'active', setup_stage: 'begin' };
-    if (worldData) {
-      updates.setting = worldData.world_name || worldData.overview || '';
-      updates.world_state = worldData;
-      if (worldData.starting_location) updates.current_location = worldData.starting_location;
+    if (payload) {
+      if (payload.name) updates.name = payload.name;
+      if (payload.setting) updates.setting = payload.setting;
+      if (payload.description) updates.description = payload.description;
+      if (payload.tone) updates.tone = payload.tone;
+      if (payload.difficulty) updates.difficulty = payload.difficulty;
+      if (payload.dm_style) updates.dm_style = payload.dm_style;
+      if (payload.world_state) updates.world_state = payload.world_state;
+      if (payload.current_location) updates.current_location = payload.current_location;
     }
     await base44.entities.Campaign.update(campaign.id, updates);
     // Navigate to the game after a short delay so the player sees the final setup message
@@ -230,9 +237,23 @@ export default function NewCampaign() {
       const updated = { ...campaign, character_id: char.id, name, setup_stage: 'world' };
       await base44.entities.Campaign.update(campaign.id, { character_id: char.id, name, setup_stage: 'world' });
       setCampaign(updated);
+      setCharacter(char);
       setStage('world');
+      setStep('campaign');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleCampaignChosen = async (payload) => {
+    if (payload && payload.mode === 'guide') {
       setStep('chat');
-      await sendInitialMessage(updated, char, storyContext);
+      await sendInitialMessage(campaign, character, storyContext);
+      return;
+    }
+    setCreating(true);
+    try {
+      await transitionToActive(payload);
     } finally {
       setCreating(false);
     }
@@ -247,6 +268,10 @@ export default function NewCampaign() {
 
   if (step === 'character') {
     return <CharacterSetup onComplete={handleCharacterCreated} saving={creating} />;
+  }
+
+  if (step === 'campaign') {
+    return <CampaignSetup onComplete={handleCampaignChosen} saving={creating} characterName={character?.name} mature={mature} onToggleMature={toggleMature} />;
   }
 
   return (
