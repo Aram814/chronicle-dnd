@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { ArrowLeft, Save, Play, Archive, Trash2, Bookmark } from 'lucide-react';
+import { Save, Play, Archive, Trash2, Bookmark } from 'lucide-react';
 import BottomSheetPicker from '@/components/BottomSheetPicker';
+import ScreenHeader from '@/components/ScreenHeader';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 export default function CampaignDetails() {
   const { id } = useParams();
@@ -10,6 +12,7 @@ export default function CampaignDetails() {
   const [character, setCharacter] = useState(null);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (id) load();
@@ -36,25 +39,23 @@ export default function CampaignDetails() {
   };
 
   const remove = async () => {
-    if (!confirm('Delete this campaign and all its data?')) return;
     await base44.entities.Campaign.delete(id);
     window.location.href = '/';
   };
 
-  if (!campaign) return <div className="min-h-screen bg-stone-950 flex items-center justify-center"><div className="w-8 h-8 border-4 border-amber-900 border-t-amber-500 rounded-full animate-spin"></div></div>;
+  if (!campaign) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 border-4 border-amber-900 border-t-amber-500 rounded-full animate-spin"></div></div>;
 
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-200 safe-top">
+    <div className="min-h-screen bg-background text-foreground">
+      <ScreenHeader
+        title="Campaign Details"
+        actions={editing ? (
+          <button onClick={save} className="flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold"><Save className="w-4 h-4" /> Save</button>
+        ) : (
+          <button onClick={() => setEditing(true)} className="px-4 py-2 bg-stone-800 hover:bg-stone-700 rounded-lg text-sm">Edit</button>
+        )}
+      />
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="flex items-center gap-3 mb-6">
-          <Link to="/" aria-label="Back to dashboard" className="text-stone-400 hover:text-amber-300"><ArrowLeft className="w-5 h-5" /></Link>
-          <h1 className="text-xl md:text-2xl font-serif text-amber-200 flex-1 truncate">Campaign Details</h1>
-          {editing ? (
-            <button onClick={save} className="flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold"><Save className="w-4 h-4" /> Save</button>
-          ) : (
-            <button onClick={() => setEditing(true)} className="px-4 py-2 bg-stone-800 hover:bg-stone-700 rounded-lg text-sm">Edit</button>
-          )}
-        </div>
 
         <div className="bg-gradient-to-br from-stone-900/80 to-stone-950/80 border border-amber-900/30 rounded-xl p-6 mb-4">
           {editing ? (
@@ -89,9 +90,18 @@ export default function CampaignDetails() {
         <div className="flex flex-wrap gap-2">
           <Link to={`/campaign/${id}`} className="flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold"><Play className="w-4 h-4" /> Continue Campaign</Link>
           <button onClick={archive} className="flex items-center gap-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-lg text-sm"><Archive className="w-4 h-4" /> Archive</button>
-          <button onClick={remove} className="flex items-center gap-2 px-4 py-2 bg-red-950/40 hover:bg-red-900/40 border border-red-900/40 text-red-400 rounded-lg text-sm"><Trash2 className="w-4 h-4" /> Delete</button>
+          <button onClick={() => setConfirmDelete(true)} className="flex items-center gap-2 px-4 py-2 bg-red-950/40 hover:bg-red-900/40 border border-red-900/40 text-red-400 rounded-lg text-sm"><Trash2 className="w-4 h-4" /> Delete</button>
         </div>
       </div>
+      <ConfirmDialog
+        open={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={remove}
+        title="Delete Campaign?"
+        description="Delete this campaign and all its data? This cannot be undone."
+        confirmLabel="Delete"
+        destructive
+      />
     </div>
   );
 }

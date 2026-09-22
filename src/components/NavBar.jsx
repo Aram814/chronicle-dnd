@@ -15,7 +15,7 @@ export default function NavBar({ title, showBack = false, onBack }) {
 
   return (
     <header
-      className="safe-top bg-stone-900/90 backdrop-blur border-b border-amber-900/30 z-30"
+      className="safe-top bg-card backdrop-blur border-b border-border z-30"
       role="banner"
     >
       <div className="flex items-center gap-3 px-4 h-14 max-w-2xl mx-auto">
@@ -24,7 +24,7 @@ export default function NavBar({ title, showBack = false, onBack }) {
             type="button"
             onClick={() => (onBack ? onBack() : navigate(-1))}
             aria-label="Go back"
-            className="text-stone-400 hover:text-amber-300 flex items-center"
+            className="text-muted-foreground hover:text-amber-300 flex items-center"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>

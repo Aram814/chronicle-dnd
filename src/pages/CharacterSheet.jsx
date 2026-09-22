@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { ArrowLeft, Heart, Shield, Star, Coins, Sword, Sparkles, Save } from 'lucide-react';
+import { Heart, Shield, Star, Coins, Sword, Sparkles, Save } from 'lucide-react';
 import { abilityModifier, ABILITY_LABELS, SKILL_LABELS, SKILLS, proficiencyBonusForLevel } from '@/lib/dndClient';
+import ScreenHeader from '@/components/ScreenHeader';
 
 export default function CharacterSheet() {
   const { id } = useParams();
@@ -27,23 +28,22 @@ export default function CharacterSheet() {
     setEditing(false);
   };
 
-  if (!character) return <div className="min-h-screen bg-stone-950 flex items-center justify-center"><div className="w-8 h-8 border-4 border-amber-900 border-t-amber-500 rounded-full animate-spin"></div></div>;
+  if (!character) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 border-4 border-amber-900 border-t-amber-500 rounded-full animate-spin"></div></div>;
 
   const scores = character.ability_scores || {};
   const profBonus = character.proficiency_bonus || proficiencyBonusForLevel(character.level);
 
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-200 safe-top">
+    <div className="min-h-screen bg-background text-foreground">
+      <ScreenHeader
+        title="Character Sheet"
+        actions={editing ? (
+          <button onClick={save} className="flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold"><Save className="w-4 h-4" /> Save</button>
+        ) : (
+          <button onClick={() => { setForm(character); setEditing(true); }} className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-lg text-sm">Edit</button>
+        )}
+      />
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center gap-3 mb-6">
-          <Link to="/" aria-label="Back to dashboard" className="text-stone-400 hover:text-amber-300"><ArrowLeft className="w-5 h-5" /></Link>
-          <h1 className="text-xl md:text-2xl font-serif text-amber-200 flex-1 truncate">Character Sheet</h1>
-          {editing ? (
-            <button onClick={save} className="flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold"><Save className="w-4 h-4" /> Save</button>
-          ) : (
-            <button onClick={() => { setForm(character); setEditing(true); }} className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-lg text-sm">Edit</button>
-          )}
-        </div>
 
         {/* Header card */}
         <div className="bg-gradient-to-br from-stone-900/80 to-stone-950/80 border border-amber-900/30 rounded-xl p-6 mb-4">

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { ArrowLeft, Save, Sparkles, Dices } from 'lucide-react';
+import { Save, Sparkles, Dices } from 'lucide-react';
 import BottomSheetPicker from '@/components/BottomSheetPicker';
+import ScreenHeader from '@/components/ScreenHeader';
+import InfoDialog from '@/components/InfoDialog';
 
 const SPECIES = ['Human', 'Elf', 'Dwarf', 'Halfling', 'Dragonborn', 'Gnome', 'Half-Elf', 'Half-Orc', 'Tiefling', 'Orc', 'Goblin', 'Firbolg', 'Tabaxi', 'Aasimar', 'Genasi', 'Custom'];
 const CLASSES = ['Barbarian', 'Bard', 'Cleric', 'Druid', 'Fighter', 'Monk', 'Paladin', 'Ranger', 'Rogue', 'Sorcerer', 'Warlock', 'Wizard', 'Artificer', 'Custom'];
@@ -22,6 +24,7 @@ export default function CharacterEditor() {
   });
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [info, setInfo] = useState(null);
 
   useEffect(() => {
     if (!isNew) load();
@@ -43,7 +46,7 @@ export default function CharacterEditor() {
         navigate(`/character/${id}`);
       }
     } catch (e) {
-      alert('Failed to save: ' + e.message);
+      setInfo({ title: 'Failed to Save', description: e.message || 'Please try again.' });
     } finally {
       setSaving(false);
     }
@@ -60,7 +63,7 @@ export default function CharacterEditor() {
         setForm({ ...form, ...res.data.character, level: 1, xp: 0 });
       }
     } catch (e) {
-      alert('Failed to generate character');
+      setInfo({ title: 'Failed to Generate', description: 'Please try again.' });
     } finally {
       setGenerating(false);
     }
@@ -81,18 +84,21 @@ export default function CharacterEditor() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-200 safe-top">
+    <div className="min-h-screen bg-background text-foreground">
+      <ScreenHeader
+        title={isNew ? 'New Character' : 'Edit Character'}
+        actions={
+          <>
+            <button onClick={generate} disabled={generating} aria-label="Generate character with AI" className="flex items-center gap-2 px-3 py-2 bg-purple-900/40 hover:bg-purple-800/50 border border-purple-700/40 text-purple-200 rounded-lg text-sm flex-shrink-0">
+              <Sparkles className="w-4 h-4" /> <span className="hidden sm:inline">{generating ? 'Generating...' : 'AI Generate'}</span>
+            </button>
+            <button onClick={save} disabled={saving} aria-label="Save character" className="flex items-center gap-2 px-3 md:px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold flex-shrink-0">
+              <Save className="w-4 h-4" /> <span className="hidden sm:inline">Save</span>
+            </button>
+          </>
+        }
+      />
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="flex items-center gap-2 md:gap-3 mb-6">
-          <Link to="/" aria-label="Back to dashboard" className="text-stone-400 hover:text-amber-300 flex-shrink-0"><ArrowLeft className="w-5 h-5" /></Link>
-          <h1 className="text-xl md:text-2xl font-serif text-amber-200 flex-1 truncate">{isNew ? 'New Character' : 'Edit Character'}</h1>
-          <button onClick={generate} disabled={generating} aria-label="Generate character with AI" className="flex items-center gap-2 px-3 py-2 bg-purple-900/40 hover:bg-purple-800/50 border border-purple-700/40 text-purple-200 rounded-lg text-sm flex-shrink-0">
-            <Sparkles className="w-4 h-4" /> <span className="hidden sm:inline">{generating ? 'Generating...' : 'AI Generate'}</span>
-          </button>
-          <button onClick={save} disabled={saving} aria-label="Save character" className="flex items-center gap-2 px-3 md:px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold flex-shrink-0">
-            <Save className="w-4 h-4" /> <span className="hidden sm:inline">Save</span>
-          </button>
-        </div>
 
         <div className="space-y-4">
           <Card title="Identity">
@@ -144,6 +150,12 @@ export default function CharacterEditor() {
           </Card>
         </div>
       </div>
+      <InfoDialog
+        open={!!info}
+        onClose={() => setInfo(null)}
+        title={info?.title || ''}
+        description={info?.description}
+      />
     </div>
   );
 }

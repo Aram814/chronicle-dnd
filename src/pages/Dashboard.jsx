@@ -5,6 +5,7 @@ import { Plus, Scroll, Users, BookOpen, Swords, Sparkles, ChevronRight } from 'l
 import CampaignCard from '@/components/CampaignCard';
 import CharacterCard from '@/components/CharacterCard';
 import PullToRefresh from '@/components/PullToRefresh';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 export default function Dashboard() {
   const [campaigns, setCampaigns] = useState([]);
@@ -12,6 +13,7 @@ export default function Dashboard() {
   const [stories, setStories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('campaigns');
+  const [pendingDelete, setPendingDelete] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -47,16 +49,7 @@ export default function Dashboard() {
     }
   };
 
-  const handleDeleteCampaign = async (campaign) => {
-    if (!confirm(`Delete "${campaign.name}"? This cannot be undone.`)) return;
-    const prev = campaigns;
-    setCampaigns(campaigns.filter(c => c.id !== campaign.id));
-    try {
-      await base44.entities.Campaign.delete(campaign.id);
-    } catch (e) {
-      setCampaigns(prev);
-    }
-  };
+  const handleDeleteCampaign = (campaign) => setPendingDelete({ kind: 'campaign', item: campaign });
 
   const handleDuplicate = async (character) => {
     const { id, created_date, updated_date, created_by_id, ...rest } = character;
@@ -72,20 +65,34 @@ export default function Dashboard() {
     }
   };
 
-  const handleDeleteCharacter = async (character) => {
-    if (!confirm(`Delete ${character.name}? This cannot be undone.`)) return;
-    const prev = characters;
-    setCharacters(characters.filter(c => c.id !== character.id));
-    try {
-      await base44.entities.Character.delete(character.id);
-    } catch (e) {
-      setCharacters(prev);
+  const handleDeleteCharacter = (character) => setPendingDelete({ kind: 'character', item: character });
+
+  const confirmDelete = async () => {
+    const target = pendingDelete;
+    setPendingDelete(null);
+    if (!target) return;
+    if (target.kind === 'campaign') {
+      const prev = campaigns;
+      setCampaigns(campaigns.filter(c => c.id !== target.item.id));
+      try {
+        await base44.entities.Campaign.delete(target.item.id);
+      } catch (e) {
+        setCampaigns(prev);
+      }
+    } else {
+      const prev = characters;
+      setCharacters(characters.filter(c => c.id !== target.item.id));
+      try {
+        await base44.entities.Character.delete(target.item.id);
+      } catch (e) {
+        setCharacters(prev);
+      }
     }
   };
 
   if (loading) {
     return (
-      <div className="h-full bg-stone-950 flex items-center justify-center">
+      <div className="h-full bg-background flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-amber-900 border-t-amber-500 rounded-full animate-spin"></div>
       </div>
     );
@@ -94,7 +101,7 @@ export default function Dashboard() {
   const isEmpty = campaigns.length === 0 && characters.length === 0;
 
   return (
-    <PullToRefresh onRefresh={loadData} className="h-full bg-stone-950 text-stone-200 overscroll-none">
+    <PullToRefresh onRefresh={loadData} className="h-full bg-background text-foreground overscroll-none">
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8 text-center">
@@ -185,6 +192,15 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onClose={() => setPendingDelete(null)}
+        onConfirm={confirmDelete}
+        title="Delete?"
+        description={pendingDelete ? `Delete "${pendingDelete.item.name}"? This cannot be undone.` : ''}
+        confirmLabel="Delete"
+        destructive
+      />
     </PullToRefresh>
   );
 }

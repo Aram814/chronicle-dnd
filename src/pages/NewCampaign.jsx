@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { ArrowLeft, Send, Sparkles } from 'lucide-react';
+import { Send, Sparkles } from 'lucide-react';
 import ChatMessage from '@/components/ChatMessage';
 import { parseDMReply } from '@/lib/dndClient';
+import ScreenHeader from '@/components/ScreenHeader';
 
 export default function NewCampaign() {
   const navigate = useNavigate();
@@ -185,13 +186,12 @@ export default function NewCampaign() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-200 flex flex-col">
-      <div className="border-b border-stone-800 px-4 py-3 flex items-center gap-3 bg-stone-900/50 safe-top">
-        <Link to="/" aria-label="Back to dashboard" className="text-stone-400 hover:text-amber-300"><ArrowLeft className="w-5 h-5" /></Link>
-        <Sparkles className="w-5 h-5 text-amber-500" aria-hidden="true" />
-        <h1 className="font-serif text-amber-200">Campaign Setup</h1>
-        <span className="text-xs text-stone-500 capitalize">· Stage: {stage}</span>
-      </div>
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <ScreenHeader
+        title="Campaign Setup"
+        icon={Sparkles}
+        actions={<span className="text-xs text-muted-foreground capitalize">· Stage: {stage}</span>}
+      />
       <div className="flex-1 overflow-y-auto px-4 py-6 max-w-3xl mx-auto w-full">
         {messages.map((m, i) => (
           <ChatMessage key={i} message={m} isLatest={i === messages.length - 1} />

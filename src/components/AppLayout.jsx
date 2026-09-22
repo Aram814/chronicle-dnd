@@ -41,7 +41,7 @@ export default function AppLayout() {
   }, [location.pathname, getScroll, saveScroll]);
 
   return (
-    <div className="flex flex-col h-screen bg-stone-950 text-stone-200 overflow-x-hidden">
+    <div className="flex flex-col h-screen bg-background text-foreground overflow-x-hidden">
       <NavBar />
       <main ref={mainRef} className="flex-1 overflow-hidden relative pb-tabbar">
         <AnimatePresence mode="wait">

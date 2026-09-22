@@ -3,11 +3,13 @@ import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Plus } from 'lucide-react';
 import CharacterCard from '@/components/CharacterCard';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { toast } from '@/components/ui/use-toast';
 
 export default function Characters() {
   const [characters, setCharacters] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [pendingDelete, setPendingDelete] = useState(null);
 
   useEffect(() => {
     load();
@@ -30,12 +32,16 @@ export default function Characters() {
     load();
   };
 
-  const handleDelete = async (character) => {
-    if (!confirm(`Delete ${character.name}? This cannot be undone.`)) return;
+  const handleDelete = (character) => setPendingDelete(character);
+
+  const confirmDelete = async () => {
+    const target = pendingDelete;
+    setPendingDelete(null);
+    if (!target) return;
     const prev = characters;
-    setCharacters(characters.filter(c => c.id !== character.id));
+    setCharacters(characters.filter(c => c.id !== target.id));
     try {
-      await base44.entities.Character.delete(character.id);
+      await base44.entities.Character.delete(target.id);
     } catch (e) {
       setCharacters(prev);
       toast({ title: 'Failed to delete character', description: 'Please try again.', variant: 'destructive' });
@@ -44,14 +50,14 @@ export default function Characters() {
 
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center bg-stone-950">
+      <div className="h-full flex items-center justify-center bg-background">
         <div className="w-8 h-8 border-4 border-amber-900 border-t-amber-500 rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-stone-950 text-stone-200 overscroll-none">
+    <div className="h-full overflow-y-auto bg-background text-foreground overscroll-none">
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-serif text-amber-200">Your Characters</h2>
@@ -74,6 +80,15 @@ export default function Characters() {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onClose={() => setPendingDelete(null)}
+        onConfirm={confirmDelete}
+        title="Delete Character?"
+        description={pendingDelete ? `Delete ${pendingDelete.name}? This cannot be undone.` : ''}
+        confirmLabel="Delete"
+        destructive
+      />
     </div>
   );
 }

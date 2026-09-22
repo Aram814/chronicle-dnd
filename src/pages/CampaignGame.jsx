@@ -1,14 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import {
-  ArrowLeft, Send, Heart, Shield, Swords, MapPin, Scroll, Users, BookOpen,
+  Send, Heart, Shield, Swords, MapPin, Scroll, Users, BookOpen,
   Dices, Bookmark, X, Menu, Star, Crosshair
 } from 'lucide-react';
 import ChatMessage from '@/components/ChatMessage';
 import DiceRoller from '@/components/DiceRoller';
 import RollingDie from '@/components/RollingDie';
 import PullToRefresh from '@/components/PullToRefresh';
+import ScreenHeader from '@/components/ScreenHeader';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import InfoDialog from '@/components/InfoDialog';
 import { toast } from '@/components/ui/use-toast';
 import { parseDMReply, abilityModifier, SKILL_LABELS, ABILITY_LABELS, proficiencyBonusForLevel, checkLevelUp } from '@/lib/dndClient';
 import { rollForRequest } from '@/lib/dice';
@@ -28,6 +31,8 @@ export default function CampaignGame() {
   const [diceOpen, setDiceOpen] = useState(false);
   const [pendingRoll, setPendingRoll] = useState(null);
   const [rollAnim, setRollAnim] = useState(null);
+  const [confirmSaveStory, setConfirmSaveStory] = useState(false);
+  const [info, setInfo] = useState(null);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -328,8 +333,10 @@ export default function CampaignGame() {
     setMessages(prev => [...prev, rollMsg]);
   };
 
-  const saveStory = async () => {
-    if (!confirm('Save this campaign as a story? The AI will summarize your adventure.')) return;
+  const saveStory = () => setConfirmSaveStory(true);
+
+  const doSaveStory = async () => {
+    setConfirmSaveStory(false);
     setLoading(true);
     try {
       const res = await base44.functions.invoke('dm_engine', {
@@ -341,10 +348,10 @@ export default function CampaignGame() {
       const story = res.data.story;
       if (story && story.name) {
         await base44.entities.SavedStory.create({ ...story, campaign_id: id });
-        alert('Story saved! You can find it in Saved Stories on your dashboard.');
+        setInfo({ title: 'Story Saved', description: 'You can find it in Saved Stories on your dashboard.' });
       }
     } catch (e) {
-      alert('Failed to save story. Please try again.');
+      setInfo({ title: 'Failed to Save Story', description: 'Please try again.' });
     } finally {
       setLoading(false);
     }
@@ -352,30 +359,34 @@ export default function CampaignGame() {
 
   if (!campaign) {
     return (
-      <div className="min-h-screen bg-stone-950 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-amber-900 border-t-amber-500 rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen bg-stone-950 text-stone-200 flex flex-col overflow-hidden">
+    <div className="h-screen bg-background text-foreground flex flex-col overflow-hidden">
       {/* Top bar */}
-      <div className="border-b border-stone-800 px-4 py-2.5 flex items-center gap-3 bg-stone-900/70 flex-shrink-0 safe-top">
-        <Link to="/" aria-label="Back to dashboard" className="text-stone-400 hover:text-amber-300"><ArrowLeft className="w-5 h-5" /></Link>
-        <Swords className="w-5 h-5 text-amber-500" aria-hidden="true" />
-        <h1 className="font-serif text-amber-200 flex-1 truncate">{campaign.name}</h1>
-        {campaign.in_combat && <span className="text-xs px-2 py-1 bg-red-900/50 text-red-300 border border-red-700/40 rounded-full">⚔ Combat</span>}
-        <button onClick={() => setDiceOpen(true)} aria-label="Open dice roller" className="p-2 text-stone-400 hover:text-amber-300 hover:bg-stone-800 rounded-lg transition-all" title="Dice Roller">
-          <Dices className="w-5 h-5" />
-        </button>
-        <button onClick={saveStory} aria-label="Save story" className="p-2 text-stone-400 hover:text-amber-300 hover:bg-stone-800 rounded-lg transition-all" title="Save Story">
-          <Bookmark className="w-5 h-5" />
-        </button>
-        <button onClick={() => setRightOpen(!rightOpen)} aria-label="Open campaign info" className="p-2 text-stone-400 hover:text-amber-300 hover:bg-stone-800 rounded-lg transition-all md:hidden" title="Info">
-          <Menu className="w-5 h-5" />
-        </button>
-      </div>
+      <ScreenHeader
+        title={campaign.name}
+        icon={Swords}
+        containerClassName="max-w-none"
+        actions={
+          <>
+            {campaign.in_combat && <span className="text-xs px-2 py-1 bg-red-900/50 text-red-300 border border-red-700/40 rounded-full">⚔ Combat</span>}
+            <button onClick={() => setDiceOpen(true)} aria-label="Open dice roller" className="p-2 text-muted-foreground hover:text-amber-300 hover:bg-accent rounded-lg transition-all" title="Dice Roller">
+              <Dices className="w-5 h-5" />
+            </button>
+            <button onClick={saveStory} aria-label="Save story" className="p-2 text-muted-foreground hover:text-amber-300 hover:bg-accent rounded-lg transition-all" title="Save Story">
+              <Bookmark className="w-5 h-5" />
+            </button>
+            <button onClick={() => setRightOpen(!rightOpen)} aria-label="Open campaign info" className="p-2 text-muted-foreground hover:text-amber-300 hover:bg-accent rounded-lg transition-all md:hidden" title="Info">
+              <Menu className="w-5 h-5" />
+            </button>
+          </>
+        }
+      />
 
       {/* Mobile panel nav */}
       <div className="md:hidden border-b border-stone-800 px-2 py-1.5 flex gap-1 overflow-x-auto bg-stone-900/70 flex-shrink-0" role="navigation" aria-label="Game panels">
@@ -490,6 +501,21 @@ export default function CampaignGame() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmSaveStory}
+        onClose={() => setConfirmSaveStory(false)}
+        onConfirm={doSaveStory}
+        title="Save as Story?"
+        description="The AI will summarize your adventure. You can continue it later from Saved Stories."
+        confirmLabel="Save Story"
+      />
+      <InfoDialog
+        open={!!info}
+        onClose={() => setInfo(null)}
+        title={info?.title || ''}
+        description={info?.description}
+      />
     </div>
   );
 }
