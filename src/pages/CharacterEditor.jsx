@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Save, Sparkles, Dices } from 'lucide-react';
+import { Save, Sparkles, Dices, Upload, Image as ImageIcon, Wand2 } from 'lucide-react';
 import BottomSheetPicker from '@/components/BottomSheetPicker';
 import ScreenHeader from '@/components/ScreenHeader';
 import InfoDialog from '@/components/InfoDialog';
+import { Image } from '@/components/ui/image';
 
 const SPECIES = ['Human', 'Elf', 'Dwarf', 'Halfling', 'Dragonborn', 'Gnome', 'Half-Elf', 'Half-Orc', 'Tiefling', 'Orc', 'Goblin', 'Firbolg', 'Tabaxi', 'Aasimar', 'Genasi', 'Custom'];
 const CLASSES = ['Barbarian', 'Bard', 'Cleric', 'Druid', 'Fighter', 'Monk', 'Paladin', 'Ranger', 'Rogue', 'Sorcerer', 'Warlock', 'Wizard', 'Artificer', 'Custom'];
@@ -22,7 +23,7 @@ export default function CharacterEditor() {
       level: 1, xp: 0, ability_scores: { str: 15, dex: 14, con: 13, int: 12, wis: 10, cha: 8 },
       hp: 12, max_hp: 12, ac: 14, speed: 30, gold: 10, proficiency_bonus: 2,
       proficiencies: [], saving_throws: [], weapons: [{ name: 'Longsword', damage: '1d8 slashing' }], inventory: [{ name: 'Backpack' }], spells: [],
-      personality: '', ideals: '', bonds: '', flaws: '', backstory: '', appearance: '', goals: '', description: ''
+      personality: '', ideals: '', bonds: '', flaws: '', backstory: '', appearance: '', goals: '', description: '', portrait: ''
     };
     const imported = isNew ? location.state?.imported : null;
     if (imported) {
@@ -38,6 +39,8 @@ export default function CharacterEditor() {
   });
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [uploadingPortrait, setUploadingPortrait] = useState(false);
+  const [generatingPortrait, setGeneratingPortrait] = useState(false);
   const [info, setInfo] = useState(null);
 
   useEffect(() => {
@@ -97,6 +100,32 @@ export default function CharacterEditor() {
     setForm({ ...form, ability_scores: { ...form.ability_scores, [key]: parseInt(val) || 10 } });
   };
 
+  const uploadPortrait = async (file) => {
+    if (!file) return;
+    setUploadingPortrait(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+      setForm(f => ({ ...f, portrait: file_url }));
+    } catch (e) {
+      setInfo({ title: 'Failed to Upload', description: 'Please try again.' });
+    } finally {
+      setUploadingPortrait(false);
+    }
+  };
+
+  const generatePortrait = async () => {
+    setGeneratingPortrait(true);
+    try {
+      const res = await base44.functions.invoke('dm_engine', { mode: 'generate_portrait', character: form });
+      if (res.data?.url) setForm(f => ({ ...f, portrait: res.data.url }));
+      else setInfo({ title: 'Failed to Generate', description: 'No image returned. Please try again.' });
+    } catch (e) {
+      setInfo({ title: 'Failed to Generate', description: 'Please try again.' });
+    } finally {
+      setGeneratingPortrait(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <ScreenHeader
@@ -123,6 +152,32 @@ export default function CharacterEditor() {
               <Input label="Subclass" value={form.subclass} onChange={v => setForm({...form, subclass: v})} />
               <Input label="Background" value={form.background} onChange={v => setForm({...form, background: v})} type="select" options={BACKGROUNDS} />
               <Input label="Alignment" value={form.alignment} onChange={v => setForm({...form, alignment: v})} type="select" options={ALIGNMENTS} />
+            </div>
+          </Card>
+
+          <Card title="Portrait">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="w-28 h-28 rounded-lg overflow-hidden border border-amber-900/40 bg-muted flex items-center justify-center flex-shrink-0">
+                {form.portrait ? (
+                  <Image src={form.portrait} alt={form.name || 'Character portrait'} fittingType="fill" className="w-full h-full" />
+                ) : (
+                  <ImageIcon className="w-10 h-10 text-muted-foreground" />
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2 justify-center">
+                <label className="touch-target inline-flex items-center gap-2 px-4 py-2 bg-amber-900/50 hover:bg-amber-800/60 border border-amber-700/50 text-amber-200 rounded-lg text-sm font-semibold cursor-pointer transition-all">
+                  <Upload className="w-4 h-4" /> {uploadingPortrait ? 'Uploading...' : 'Upload'}
+                  <input type="file" accept="image/*" className="hidden" onChange={e => uploadPortrait(e.target.files?.[0])} disabled={uploadingPortrait} />
+                </label>
+                <button onClick={generatePortrait} disabled={generatingPortrait} className="touch-target inline-flex items-center gap-2 px-4 py-2 bg-purple-900/40 hover:bg-purple-800/50 border border-purple-700/40 text-purple-200 rounded-lg text-sm font-semibold transition-all disabled:opacity-50">
+                  <Wand2 className="w-4 h-4" /> {generatingPortrait ? 'Generating...' : 'AI Generate'}
+                </button>
+                {form.portrait && (
+                  <button onClick={() => setForm(f => ({ ...f, portrait: '' }))} className="touch-target inline-flex items-center gap-2 px-4 py-2 bg-muted hover:bg-accent text-foreground rounded-lg text-sm">
+                    Remove
+                  </button>
+                )}
+              </div>
             </div>
           </Card>
 

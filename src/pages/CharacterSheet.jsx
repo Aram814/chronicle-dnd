@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Heart, Shield, Star, Coins, Sword, Sparkles, Pencil } from 'lucide-react';
 import { abilityModifier, ABILITY_LABELS, SKILL_LABELS, SKILLS, proficiencyBonusForLevel } from '@/lib/dndClient';
 import ScreenHeader from '@/components/ScreenHeader';
+import { Image } from '@/components/ui/image';
 
 export default function CharacterSheet() {
   const { id } = useParams();
@@ -42,8 +43,12 @@ export default function CharacterSheet() {
         {/* Header card */}
         <div className="bg-gradient-to-br from-card/80 to-background/80 border border-amber-900/30 rounded-xl p-6 mb-4">
           <div className="flex items-start gap-4">
-            <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-amber-900/50 to-muted border border-amber-700/40 flex items-center justify-center text-3xl font-bold text-amber-400 font-serif">
-              {character.name?.[0]?.toUpperCase()}
+            <div className="w-20 h-20 rounded-lg overflow-hidden bg-gradient-to-br from-amber-900/50 to-muted border border-amber-700/40 flex items-center justify-center text-3xl font-bold text-amber-400 font-serif flex-shrink-0">
+              {character.portrait ? (
+                <Image src={character.portrait} alt={character.name || 'Character portrait'} fittingType="fill" className="w-full h-full" />
+              ) : (
+                character.name?.[0]?.toUpperCase()
+              )}
             </div>
             <div className="flex-1">
               <h2 className="text-2xl font-serif text-amber-200">{character.name}</h2>

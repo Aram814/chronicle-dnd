@@ -17,6 +17,7 @@ export default async function(req) {
     if (mode === 'generate_character') return await handleGenerateCharacter(base44, body);
     if (mode === 'save_story') return await handleSaveStory(base44, body);
     if (mode === 'npc_consequence') return await handleNpcConsequence(base44, body);
+    if (mode === 'generate_portrait') return await handleGeneratePortrait(base44, body);
 
     return Response.json({ error: 'Unknown mode' }, { status: 400 });
   } catch (error) {
@@ -237,6 +238,21 @@ async function handleSaveStory(base44, body) {
   };
   const res = await base44.asServiceRole.integrations.Core.InvokeLLM({ prompt, model: 'automatic', response_json_schema: schema });
   return Response.json({ story: res });
+}
+
+// Generate a character portrait via AI image generation.
+async function handleGeneratePortrait(base44, body) {
+  const { character } = body;
+  const c = character || {};
+  const traits = [
+    c.species ? `${c.species}` : 'Human',
+    c.class ? `${c.class}` : 'fighter',
+    c.appearance ? `Appearance: ${c.appearance}` : 'weathered heroic adventurer',
+    c.name ? `Named ${c.name}` : ''
+  ].filter(Boolean).join('. ');
+  const prompt = `Fantasy RPG character portrait, head and shoulders, centered composition. ${traits}. Dark fantasy digital painting, dramatic cinematic lighting, highly detailed painterly style, plain dark background, no text.`;
+  const res = await base44.asServiceRole.integrations.Core.GenerateImage({ prompt });
+  return Response.json({ url: res.url });
 }
 
 // Workflow-triggered mode: narrate a negative consequence for a critical failure
