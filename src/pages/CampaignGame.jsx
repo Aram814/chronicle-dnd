@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import ChatMessage from '@/components/ChatMessage';
 import DiceRoller from '@/components/DiceRoller';
+import RollingDie from '@/components/RollingDie';
 import PullToRefresh from '@/components/PullToRefresh';
 import { toast } from '@/components/ui/use-toast';
 import { parseDMReply, abilityModifier, SKILL_LABELS, ABILITY_LABELS, proficiencyBonusForLevel, checkLevelUp } from '@/lib/dndClient';
@@ -26,6 +27,7 @@ export default function CampaignGame() {
   const [rightOpen, setRightOpen] = useState(false);
   const [diceOpen, setDiceOpen] = useState(false);
   const [pendingRoll, setPendingRoll] = useState(null);
+  const [rollAnim, setRollAnim] = useState(null);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -272,10 +274,17 @@ export default function CampaignGame() {
     setPendingRoll(rollRequest);
   }, []);
 
-  const executeRoll = async (rollRequest) => {
+  const executeRoll = (rollRequest) => {
     if (!character) return;
     const rollData = rollForRequest(character, rollRequest);
-    // Save dice roll record
+    // Show the tumbling die; persist + forward to DM once it settles.
+    setRollAnim({ rollData });
+  };
+
+  const finishRequestedRoll = async () => {
+    const rollData = rollAnim?.rollData;
+    setRollAnim(null);
+    if (!rollData) return;
     await base44.entities.DiceRoll.create({
       campaign_id: id,
       character_id: character.id,
@@ -285,7 +294,6 @@ export default function CampaignGame() {
       total: rollData.total,
       reason: rollData.reason
     });
-    // Add dice roll as a player message in chat
     const rollMsg = {
       session_id: id,
       campaign_id: id,
@@ -296,7 +304,6 @@ export default function CampaignGame() {
     await base44.entities.Message.create(rollMsg);
     setMessages(prev => [...prev, rollMsg]);
     setPendingRoll(null);
-    // Send to DM with the result
     await getDMResponse([...messages, rollMsg], rollData);
   };
 
@@ -470,6 +477,16 @@ export default function CampaignGame() {
               <button onClick={() => setDiceOpen(false)} aria-label="Close dice roller" className="text-stone-400"><X className="w-5 h-5" /></button>
             </div>
             <DiceRoller onRoll={handleManualRoll} />
+          </div>
+        </div>
+      )}
+
+      {/* Requested-roll animation overlay */}
+      {rollAnim && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75">
+          <div className="flex flex-col items-center gap-3 p-8 bg-stone-900 border border-amber-900/40 rounded-2xl shadow-2xl">
+            <p className="text-sm text-amber-200 font-serif">Rolling {rollAnim.rollData.label || rollAnim.rollData.reason}…</p>
+            <RollingDie sides={20} finalResult={rollAnim.rollData.result} onComplete={finishRequestedRoll} />
           </div>
         </div>
       )}
