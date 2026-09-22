@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Plus } from 'lucide-react';
 import CharacterCard from '@/components/CharacterCard';
+import { toast } from '@/components/ui/use-toast';
 
 export default function Characters() {
   const [characters, setCharacters] = useState([]);
@@ -31,8 +32,14 @@ export default function Characters() {
 
   const handleDelete = async (character) => {
     if (!confirm(`Delete ${character.name}? This cannot be undone.`)) return;
-    await base44.entities.Character.delete(character.id);
-    load();
+    const prev = characters;
+    setCharacters(characters.filter(c => c.id !== character.id));
+    try {
+      await base44.entities.Character.delete(character.id);
+    } catch (e) {
+      setCharacters(prev);
+      toast({ title: 'Failed to delete character', description: 'Please try again.', variant: 'destructive' });
+    }
   };
 
   if (loading) {

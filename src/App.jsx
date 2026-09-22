@@ -10,6 +10,7 @@ import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ThemeProvider from '@/components/ThemeProvider';
 import AppLayout from '@/components/AppLayout';
+import { TabStackProvider } from '@/components/TabStackProvider';
 
 // Code-split pages
 const Login = lazy(() => import('@/pages/Login'));
@@ -73,6 +74,7 @@ const AuthenticatedApp = () => {
 
   return (
     <Suspense fallback={<PageFallback />}>
+      <TabStackProvider>
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -95,6 +97,7 @@ const AuthenticatedApp = () => {
         </Route>
         <Route path="*" element={<LazyPageNotFound />} />
       </Routes>
+      </TabStackProvider>
     </Suspense>
   );
 };

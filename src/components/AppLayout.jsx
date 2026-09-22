@@ -1,8 +1,9 @@
-import { Suspense } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import NavBar from '@/components/NavBar';
 import BottomTabBar from '@/components/BottomTabBar';
+import { useTabStack } from '@/components/TabStackProvider';
 
 const ContentSpinner = () => (
   <div className="h-full flex items-center justify-center">
@@ -18,10 +19,31 @@ const pageVariants = {
 
 export default function AppLayout() {
   const location = useLocation();
+  const { saveScroll, getScroll } = useTabStack();
+  const mainRef = useRef(null);
+
+  // Preserve each tab's scroll position across tab switches and child-screen
+  // round-trips. The scroll container is the page root (`.overscroll-none`).
+  useEffect(() => {
+    const main = mainRef.current;
+    if (!main) return;
+    const path = location.pathname;
+    // Restore after the exit animation completes and the new page mounts.
+    const t = setTimeout(() => {
+      const scroller = main.querySelector('.overscroll-none');
+      if (scroller) scroller.scrollTop = getScroll(path);
+    }, 220);
+    return () => {
+      clearTimeout(t);
+      const scroller = main.querySelector('.overscroll-none');
+      if (scroller) saveScroll(path, scroller.scrollTop);
+    };
+  }, [location.pathname, getScroll, saveScroll]);
+
   return (
     <div className="flex flex-col h-screen bg-stone-950 text-stone-200 overflow-x-hidden">
       <NavBar />
-      <main className="flex-1 overflow-hidden relative pb-tabbar">
+      <main ref={mainRef} className="flex-1 overflow-hidden relative pb-tabbar">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}

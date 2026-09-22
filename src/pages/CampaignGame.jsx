@@ -8,6 +8,7 @@ import {
 import ChatMessage from '@/components/ChatMessage';
 import DiceRoller from '@/components/DiceRoller';
 import PullToRefresh from '@/components/PullToRefresh';
+import { toast } from '@/components/ui/use-toast';
 import { parseDMReply, abilityModifier, SKILL_LABELS, ABILITY_LABELS, proficiencyBonusForLevel, checkLevelUp } from '@/lib/dndClient';
 import { rollForRequest } from '@/lib/dice';
 
@@ -108,10 +109,14 @@ export default function CampaignGame() {
   };
 
   const applyStateUpdates = async (updates) => {
+    const prevCharacter = character;
+    const prevCampaign = campaign;
     let charUpdates = {};
+    let nextChar = { ...character };
+    let charChanged = false;
     let campaignUpdates = {};
-    let needCharSave = false;
-    let needCampaignSave = false;
+    let nextCamp = { ...campaign };
+    let campChanged = false;
     const npcAdds = [];
     const npcStatuses = [];
     const questAdds = [];
@@ -122,47 +127,55 @@ export default function CampaignGame() {
       switch (u.type) {
         case 'hp_change': {
           const amt = parseInt(u.arg1, 10);
-          const newHp = Math.max(0, Math.min((character.max_hp || 1), (character.hp || 0) + amt));
+          const newHp = Math.max(0, Math.min((nextChar.max_hp || 1), (nextChar.hp || 0) + amt));
+          nextChar.hp = newHp;
           charUpdates.hp = newHp;
-          needCharSave = true;
+          charChanged = true;
           break;
         }
         case 'xp_gain': {
           const xp = parseInt(u.arg1, 10);
-          const newXp = (character.xp || 0) + xp;
+          const newXp = (nextChar.xp || 0) + xp;
+          nextChar.xp = newXp;
           charUpdates.xp = newXp;
-          const { leveledUp, newLevel } = checkLevelUp({ ...character, xp: newXp });
+          const { leveledUp, newLevel } = checkLevelUp({ ...nextChar, xp: newXp });
           if (leveledUp) {
+            nextChar.level = newLevel;
+            nextChar.proficiency_bonus = proficiencyBonusForLevel(newLevel);
             charUpdates.level = newLevel;
             charUpdates.proficiency_bonus = proficiencyBonusForLevel(newLevel);
           }
-          needCharSave = true;
+          charChanged = true;
           break;
         }
         case 'gold_change': {
-          charUpdates.gold = (character.gold || 0) + parseInt(u.arg1, 10);
-          needCharSave = true;
+          nextChar.gold = (nextChar.gold || 0) + parseInt(u.arg1, 10);
+          charUpdates.gold = nextChar.gold;
+          charChanged = true;
           break;
         }
         case 'item_add': {
-          const inv = [...(character.inventory || []), { name: u.arg1, description: u.arg2 || '' }];
-          charUpdates.inventory = inv;
-          needCharSave = true;
+          nextChar.inventory = [...(nextChar.inventory || []), { name: u.arg1, description: u.arg2 || '' }];
+          charUpdates.inventory = nextChar.inventory;
+          charChanged = true;
           break;
         }
         case 'item_remove': {
-          charUpdates.inventory = (character.inventory || []).filter(i => (i.name || i) !== u.arg1);
-          needCharSave = true;
+          nextChar.inventory = (nextChar.inventory || []).filter(i => (i.name || i) !== u.arg1);
+          charUpdates.inventory = nextChar.inventory;
+          charChanged = true;
           break;
         }
         case 'condition_add': {
-          charUpdates.conditions = [...(character.conditions || []), u.arg1];
-          needCharSave = true;
+          nextChar.conditions = [...(nextChar.conditions || []), u.arg1];
+          charUpdates.conditions = nextChar.conditions;
+          charChanged = true;
           break;
         }
         case 'condition_remove': {
-          charUpdates.conditions = (character.conditions || []).filter(c => c !== u.arg1);
-          needCharSave = true;
+          nextChar.conditions = (nextChar.conditions || []).filter(c => c !== u.arg1);
+          charUpdates.conditions = nextChar.conditions;
+          charChanged = true;
           break;
         }
         case 'npc_add':
@@ -181,30 +194,48 @@ export default function CampaignGame() {
           locAdds.push({ campaign_id: id, name: u.arg1, type: u.arg2, description: u.arg3, discovered: true });
           break;
         case 'current_location':
+          nextCamp.current_location = u.arg1;
           campaignUpdates.current_location = u.arg1;
-          needCampaignSave = true;
+          campChanged = true;
           break;
         case 'combat_start':
+          nextCamp.in_combat = true;
           campaignUpdates.in_combat = true;
-          try { campaignUpdates.combat_state = JSON.parse(u.arg1); } catch (e) { /* ignore */ }
-          needCampaignSave = true;
+          try { const cs = JSON.parse(u.arg1); nextCamp.combat_state = cs; campaignUpdates.combat_state = cs; } catch (e) { /* ignore */ }
+          campChanged = true;
           break;
         case 'combat_end':
+          nextCamp.in_combat = false;
+          nextCamp.combat_state = {};
           campaignUpdates.in_combat = false;
           campaignUpdates.combat_state = {};
-          needCampaignSave = true;
+          campChanged = true;
           break;
         default: break;
       }
     }
 
-    if (needCharSave) {
-      const updated = await base44.entities.Character.update(character.id, charUpdates);
-      setCharacter(updated);
+    // Optimistic local updates applied before any API call
+    if (charChanged) setCharacter(nextChar);
+    if (campChanged) setCampaign(nextCamp);
+
+    if (charChanged) {
+      try {
+        const updated = await base44.entities.Character.update(character.id, charUpdates);
+        setCharacter(updated);
+      } catch (e) {
+        setCharacter(prevCharacter);
+        toast({ title: 'Failed to update character', description: 'Your changes were reverted.', variant: 'destructive' });
+      }
     }
-    if (needCampaignSave) {
-      const updatedCamp = await base44.entities.Campaign.update(id, campaignUpdates);
-      setCampaign(updatedCamp);
+    if (campChanged) {
+      try {
+        const updatedCamp = await base44.entities.Campaign.update(id, campaignUpdates);
+        setCampaign(updatedCamp);
+      } catch (e) {
+        setCampaign(prevCampaign);
+        toast({ title: 'Failed to update campaign', description: 'Your changes were reverted.', variant: 'destructive' });
+      }
     }
     if (npcAdds.length) {
       await base44.entities.NPC.bulkCreate(npcAdds);
