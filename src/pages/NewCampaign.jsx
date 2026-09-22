@@ -18,9 +18,31 @@ export default function NewCampaign() {
   const [stage, setStage] = useState('world');
   const [storyContext, setStoryContext] = useState('');
   const messagesEndRef = useRef(null);
+  // Guards against duplicate campaign creation (StrictMode/HMR re-mounts) and
+  // tracks the in-flight campaign so abandoned setups can be cleaned up.
+  const initRef = useRef(false);
+  const campaignRef = useRef(null);
+  const completedRef = useRef(false);
 
   useEffect(() => {
-    init();
+    if (!initRef.current) {
+      initRef.current = true;
+      init();
+    }
+    return () => {
+      // Real unmount with an unfinished setup → delete the abandoned campaign
+      // and its messages so they don't pile up on the dashboard.
+      if (completedRef.current) return;
+      const camp = campaignRef.current;
+      if (!camp) {
+        initRef.current = false; // create still in flight; allow re-init
+        return;
+      }
+      campaignRef.current = null;
+      initRef.current = false;
+      base44.entities.Campaign.delete(camp.id).catch(() => {});
+      base44.entities.Message.deleteMany({ campaign_id: camp.id }).catch(() => {});
+    };
   }, []);
 
   useEffect(() => {
@@ -37,13 +59,20 @@ export default function NewCampaign() {
         setStoryContext(ctx);
       } catch (e) { /* ignore */ }
     }
-    // Create a campaign in setup status
+    // Race guard: a concurrent init (StrictMode/HMR) may have already created one.
+    if (campaignRef.current) return;
     const newCampaign = await base44.entities.Campaign.create({
       name: storyId ? 'New Campaign' : 'Untitled Campaign',
       status: 'setup',
       setup_stage: 'world',
       setup_data: {}
     });
+    if (campaignRef.current) {
+      // Duplicate from a concurrent init — discard it.
+      base44.entities.Campaign.delete(newCampaign.id).catch(() => {});
+      return;
+    }
+    campaignRef.current = newCampaign;
     setCampaign(newCampaign);
     // Initial DM greeting
     sendInitialMessage(newCampaign, ctx);
@@ -130,6 +159,7 @@ export default function NewCampaign() {
   };
 
   const transitionToActive = async (charData, worldData) => {
+    completedRef.current = true; // mark setup finished so cleanup keeps the record
     let characterId = campaign.character_id;
     if (charData) {
       const char = await base44.entities.Character.create({
