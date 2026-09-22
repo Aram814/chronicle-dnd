@@ -25,6 +25,11 @@ export default function NewCampaign() {
   const campaignRef = useRef(null);
   const completedRef = useRef(false);
   const cancelledRef = useRef(false);
+  // True once the greeting or any player message has been persisted — meaning the
+  // user actually engaged with setup, so their campaign should survive unmount.
+  const engagedRef = useRef(false);
+  // True when we're resuming an existing setup campaign (not creating a new one).
+  const resumedRef = useRef(false);
 
   useEffect(() => {
     cancelledRef.current = false;
@@ -36,7 +41,10 @@ export default function NewCampaign() {
       // Mark this mount cancelled so a create that resolves after unmount
       // cleans up its orphan instead of leaving an "Untitled Campaign".
       cancelledRef.current = true;
-      if (completedRef.current) return;
+      // Keep the campaign when the user engaged with setup, is resuming an existing
+      // setup, or finished setup — so progress survives navigating back to home.
+      // Only a never-touched orphan ("Untitled Campaign" with no messages) is removed.
+      if (completedRef.current || engagedRef.current || resumedRef.current) return;
       const camp = campaignRef.current;
       if (!camp) return; // create still in flight; init() will delete the orphan
       campaignRef.current = null;
@@ -51,6 +59,25 @@ export default function NewCampaign() {
   }, [messages]);
 
   const init = async () => {
+    // Resume an existing in-progress setup campaign instead of creating a new one
+    const resumeId = searchParams.get('resume');
+    if (resumeId) {
+      try {
+        const existing = await base44.entities.Campaign.get(resumeId);
+        if (cancelledRef.current) return;
+        resumedRef.current = true;
+        campaignRef.current = existing;
+        setCampaign(existing);
+        setSetupData(existing.setup_data || {});
+        setStage(existing.setup_stage || 'world');
+        const msgs = await base44.entities.Message.filter({ campaign_id: resumeId });
+        if (cancelledRef.current) return;
+        setMessages(msgs || []);
+        return;
+      } catch (e) {
+        // Resume target missing — fall through to create a fresh campaign
+      }
+    }
     let ctx = '';
     if (storyId) {
       try {
@@ -102,9 +129,11 @@ export default function NewCampaign() {
       if (cancelledRef.current) return;
       const dmMsg = { session_id: camp.id, campaign_id: camp.id, sender: 'dm', content: parsed.narration };
       await base44.entities.Message.create(dmMsg);
+      engagedRef.current = true;
       setMessages([dmMsg]);
     } catch (e) {
       const errMsg = { session_id: camp.id, campaign_id: camp.id, sender: 'dm', content: 'The realms seem hazy... please try again.' };
+      engagedRef.current = true;
       setMessages([errMsg]);
     } finally {
       setLoading(false);
@@ -113,6 +142,7 @@ export default function NewCampaign() {
 
   const send = async () => {
     if (!input.trim() || loading) return;
+    engagedRef.current = true;
     const userText = input.trim();
     setInput('');
     const playerMsg = { session_id: campaign.id, campaign_id: campaign.id, sender: 'player', content: userText };

@@ -52,7 +52,7 @@ export default function CampaignCard({ campaign, character, onArchive, onDelete 
       )}
       <div className="flex gap-2">
         <Link
-          to={`/campaign/${campaign.id}`}
+          to={campaign.status === 'setup' ? `/new-campaign?resume=${campaign.id}` : `/campaign/${campaign.id}`}
           className="touch-target flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-amber-900/40 hover:bg-amber-800/50 border border-amber-700/50 rounded-lg text-amber-200 text-sm font-semibold transition-all"
         >
           <Play className="w-4 h-4" />
