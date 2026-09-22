@@ -1,12 +1,17 @@
 import { Link } from 'react-router-dom';
 import { Play, Eye, Pencil, Copy, Trash2, Heart } from 'lucide-react';
+import { Image } from '@/components/ui/image';
 
 export default function CharacterCard({ character, onDuplicate, onDelete }) {
   return (
     <div className="group bg-gradient-to-br from-card/80 to-background/80 border border-amber-900/30 rounded-xl p-5 hover:border-amber-700/50 transition-all">
       <div className="flex items-start gap-3 mb-3">
-        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-amber-900/50 to-muted border border-amber-700/40 flex items-center justify-center text-amber-400 text-xl font-bold font-serif">
-          {character.name?.[0]?.toUpperCase() || '?'}
+        <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-amber-900/50 to-muted border border-amber-700/40 flex items-center justify-center text-amber-400 text-xl font-bold font-serif flex-shrink-0">
+          {character.portrait ? (
+            <Image src={character.portrait} alt={character.name || 'Character portrait'} fittingType="fill" className="w-full h-full" />
+          ) : (
+            character.name?.[0]?.toUpperCase() || '?'
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-lg font-bold text-amber-100 font-serif truncate">{character.name}</h3>
