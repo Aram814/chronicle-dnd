@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Plus, Wand2 } from 'lucide-react';
+import { Plus, Wand2, Upload } from 'lucide-react';
 import CharacterCard from '@/components/CharacterCard';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import PullToRefresh from '@/components/PullToRefresh';
@@ -73,6 +73,12 @@ export default function Characters() {
             className="touch-target inline-flex items-center gap-2 px-4 py-2 bg-amber-900/50 hover:bg-amber-800/60 border border-amber-700/50 text-amber-200 rounded-lg text-sm font-semibold transition-all"
           >
             <Wand2 className="w-4 h-4" /> Forge
+          </Link>
+          <Link
+            to="/import-character"
+            className="touch-target inline-flex items-center gap-2 px-4 py-2 bg-amber-900/50 hover:bg-amber-800/60 border border-amber-700/50 text-amber-200 rounded-lg text-sm font-semibold transition-all"
+          >
+            <Upload className="w-4 h-4" /> Import
           </Link>
         </div>
         {characters.length === 0 ? (

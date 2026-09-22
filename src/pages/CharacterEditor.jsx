@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Save, Sparkles, Dices } from 'lucide-react';
 import BottomSheetPicker from '@/components/BottomSheetPicker';
@@ -14,13 +14,27 @@ const BACKGROUNDS = ['Acolyte', 'Criminal', 'Folk Hero', 'Noble', 'Sage', 'Soldi
 export default function CharacterEditor() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const isNew = id === 'new' || !id;
-  const [form, setForm] = useState({
-    name: '', species: 'Human', class: 'Fighter', subclass: '', background: 'Folk Hero', alignment: 'Neutral Good',
-    level: 1, xp: 0, ability_scores: { str: 15, dex: 14, con: 13, int: 12, wis: 10, cha: 8 },
-    hp: 12, max_hp: 12, ac: 14, speed: 30, gold: 10, proficiency_bonus: 2,
-    proficiencies: [], saving_throws: [], weapons: [{ name: 'Longsword', damage: '1d8 slashing' }], inventory: [{ name: 'Backpack' }], spells: [],
-    personality: '', ideals: '', bonds: '', flaws: '', backstory: '', appearance: '', goals: '', description: ''
+  const [form, setForm] = useState(() => {
+    const defaults = {
+      name: '', species: 'Human', class: 'Fighter', subclass: '', background: 'Folk Hero', alignment: 'Neutral Good',
+      level: 1, xp: 0, ability_scores: { str: 15, dex: 14, con: 13, int: 12, wis: 10, cha: 8 },
+      hp: 12, max_hp: 12, ac: 14, speed: 30, gold: 10, proficiency_bonus: 2,
+      proficiencies: [], saving_throws: [], weapons: [{ name: 'Longsword', damage: '1d8 slashing' }], inventory: [{ name: 'Backpack' }], spells: [],
+      personality: '', ideals: '', bonds: '', flaws: '', backstory: '', appearance: '', goals: '', description: ''
+    };
+    const imported = isNew ? location.state?.imported : null;
+    if (imported) {
+      return {
+        ...defaults,
+        ...imported,
+        ability_scores: { ...defaults.ability_scores, ...(imported.ability_scores || {}) },
+        weapons: imported.weapons && imported.weapons.length ? imported.weapons : defaults.weapons,
+        inventory: imported.inventory && imported.inventory.length ? imported.inventory : defaults.inventory
+      };
+    }
+    return defaults;
   });
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
