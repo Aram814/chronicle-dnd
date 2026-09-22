@@ -1,7 +1,7 @@
 import ReactMarkdown from 'react-markdown';
-import { Dices, Shield, Heart, Sparkles } from 'lucide-react';
+import { Dices, Shield, Heart, Sparkles, Pencil, RefreshCw } from 'lucide-react';
 
-export default function ChatMessage({ message, onRollRequest, isLatest }) {
+export default function ChatMessage({ message, onRollRequest, isLatest, onEdit, onRetry }) {
   const isDM = message.sender === 'dm';
   const isPlayer = message.sender === 'player';
   const isSystem = message.sender === 'system';
@@ -36,6 +36,26 @@ export default function ChatMessage({ message, onRollRequest, isLatest }) {
           </div>
           {message.dice_roll && <DiceRollCard roll={message.dice_roll} />}
         </div>
+        {isPlayer && onEdit && (
+          <div className="flex justify-end mt-1">
+            <button
+              onClick={() => onEdit(message)}
+              className="touch-target inline-flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-amber-300 transition-colors"
+            >
+              <Pencil className="w-3 h-3" /> Edit
+            </button>
+          </div>
+        )}
+        {isDM && isLatest && onRetry && (
+          <div className="mt-1">
+            <button
+              onClick={() => onRetry(message)}
+              className="touch-target inline-flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-amber-300 transition-colors"
+            >
+              <RefreshCw className="w-3 h-3" /> Regenerate
+            </button>
+          </div>
+        )}
         {isDM && message.roll_request && isLatest && onRollRequest && (
           <div className="mt-2">
             <button

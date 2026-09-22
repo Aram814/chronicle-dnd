@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import {
   Send, Heart, Shield, Swords, MapPin, Scroll, Users, BookOpen,
-  Dices, Bookmark, X, Menu, Star, Crosshair
+  Dices, Bookmark, X, Menu, Star, Crosshair, Pencil
 } from 'lucide-react';
 import ChatMessage from '@/components/ChatMessage';
 import DiceRoller from '@/components/DiceRoller';
@@ -41,6 +41,7 @@ export default function CampaignGame() {
   const messagesEndRef = useRef(null);
   const openingRef = useRef(false);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [editingMessage, setEditingMessage] = useState(null);
 
   // All user IDs that can access this campaign's shared data (host + joined players).
   const allMemberIds = campaign ? [...new Set([campaign.created_by_id, ...(campaign.members || [])])] : [];
@@ -188,6 +189,22 @@ export default function CampaignGame() {
   const send = async () => {
     if (!input.trim() || loading) return;
     const userText = input.trim();
+
+    let baseMessages = messages;
+
+    // Editing: delete the original player message and everything after it,
+    // then resend the edited text as a fresh message.
+    if (editingMessage) {
+      const editIndex = messages.findIndex(m => m.id === editingMessage.id);
+      if (editIndex !== -1) {
+        const toDelete = messages.slice(editIndex).filter(m => m.id);
+        await Promise.all(toDelete.map(m => base44.entities.Message.delete(m.id).catch(() => {})));
+        baseMessages = messages.slice(0, editIndex);
+        setMessages(baseMessages);
+      }
+      setEditingMessage(null);
+    }
+
     setInput('');
     const playerMsg = {
       session_id: id, campaign_id: id, sender: 'player', content: userText,
@@ -196,7 +213,27 @@ export default function CampaignGame() {
     };
     setMessages(prev => [...prev, playerMsg]);
     await base44.entities.Message.create(playerMsg);
-    await getDMResponse([...messages, playerMsg]);
+    await getDMResponse([...baseMessages, playerMsg]);
+  };
+
+  const handleEdit = (message) => {
+    setEditingMessage(message);
+    setInput(message.content);
+  };
+
+  const cancelEdit = () => {
+    setEditingMessage(null);
+    setInput('');
+  };
+
+  const handleRetry = async (dmMessage) => {
+    if (loading) return;
+    const dmIndex = messages.findIndex(m => m.id === dmMessage.id);
+    if (dmIndex === -1) return;
+    await base44.entities.Message.delete(dmMessage.id).catch(() => {});
+    const remaining = messages.slice(0, dmIndex);
+    setMessages(remaining);
+    await getDMResponse(remaining);
   };
 
   const getDMResponse = async (allMsgs, diceResult = null, opening = false) => {
@@ -551,7 +588,14 @@ export default function CampaignGame() {
           <PullToRefresh onRefresh={loadAll} className="flex-1 px-4 py-4">
             <div className="max-w-3xl mx-auto">
               {messages.map((m, i) => (
-                <ChatMessage key={i} message={m} isLatest={i === messages.length - 1 && m.sender === 'dm'} onRollRequest={handleRollRequest} />
+                <ChatMessage
+                  key={i}
+                  message={m}
+                  isLatest={i === messages.length - 1 && m.sender === 'dm'}
+                  onRollRequest={handleRollRequest}
+                  onEdit={m.sender === 'player' && m.id ? handleEdit : null}
+                  onRetry={i === messages.length - 1 && m.sender === 'dm' && m.id ? handleRetry : null}
+                />
               ))}
               {loading && (
                 <div className="flex items-center gap-2 text-muted-foreground text-sm ml-2 mb-4">
@@ -573,19 +617,31 @@ export default function CampaignGame() {
             </div>
           </PullToRefresh>
           <div className="border-t border-border p-3 bg-card/50 flex-shrink-0 input-safe">
-            <div className="max-w-3xl mx-auto flex gap-2">
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-                placeholder="What do you do?"
-                rows={1}
-                aria-label="Type your action"
-                className="flex-1 px-4 py-3 bg-background border border-amber-900/40 rounded-lg text-foreground placeholder-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-amber-700/50 focus:border-amber-700 max-h-32"
-              />
-              <button onClick={send} disabled={loading || !input.trim()} aria-label="Send message" className="touch-target px-4 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-amber-50 rounded-lg transition-all">
-                <Send className="w-5 h-5" />
-              </button>
+            <div className="max-w-3xl mx-auto">
+              {editingMessage && (
+                <div className="flex items-center justify-between mb-2 px-3 py-2 bg-amber-950/50 border border-amber-800/50 rounded-lg">
+                  <span className="text-xs text-amber-200 flex items-center gap-1.5">
+                    <Pencil className="w-3.5 h-3.5" /> Editing your message
+                  </span>
+                  <button onClick={cancelEdit} className="touch-target text-muted-foreground hover:text-foreground p-1" aria-label="Cancel edit">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
+                  placeholder="What do you do?"
+                  rows={1}
+                  aria-label="Type your action"
+                  className="flex-1 px-4 py-3 bg-background border border-amber-900/40 rounded-lg text-foreground placeholder-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-amber-700/50 focus:border-amber-700 max-h-32"
+                />
+                <button onClick={send} disabled={loading || !input.trim()} aria-label={editingMessage ? 'Resend message' : 'Send message'} className="touch-target px-4 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-amber-50 rounded-lg transition-all">
+                  <Send className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
