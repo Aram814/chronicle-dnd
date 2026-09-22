@@ -56,11 +56,11 @@ export default function CharacterEditor() {
     setSaving(true);
     try {
       if (isNew) {
-        const created = await base44.entities.Character.create(form);
-        navigate(`/character/${created.id}`);
+        await base44.entities.Character.create(form);
+        navigate('/characters');
       } else {
         await base44.entities.Character.update(id, form);
-        navigate(`/character/${id}`);
+        navigate('/characters');
       }
     } catch (e) {
       setInfo({ title: 'Failed to Save', description: e.message || 'Please try again.' });
