@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Sparkles, Heart, Shield, Footprints, Users } from 'lucide-react';
+import { User, Sparkles, Heart, Shield, Footprints, Users, ExternalLink } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import ScreenHeader from '@/components/ScreenHeader';
 import CharacterBuildForm from '@/components/CharacterBuildForm';
@@ -145,7 +145,21 @@ export default function CharacterSetup({ onComplete, saving }) {
               })}
             </div>
           ) : (
-            <CharacterBuildForm onChange={setForm} />
+            <>
+              <a
+                href="https://www.dndbeyond.com/characters/builder"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="touch-target flex items-center gap-3 p-3 mb-4 rounded-xl bg-amber-900/20 border border-amber-800/40 hover:bg-amber-900/30 transition-all"
+              >
+                <ExternalLink className="w-5 h-5 text-amber-400 flex-shrink-0" />
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-amber-200">Build on D&D Beyond</div>
+                  <div className="text-xs text-muted-foreground">Opens their builder in a new tab — then transcribe the stats into the form below.</div>
+                </div>
+              </a>
+              <CharacterBuildForm onChange={setForm} />
+            </>
           )}
         </div>
       </div>
