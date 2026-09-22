@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { ChevronRight, BookOpen } from 'lucide-react';
+import { ChevronRight, BookOpen, ScrollText } from 'lucide-react';
 import PullToRefresh from '@/components/PullToRefresh';
 
 export default function Stories() {
@@ -34,7 +34,15 @@ export default function Stories() {
   return (
     <PullToRefresh onRefresh={load} className="h-full bg-background text-foreground overscroll-none">
       <div className="max-w-2xl mx-auto px-4 py-6">
-        <h2 className="text-xl font-serif text-amber-200 mb-4">Saved Stories</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-serif text-amber-200">Saved Stories</h2>
+          <Link
+            to="/story-recap"
+            className="touch-target inline-flex items-center gap-2 px-4 py-2 bg-amber-900/50 hover:bg-amber-800/60 border border-amber-700/50 text-amber-200 rounded-lg text-sm font-semibold transition-all"
+          >
+            <ScrollText className="w-4 h-4" /> Recap
+          </Link>
+        </div>
         {stories.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground border border-dashed border-border rounded-xl">
             <BookOpen className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
