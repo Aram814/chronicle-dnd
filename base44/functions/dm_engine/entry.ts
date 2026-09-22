@@ -119,7 +119,7 @@ Only include updates that actually happened in this turn. If nothing changed, in
 
   let prompt = `Conversation so far:\n${conversation}\n\n`;
   if (diceResult) {
-    prompt += `The player just rolled: ${diceResult.dice_type} => ${diceResult.result} + ${diceResult.modifier} = ${diceResult.total} for ${diceResult.reason}.\nNarrate the outcome of this roll honestly.\n\n`;
+    prompt += `The player just rolled: ${diceResult.dice_type} => ${diceResult.result} + ${diceResult.modifier} = ${diceResult.total} for ${diceResult.reason}.\nNarrate the outcome of this roll honestly and impartially. If it is a failure (total below the DC, or a natural 1), the action fails — narrate the real, in-fiction consequence without softening it or rescuing the character. Do not tilt the outcome toward success.\n\n`;
   }
   prompt += `Continue as the DM. Narrate the outcome and end with an open prompt or a roll request if needed.`;
 
