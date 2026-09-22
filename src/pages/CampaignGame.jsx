@@ -40,12 +40,16 @@ export default function CampaignGame() {
   const [me, setMe] = useState(null);
   const messagesEndRef = useRef(null);
   const openingRef = useRef(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   // All user IDs that can access this campaign's shared data (host + joined players).
   const allMemberIds = campaign ? [...new Set([campaign.created_by_id, ...(campaign.members || [])])] : [];
 
   useEffect(() => {
-    if (id) loadAll();
+    if (id) {
+      setDataLoaded(false);
+      loadAll();
+    }
   }, [id]);
 
   useEffect(() => {
@@ -55,11 +59,11 @@ export default function CampaignGame() {
   // When an active campaign is first entered and the DM hasn't set the stage yet,
   // automatically generate the opening scene-setting narration.
   useEffect(() => {
-    if (campaign && campaign.status === 'active' && !campaign.story_state?.opening_set && !openingRef.current && !loading) {
+    if (dataLoaded && campaign && campaign.status === 'active' && !campaign.story_state?.opening_set && !openingRef.current && !loading) {
       openingRef.current = true;
       generateOpening();
     }
-  }, [campaign, loading]);
+  }, [dataLoaded, campaign, loading]);
 
   const generateOpening = async () => {
     try {
@@ -123,8 +127,10 @@ export default function CampaignGame() {
       setNpcs(npcList || []);
       setQuests(questList || []);
       setLocations(locList || []);
+      setDataLoaded(true);
     } catch (e) {
       console.error(e);
+      setDataLoaded(true);
     }
   };
 
@@ -206,7 +212,7 @@ export default function CampaignGame() {
         npcs,
         quests,
         locations,
-        messages: allMsgs,
+        messages: (allMsgs || []).slice(-20),
         diceResult,
         opening
       });
