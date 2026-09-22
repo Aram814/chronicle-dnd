@@ -98,9 +98,14 @@ export default function Dashboard() {
             <Sparkles className="w-12 h-12 text-amber-500 mx-auto mb-4" />
             <h2 className="text-2xl font-serif text-amber-200 mb-2">Your adventure begins here</h2>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">Create your first campaign and let the AI Dungeon Master guide you into a world of fantasy and adventure.</p>
-            <Link to="/new-campaign" className="touch-target inline-flex items-center gap-2 px-6 py-3 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg font-semibold transition-all">
-              <Plus className="w-5 h-5" /> Start New Campaign
-            </Link>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link to="/new-campaign" className="touch-target inline-flex items-center gap-2 px-6 py-3 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg font-semibold transition-all">
+                <Plus className="w-5 h-5" /> Start New Campaign
+              </Link>
+              <Link to="/join" className="touch-target inline-flex items-center gap-2 px-6 py-3 bg-amber-800/40 hover:bg-amber-700/40 border border-amber-700/40 text-amber-100 rounded-lg font-semibold transition-all">
+                <KeyRound className="w-5 h-5" /> Join with Code
+              </Link>
+            </div>
           </div>
         ) : (
           <div>
