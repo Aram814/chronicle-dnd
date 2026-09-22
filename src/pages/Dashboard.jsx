@@ -22,7 +22,19 @@ export default function Dashboard() {
         base44.entities.Campaign.filter({}),
         base44.entities.Character.filter({})
       ]);
-      const notArchived = (camps || []).filter(c => c.status !== 'archived');
+      const all = camps || [];
+      // Purge orphaned placeholder campaigns left behind when a page reload
+      // tears down the setup screen before its unmount cleanup can run.
+      const orphans = all.filter(c => c.name === 'Untitled Campaign' && c.status === 'setup');
+      if (orphans.length) {
+        await Promise.all(orphans.map(c =>
+          Promise.all([
+            base44.entities.Campaign.delete(c.id).catch(() => {}),
+            base44.entities.Message.deleteMany({ campaign_id: c.id }).catch(() => {})
+          ])
+        ));
+      }
+      const notArchived = all.filter(c => c.status !== 'archived' && c.name !== 'Untitled Campaign');
       setCampaigns(notArchived);
       setCharacters(chars || []);
     } catch (e) {
