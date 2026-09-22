@@ -90,3 +90,106 @@
     @apply bg-background text-foreground font-body;
   }
 }
+
+/* ===== Mobile / iOS WebView readiness ===== */
+
+@layer base {
+  html,
+  body {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  /* Safe-area insets for fixed/sticky chrome */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Fixed top bars respect the top safe area */
+  .fixed.top-0,
+  .sticky.top-0 {
+    padding-top: env(safe-area-inset-top);
+  }
+  /* Fixed bottom bars respect the bottom safe area */
+  .fixed.bottom-0,
+  .sticky.bottom-0 {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Input areas sit above the bottom safe area */
+  .input-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Reserve space for the fixed bottom tab bar */
+  .pb-tabbar {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+  }
+
+  /* Scrollable containers should not bounce/chain */
+  .overscroll-none {
+    overscroll-behavior: none;
+  }
+
+  /* Touch targets meet the 44px minimum */
+  button,
+  a,
+  [role="button"],
+  summary {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Prevent text selection on chrome / interactive elements */
+  button,
+  a,
+  [role="button"],
+  nav,
+  summary,
+  svg,
+  img,
+  .nav-item,
+  .interactive {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  /* Keep text selectable where it matters */
+  input,
+  textarea,
+  [contenteditable="true"],
+  .prose,
+  .selectable {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+}
+
+/* Dark-mode fallback when no next-themes class is present yet */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light):not(.dark) {
+    color-scheme: dark;
+  }
+}
+
+/* Enforce 14px minimum text size (text-xs -> 14px) for readability.
+   Placed after Tailwind utilities so equal-specificity source order wins. */
+.text-xs {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}

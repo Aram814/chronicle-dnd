@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { ArrowLeft, Save, Play, Archive, Trash2, Bookmark } from 'lucide-react';
+import BottomSheetPicker from '@/components/BottomSheetPicker';
 
 export default function CampaignDetails() {
   const { id } = useParams();
@@ -43,7 +44,7 @@ export default function CampaignDetails() {
   if (!campaign) return <div className="min-h-screen bg-stone-950 flex items-center justify-center"><div className="w-8 h-8 border-4 border-amber-900 border-t-amber-500 rounded-full animate-spin"></div></div>;
 
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-200">
+    <div className="min-h-screen bg-stone-950 text-stone-200 safe-top">
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-6">
           <Link to="/" aria-label="Back to dashboard" className="text-stone-400 hover:text-amber-300"><ArrowLeft className="w-5 h-5" /></Link>
@@ -62,12 +63,8 @@ export default function CampaignDetails() {
               <textarea value={form.description || ''} onChange={e => setForm({...form, description: e.target.value})} placeholder="Description" rows={3} className="w-full bg-stone-950 border border-stone-700 rounded px-2 py-1 text-stone-300 text-sm resize-none mb-2" />
               <textarea value={form.setting || ''} onChange={e => setForm({...form, setting: e.target.value})} placeholder="Setting" rows={2} className="w-full bg-stone-950 border border-stone-700 rounded px-2 py-1 text-stone-300 text-sm resize-none mb-2" />
               <div className="grid grid-cols-2 gap-2">
-                <select value={form.difficulty} onChange={e => setForm({...form, difficulty: e.target.value})} className="bg-stone-950 border border-stone-700 rounded px-2 py-1 text-stone-200">
-                  <option>Casual</option><option>Normal</option><option>Challenging</option><option>Hardcore</option>
-                </select>
-                <select value={form.dm_style} onChange={e => setForm({...form, dm_style: e.target.value})} className="bg-stone-950 border border-stone-700 rounded px-2 py-1 text-stone-200">
-                  <option>Story-focused</option><option>Rules-focused</option><option>Balanced</option><option>Cinematic</option><option>Tactical</option>
-                </select>
+                <BottomSheetPicker label="Difficulty" value={form.difficulty} options={['Casual', 'Normal', 'Challenging', 'Hardcore']} onChange={v => setForm({ ...form, difficulty: v })} />
+                <BottomSheetPicker label="DM Style" value={form.dm_style} options={['Story-focused', 'Rules-focused', 'Balanced', 'Cinematic', 'Tactical']} onChange={v => setForm({ ...form, dm_style: v })} />
               </div>
             </>
           ) : (

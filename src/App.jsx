@@ -1,28 +1,59 @@
+import { Suspense, lazy } from 'react';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import PageNotFound from './lib/PageNotFound';
+import { motion } from 'framer-motion';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import Login from '@/pages/Login';
-import Register from '@/pages/Register';
-import ForgotPassword from '@/pages/ForgotPassword';
-import ResetPassword from '@/pages/ResetPassword';
-import Dashboard from '@/pages/Dashboard';
-import NewCampaign from '@/pages/NewCampaign';
-import CampaignGame from '@/pages/CampaignGame';
-import CampaignDetails from '@/pages/CampaignDetails';
-import CharacterSheet from '@/pages/CharacterSheet';
-import CharacterEditor from '@/pages/CharacterEditor';
-// Add page imports here
+import ThemeProvider from '@/components/ThemeProvider';
+import AppLayout from '@/components/AppLayout';
+
+// Code-split pages
+const Login = lazy(() => import('@/pages/Login'));
+const Register = lazy(() => import('@/pages/Register'));
+const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
+const Dashboard = lazy(() => import('@/pages/Dashboard'));
+const NewCampaign = lazy(() => import('@/pages/NewCampaign'));
+const CampaignGame = lazy(() => import('@/pages/CampaignGame'));
+const CampaignDetails = lazy(() => import('@/pages/CampaignDetails'));
+const CharacterSheet = lazy(() => import('@/pages/CharacterSheet'));
+const CharacterEditor = lazy(() => import('@/pages/CharacterEditor'));
+const Characters = lazy(() => import('@/pages/Characters'));
+const Stories = lazy(() => import('@/pages/Stories'));
+const Settings = lazy(() => import('@/pages/Settings'));
+const LazyPageNotFound = lazy(() => import('./lib/PageNotFound'));
+
+const PageFallback = () => (
+  <div className="fixed inset-0 flex items-center justify-center bg-stone-950">
+    <div className="w-8 h-8 border-4 border-amber-900 border-t-amber-500 rounded-full animate-spin"></div>
+  </div>
+);
+
+const pageVariants = {
+  initial: { opacity: 0, x: 24 },
+  animate: { opacity: 1, x: 0 },
+};
+
+function PageWrapper({ children }) {
+  return (
+    <motion.div
+      initial="initial"
+      animate="animate"
+      variants={pageVariants}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
 
-  // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
@@ -31,34 +62,40 @@ const AuthenticatedApp = () => {
     );
   }
 
-  // Handle authentication errors
   if (authError) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
       navigateToLogin();
       return null;
     }
   }
 
-  // Render the main app
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/new-campaign" element={<NewCampaign />} />
-        <Route path="/campaign/:id" element={<CampaignGame />} />
-        <Route path="/campaign/:id/details" element={<CampaignDetails />} />
-        <Route path="/character/:id" element={<CharacterSheet />} />
-        <Route path="/character/:id/edit" element={<CharacterEditor />} />
-      </Route>
-      <Route path="*" element={<PageNotFound />} />
-    </Routes>
+    <Suspense fallback={<PageFallback />}>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+          {/* Tab root screens share the app chrome (NavBar + BottomTabBar) */}
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/characters" element={<Characters />} />
+            <Route path="/stories" element={<Stories />} />
+            <Route path="/settings" element={<Settings />} />
+          </Route>
+          {/* Child screens keep their own headers / full-screen layouts */}
+          <Route path="/new-campaign" element={<PageWrapper><NewCampaign /></PageWrapper>} />
+          <Route path="/campaign/:id" element={<PageWrapper><CampaignGame /></PageWrapper>} />
+          <Route path="/campaign/:id/details" element={<PageWrapper><CampaignDetails /></PageWrapper>} />
+          <Route path="/character/:id" element={<PageWrapper><CharacterSheet /></PageWrapper>} />
+          <Route path="/character/:id/edit" element={<PageWrapper><CharacterEditor /></PageWrapper>} />
+        </Route>
+        <Route path="*" element={<LazyPageNotFound />} />
+      </Routes>
+    </Suspense>
   );
 };
 
@@ -66,15 +103,17 @@ const AuthenticatedApp = () => {
 function App() {
 
   return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <ScrollToTop />
-          <AuthenticatedApp />
-        </Router>
-        <Toaster />
-      </QueryClientProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <QueryClientProvider client={queryClientInstance}>
+          <Router>
+            <ScrollToTop />
+            <AuthenticatedApp />
+          </Router>
+          <Toaster />
+        </QueryClientProvider>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }
 

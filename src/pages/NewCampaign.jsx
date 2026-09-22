@@ -156,7 +156,7 @@ export default function NewCampaign() {
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-200 flex flex-col">
-      <div className="border-b border-stone-800 px-4 py-3 flex items-center gap-3 bg-stone-900/50">
+      <div className="border-b border-stone-800 px-4 py-3 flex items-center gap-3 bg-stone-900/50 safe-top">
         <Link to="/" aria-label="Back to dashboard" className="text-stone-400 hover:text-amber-300"><ArrowLeft className="w-5 h-5" /></Link>
         <Sparkles className="w-5 h-5 text-amber-500" aria-hidden="true" />
         <h1 className="font-serif text-amber-200">Campaign Setup</h1>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { ArrowLeft, Save, Sparkles, Dices } from 'lucide-react';
+import BottomSheetPicker from '@/components/BottomSheetPicker';
 
 const SPECIES = ['Human', 'Elf', 'Dwarf', 'Halfling', 'Dragonborn', 'Gnome', 'Half-Elf', 'Half-Orc', 'Tiefling', 'Orc', 'Goblin', 'Firbolg', 'Tabaxi', 'Aasimar', 'Genasi', 'Custom'];
 const CLASSES = ['Barbarian', 'Bard', 'Cleric', 'Druid', 'Fighter', 'Monk', 'Paladin', 'Ranger', 'Rogue', 'Sorcerer', 'Warlock', 'Wizard', 'Artificer', 'Custom'];
@@ -80,7 +81,7 @@ export default function CharacterEditor() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-200">
+    <div className="min-h-screen bg-stone-950 text-stone-200 safe-top">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="flex items-center gap-2 md:gap-3 mb-6">
           <Link to="/" aria-label="Back to dashboard" className="text-stone-400 hover:text-amber-300 flex-shrink-0"><ArrowLeft className="w-5 h-5" /></Link>
@@ -164,9 +165,7 @@ function Input({ label, value, onChange, type = 'text', options }) {
     <div>
       <label className="text-xs text-stone-500 uppercase">{label}</label>
       {type === 'select' ? (
-        <select value={value} onChange={e => onChange(e.target.value)} className="w-full bg-stone-950 border border-stone-700 rounded px-2 py-1.5 text-stone-200 mt-1">
-          {options.map(o => <option key={o} value={o}>{o}</option>)}
-        </select>
+        <BottomSheetPicker label={label} value={value} options={options} onChange={onChange} />
       ) : (
         <input type={type} value={value || ''} onChange={e => onChange(e.target.value)} className="w-full bg-stone-950 border border-stone-700 rounded px-2 py-1.5 text-stone-200 mt-1" />
       )}

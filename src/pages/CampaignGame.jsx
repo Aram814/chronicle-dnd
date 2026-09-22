@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import ChatMessage from '@/components/ChatMessage';
 import DiceRoller from '@/components/DiceRoller';
+import PullToRefresh from '@/components/PullToRefresh';
 import { parseDMReply, abilityModifier, SKILL_LABELS, ABILITY_LABELS, proficiencyBonusForLevel, checkLevelUp } from '@/lib/dndClient';
 import { rollForRequest } from '@/lib/dice';
 
@@ -322,7 +323,7 @@ export default function CampaignGame() {
   return (
     <div className="h-screen bg-stone-950 text-stone-200 flex flex-col overflow-hidden">
       {/* Top bar */}
-      <div className="border-b border-stone-800 px-4 py-2.5 flex items-center gap-3 bg-stone-900/70 flex-shrink-0">
+      <div className="border-b border-stone-800 px-4 py-2.5 flex items-center gap-3 bg-stone-900/70 flex-shrink-0 safe-top">
         <Link to="/" aria-label="Back to dashboard" className="text-stone-400 hover:text-amber-300"><ArrowLeft className="w-5 h-5" /></Link>
         <Swords className="w-5 h-5 text-amber-500" aria-hidden="true" />
         <h1 className="font-serif text-amber-200 flex-1 truncate">{campaign.name}</h1>
@@ -356,7 +357,7 @@ export default function CampaignGame() {
 
         {/* Center chat */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto px-4 py-4">
+          <PullToRefresh onRefresh={loadAll} className="flex-1 px-4 py-4">
             <div className="max-w-3xl mx-auto">
               {messages.map((m, i) => (
                 <ChatMessage key={i} message={m} isLatest={i === messages.length - 1 && m.sender === 'dm'} onRollRequest={handleRollRequest} />
@@ -379,8 +380,8 @@ export default function CampaignGame() {
               )}
               <div ref={messagesEndRef} />
             </div>
-          </div>
-          <div className="border-t border-stone-800 p-3 bg-stone-900/50 flex-shrink-0">
+          </PullToRefresh>
+          <div className="border-t border-stone-800 p-3 bg-stone-900/50 flex-shrink-0 input-safe">
             <div className="max-w-3xl mx-auto flex gap-2">
               <textarea
                 value={input}

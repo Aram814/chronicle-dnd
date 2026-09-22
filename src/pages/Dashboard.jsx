@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Plus, Scroll, Users, BookOpen, Swords, Sparkles, ChevronRight } from 'lucide-react';
 import CampaignCard from '@/components/CampaignCard';
 import CharacterCard from '@/components/CharacterCard';
+import PullToRefresh from '@/components/PullToRefresh';
 
 export default function Dashboard() {
   const [campaigns, setCampaigns] = useState([]);
@@ -37,31 +38,54 @@ export default function Dashboard() {
   const getCharacter = (id) => characters.find(c => c.id === id);
 
   const handleArchive = async (campaign) => {
-    await base44.entities.Campaign.update(campaign.id, { status: 'archived' });
-    loadData();
+    const prev = campaigns;
+    setCampaigns(campaigns.filter(c => c.id !== campaign.id));
+    try {
+      await base44.entities.Campaign.update(campaign.id, { status: 'archived' });
+    } catch (e) {
+      setCampaigns(prev);
+    }
   };
 
   const handleDeleteCampaign = async (campaign) => {
     if (!confirm(`Delete "${campaign.name}"? This cannot be undone.`)) return;
-    await base44.entities.Campaign.delete(campaign.id);
-    loadData();
+    const prev = campaigns;
+    setCampaigns(campaigns.filter(c => c.id !== campaign.id));
+    try {
+      await base44.entities.Campaign.delete(campaign.id);
+    } catch (e) {
+      setCampaigns(prev);
+    }
   };
 
   const handleDuplicate = async (character) => {
     const { id, created_date, updated_date, created_by_id, ...rest } = character;
-    await base44.entities.Character.create({ ...rest, name: `${character.name} (Copy)` });
-    loadData();
+    const tempId = `temp-${Date.now()}`;
+    const tempChar = { ...character, id: tempId, name: `${character.name} (Copy)` };
+    const prev = characters;
+    setCharacters([...characters, tempChar]);
+    try {
+      const created = await base44.entities.Character.create({ ...rest, name: `${character.name} (Copy)` });
+      setCharacters(chars => chars.map(c => c.id === tempId ? created : c));
+    } catch (e) {
+      setCharacters(prev);
+    }
   };
 
   const handleDeleteCharacter = async (character) => {
     if (!confirm(`Delete ${character.name}? This cannot be undone.`)) return;
-    await base44.entities.Character.delete(character.id);
-    loadData();
+    const prev = characters;
+    setCharacters(characters.filter(c => c.id !== character.id));
+    try {
+      await base44.entities.Character.delete(character.id);
+    } catch (e) {
+      setCharacters(prev);
+    }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-stone-950 flex items-center justify-center">
+      <div className="h-full bg-stone-950 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-amber-900 border-t-amber-500 rounded-full animate-spin"></div>
       </div>
     );
@@ -70,7 +94,7 @@ export default function Dashboard() {
   const isEmpty = campaigns.length === 0 && characters.length === 0;
 
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-200">
+    <PullToRefresh onRefresh={loadData} className="h-full bg-stone-950 text-stone-200 overscroll-none">
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8 text-center">
@@ -161,7 +185,7 @@ export default function Dashboard() {
           </div>
         )}
       </div>
-    </div>
+    </PullToRefresh>
   );
 }
 
