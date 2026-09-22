@@ -4,9 +4,16 @@ import { useLocation, useNavigate } from 'react-router-dom';
 const TAB_ROOTS = ['/', '/characters', '/stories', '/settings'];
 const ROOT_SET = new Set(TAB_ROOTS);
 
-const TabStackContext = createContext(null);
-
 const rootOf = (path) => (ROOT_SET.has(path) ? path : null);
+
+// Safe default so consumers never destructure null (e.g. during HMR before the
+// provider re-mounts). The provider's value always overrides this.
+const TabStackContext = createContext({
+  activeTab: '/',
+  switchToTab: () => {},
+  saveScroll: () => {},
+  getScroll: () => 0,
+});
 
 const initialStacks = () =>
   TAB_ROOTS.reduce((acc, r) => {
