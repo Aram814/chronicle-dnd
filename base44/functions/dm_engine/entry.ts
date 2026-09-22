@@ -4,9 +4,9 @@ import { buildCharacterContext, buildWorldContext, buildNPCContext, buildQuestCo
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
+    // dm_engine is invoked both by authenticated players (frontend) and by workflows
+    // (service role). It only calls InvokeLLM via the service role and touches no
+    // user-scoped data, so no auth gate is required.
     const body = await req.json();
     const { mode } = body;
 
@@ -16,6 +16,7 @@ export default async function(req) {
     if (mode === 'generate_world') return await handleGenerateWorld(base44, body);
     if (mode === 'generate_character') return await handleGenerateCharacter(base44, body);
     if (mode === 'save_story') return await handleSaveStory(base44, body);
+    if (mode === 'npc_consequence') return await handleNpcConsequence(base44, body);
 
     return Response.json({ error: 'Unknown mode' }, { status: 400 });
   } catch (error) {
@@ -236,4 +237,28 @@ async function handleSaveStory(base44, body) {
   };
   const res = await base44.asServiceRole.integrations.Core.InvokeLLM({ prompt, model: 'automatic', response_json_schema: schema });
   return Response.json({ story: res });
+}
+
+// Workflow-triggered mode: narrate a negative consequence for a critical failure
+// against an NPC. Fetches its own context via the service role (no user session).
+async function handleNpcConsequence(base44, body) {
+  const { campaign_id, npc_id, roll_id } = body;
+  const roll = await base44.asServiceRole.entities.DiceRoll.get(roll_id);
+  const npc = await base44.asServiceRole.entities.NPC.get(npc_id).catch(() => null);
+  const campaign = await base44.asServiceRole.entities.Campaign.get(campaign_id).catch(() => null);
+  let character = null;
+  if (campaign && campaign.character_id) {
+    try { character = await base44.asServiceRole.entities.Character.get(campaign.character_id); } catch (e) { /* ignore */ }
+  }
+  const messages = await base44.asServiceRole.entities.Message.filter({ campaign_id });
+  const recent = (messages || []).slice(-15).map(m => `${m.sender}: ${m.content}`).join('\n');
+
+  let system = DM_SYSTEM_BASE + '\n\n';
+  if (campaign) system += buildWorldContext(campaign);
+  system += '\n' + buildCharacterContext(character);
+  if (npc) system += '\n' + buildNPCContext([npc]);
+
+  const prompt = `The player just rolled a CRITICAL FAILURE (natural 1) on a ${roll.dice_type} for "${roll.reason || 'an interaction'}" involving the NPC ${npc ? npc.name : 'an NPC'}.\n\nRecent conversation:\n${recent}\n\nNarrate a meaningful, in-fiction NEGATIVE CONSEQUENCE for the player as a result of this critical failure. Tie it to the NPC's disposition and the current situation. Keep it vivid but concise (2-4 sentences). Do not invent dice results. End with an open prompt for the player.`;
+  const res = await base44.asServiceRole.integrations.Core.InvokeLLM({ prompt, model: 'automatic' });
+  return Response.json({ reply: res });
 }

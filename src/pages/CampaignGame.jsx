@@ -297,7 +297,9 @@ export default function CampaignGame() {
       modifier: rollData.modifier,
       result: rollData.result,
       total: rollData.total,
-      reason: rollData.reason
+      reason: rollData.reason,
+      dc: rollData.dc ?? null,
+      npc_id: findNpcInReason(rollData.reason, npcs)
     });
     const rollMsg = {
       session_id: id,
@@ -320,7 +322,8 @@ export default function CampaignGame() {
       modifier: rollData.modifier,
       result: rollData.result,
       total: rollData.total,
-      reason: rollData.reason
+      reason: rollData.reason,
+      npc_id: findNpcInReason(rollData.reason, npcs)
     });
     const rollMsg = {
       session_id: id,
@@ -748,4 +751,17 @@ function MobileNavButton({ active, onClick, icon, label }) {
       {icon} {label}
     </button>
   );
+}
+
+// Resolve an NPC targeted by a roll from the free-text reason, matching the
+// longest NPC name found so partial names don't shadow full ones.
+function findNpcInReason(reason, npcList) {
+  if (!reason || !npcList || !npcList.length) return null;
+  const r = String(reason).toLowerCase();
+  const sorted = [...npcList].sort((a, b) => (b.name || '').length - (a.name || '').length);
+  for (const n of sorted) {
+    const name = (n.name || '').trim().toLowerCase();
+    if (name && r.includes(name)) return n.id;
+  }
+  return null;
 }

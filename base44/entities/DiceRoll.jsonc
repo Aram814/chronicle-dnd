@@ -11,6 +11,9 @@
     "character_id": {
       "type": "string"
     },
+    "npc_id": {
+      "type": "string"
+    },
     "dice_type": {
       "type": "string"
     },
@@ -22,6 +25,9 @@
       "type": "number"
     },
     "total": {
+      "type": "number"
+    },
+    "dc": {
       "type": "number"
     },
     "reason": {
