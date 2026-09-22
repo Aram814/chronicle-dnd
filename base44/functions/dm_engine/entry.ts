@@ -139,8 +139,11 @@ async function handleSummarize(base44, body) {
 async function handleGenerateWorld(base44, body) {
   const { preferences } = body;
   const sourceText = preferences && preferences.source_text ? preferences.source_text : null;
-  const prompt = `Generate a rich D&D fantasy world${sourceText ? ' based on the following source material the player provided' : ' based on these preferences'}: ${JSON.stringify(sourceText ? { source_material: sourceText, ...preferences } : preferences || {})}.
-${sourceText ? 'Faithfully adapt the people, places, conflicts, and tone described in the source material into a playable D&D 5e campaign world. Do not invent major elements that contradict it; fill gaps with fitting detail only.' : 'Create an original, cohesive world.'}
+  const sourceFileUrl = preferences && preferences.source_file_url ? preferences.source_file_url : null;
+  const fileName = preferences && preferences.file_name ? preferences.file_name : 'the uploaded document';
+  const hasSource = sourceText || sourceFileUrl;
+  const prompt = `Generate a rich D&D fantasy world${hasSource ? ' based on the following source material the player provided' : ' based on these preferences'}: ${JSON.stringify(sourceText ? { source_material: sourceText, ...preferences } : preferences || {})}.
+${hasSource ? `Faithfully adapt the people, places, conflicts, and tone described in ${sourceFileUrl ? fileName : 'the source material'} into a playable D&D 5e campaign world. Do not invent major elements that contradict it; fill gaps with fitting detail only.` : 'Create an original, cohesive world.'}
 Return ONLY a JSON object with this exact structure:
 {
   "world_name": "string",
@@ -171,7 +174,9 @@ Return ONLY a JSON object with this exact structure:
       starting_location: { type: 'string' }
     }
   };
-  const res = await base44.asServiceRole.integrations.Core.InvokeLLM({ prompt, model: 'automatic', response_json_schema: schema });
+  const llmOpts = { prompt, model: 'automatic', response_json_schema: schema };
+  if (sourceFileUrl) llmOpts.file_urls = [sourceFileUrl];
+  const res = await base44.asServiceRole.integrations.Core.InvokeLLM(llmOpts);
   return Response.json({ world: res });
 }
 

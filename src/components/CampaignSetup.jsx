@@ -47,14 +47,31 @@ export default function CampaignSetup({ onComplete, saving, characterName, matur
     if (!file) return;
     setUploadState({ loading: true, name: file.name });
     try {
-      const text = await file.text();
-      let data;
       const ext = file.name.split('.').pop().toLowerCase();
       if (ext === 'json') {
-        data = JSON.parse(text);
+        const text = await file.text();
+        const data = JSON.parse(text);
         setUploadState({ payload: buildCampaignPayloadFromImport(data), name: file.name });
+      } else if (ext === 'pdf') {
+        // PDF — upload and let the DM engine read it via the LLM's file support.
+        const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+        const res = await base44.functions.invoke('dm_engine', {
+          mode: 'generate_world',
+          preferences: { source_file_url: file_url, file_name: file.name }
+        });
+        const world = res?.data?.world || {};
+        const payload = buildCampaignPayloadFromImport({
+          name: file.name.replace(/\.[^.]+$/, ''),
+          setting: world.world_name || '',
+          description: world.overview || '',
+          tone: [],
+          current_location: world.starting_location || '',
+          world_state: world
+        });
+        setUploadState({ payload, name: file.name });
       } else {
         // Free-form text/markdown — ask the DM engine to structure it into a world.
+        const text = await file.text();
         const res = await base44.functions.invoke('dm_engine', {
           mode: 'generate_world',
           preferences: { source_text: text }
@@ -71,7 +88,7 @@ export default function CampaignSetup({ onComplete, saving, characterName, matur
         setUploadState({ payload, name: file.name });
       }
     } catch (err) {
-      setUploadState({ error: 'Could not read that file. Use a .json campaign file or a text description.', name: file.name });
+      setUploadState({ error: 'Could not read that file. Use a .json, .pdf, or text description.', name: file.name });
     } finally {
       if (fileRef.current) fileRef.current.value = '';
     }
@@ -148,12 +165,12 @@ export default function CampaignSetup({ onComplete, saving, characterName, matur
               <div className="p-4 rounded-xl bg-card/60 border border-border">
                 <div className="text-sm font-semibold text-amber-200 mb-1">Import a campaign</div>
                 <p className="text-xs text-muted-foreground mb-3">
-                  Upload a <span className="text-amber-300">.json</span> campaign file (name, setting, description, tone, difficulty, dm_style, world_state) or a <span className="text-amber-300">.txt/.md</span> description — the DM will shape it into a world.
-                </p>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept=".json,.txt,.md"
+                  Upload a <span className="text-amber-300">.json</span> campaign file (name, setting, description, tone, difficulty, dm_style, world_state), a <span className="text-amber-300">.pdf</span>, or a <span className="text-amber-300">.txt/.md</span> description — the DM will shape it into a world.
+                  </p>
+                  <input
+                   ref={fileRef}
+                   type="file"
+                   accept=".json,.pdf,.txt,.md"
                   onChange={onFile}
                   className="block w-full text-sm text-muted-foreground file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-amber-700 file:text-amber-50 file:font-semibold file:cursor-pointer"
                 />
