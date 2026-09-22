@@ -24,21 +24,21 @@ export default function NewCampaign() {
   const initRef = useRef(false);
   const campaignRef = useRef(null);
   const completedRef = useRef(false);
+  const cancelledRef = useRef(false);
 
   useEffect(() => {
+    cancelledRef.current = false;
     if (!initRef.current) {
       initRef.current = true;
       init();
     }
     return () => {
-      // Real unmount with an unfinished setup → delete the abandoned campaign
-      // and its messages so they don't pile up on the dashboard.
+      // Mark this mount cancelled so a create that resolves after unmount
+      // cleans up its orphan instead of leaving an "Untitled Campaign".
+      cancelledRef.current = true;
       if (completedRef.current) return;
       const camp = campaignRef.current;
-      if (!camp) {
-        initRef.current = false; // create still in flight; allow re-init
-        return;
-      }
+      if (!camp) return; // create still in flight; init() will delete the orphan
       campaignRef.current = null;
       initRef.current = false;
       base44.entities.Campaign.delete(camp.id).catch(() => {});
@@ -68,6 +68,12 @@ export default function NewCampaign() {
       setup_stage: 'world',
       setup_data: {}
     });
+    // If the component unmounted while we were creating, clean up the orphan
+    // so it doesn't linger on the dashboard as an "Untitled Campaign".
+    if (cancelledRef.current) {
+      base44.entities.Campaign.delete(newCampaign.id).catch(() => {});
+      return;
+    }
     if (campaignRef.current) {
       // Duplicate from a concurrent init — discard it.
       base44.entities.Campaign.delete(newCampaign.id).catch(() => {});
@@ -93,6 +99,7 @@ export default function NewCampaign() {
         messages: [{ sender: 'player', content: greetingPrompt }]
       });
       const parsed = parseDMReply(res.data.reply);
+      if (cancelledRef.current) return;
       const dmMsg = { session_id: camp.id, campaign_id: camp.id, sender: 'dm', content: parsed.narration };
       await base44.entities.Message.create(dmMsg);
       setMessages([dmMsg]);
