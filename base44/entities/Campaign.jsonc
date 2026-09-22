@@ -38,6 +38,10 @@
       ],
       "default": "Balanced"
     },
+    "mature_content": {
+      "type": "boolean",
+      "default": false
+    },
     "status": {
       "type": "string",
       "enum": [

@@ -29,6 +29,7 @@ export function buildWorldContext(campaign) {
   if (campaign.setting) text += `Setting: ${campaign.setting}\n`;
   if (campaign.tone && campaign.tone.length) text += `Tone: ${campaign.tone.join(", ")}\n`;
   text += `Difficulty: ${campaign.difficulty || "Normal"} | DM Style: ${campaign.dm_style || "Balanced"}\n`;
+  text += `Content Rating: ${campaign.mature_content ? "18+ Mature — adult themes, graphic violence, dark horror, romance, and morally complex situations are permitted; keep it tasteful and story-driven." : "General (PG-13) — keep content family-friendly. No explicit sexual content, excessive gore, or deeply disturbing themes."}\n`;
   if (campaign.current_location) text += `Current Location: ${campaign.current_location}\n`;
   if (campaign.summary) text += `Campaign Summary: ${campaign.summary}\n`;
   if (campaign.world_state && Object.keys(campaign.world_state).length) {

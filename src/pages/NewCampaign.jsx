@@ -5,6 +5,7 @@ import { Send, Sparkles } from 'lucide-react';
 import ChatMessage from '@/components/ChatMessage';
 import { parseDMReply } from '@/lib/dndClient';
 import ScreenHeader from '@/components/ScreenHeader';
+import MatureToggle from '@/components/MatureToggle';
 
 export default function NewCampaign() {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ export default function NewCampaign() {
   const [setupData, setSetupData] = useState({});
   const [stage, setStage] = useState('world');
   const [storyContext, setStoryContext] = useState('');
+  const [mature, setMature] = useState(false);
   const messagesEndRef = useRef(null);
   // Guards against duplicate campaign creation (StrictMode/HMR re-mounts) and
   // tracks the in-flight campaign so abandoned setups can be cleaned up.
@@ -68,6 +70,7 @@ export default function NewCampaign() {
         resumedRef.current = true;
         campaignRef.current = existing;
         setCampaign(existing);
+        setMature(!!existing.mature_content);
         setSetupData(existing.setup_data || {});
         setStage(existing.setup_stage || 'world');
         const msgs = await base44.entities.Message.filter({ campaign_id: resumeId });
@@ -108,6 +111,7 @@ export default function NewCampaign() {
     }
     campaignRef.current = newCampaign;
     setCampaign(newCampaign);
+    setMature(!!newCampaign.mature_content);
     // Initial DM greeting
     sendInitialMessage(newCampaign, ctx);
   };
@@ -222,12 +226,24 @@ export default function NewCampaign() {
     setTimeout(() => navigate(`/campaign/${campaign.id}`), 2000);
   };
 
+  const toggleMature = async (val) => {
+    setMature(val);
+    if (!campaign) return;
+    setCampaign({ ...campaign, mature_content: val });
+    await base44.entities.Campaign.update(campaign.id, { mature_content: val }).catch(() => {});
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <ScreenHeader
         title="Campaign Setup"
         icon={Sparkles}
-        actions={<span className="text-xs text-muted-foreground capitalize">· Stage: {stage}</span>}
+        actions={
+          <>
+            <MatureToggle enabled={mature} onChange={toggleMature} />
+            <span className="text-xs text-muted-foreground capitalize hidden sm:inline">· {stage}</span>
+          </>
+        }
       />
       <div className="flex-1 overflow-y-auto px-4 py-6 max-w-3xl mx-auto w-full">
         {messages.map((m, i) => (

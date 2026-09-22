@@ -5,6 +5,7 @@ import { Save, Play, Archive, Trash2, Bookmark } from 'lucide-react';
 import BottomSheetPicker from '@/components/BottomSheetPicker';
 import ScreenHeader from '@/components/ScreenHeader';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import MatureToggle from '@/components/MatureToggle';
 
 export default function CampaignDetails() {
   const { id } = useParams();
@@ -67,6 +68,13 @@ export default function CampaignDetails() {
                 <BottomSheetPicker label="Difficulty" value={form.difficulty} options={['Casual', 'Normal', 'Challenging', 'Hardcore']} onChange={v => setForm({ ...form, difficulty: v })} />
                 <BottomSheetPicker label="DM Style" value={form.dm_style} options={['Story-focused', 'Rules-focused', 'Balanced', 'Cinematic', 'Tactical']} onChange={v => setForm({ ...form, dm_style: v })} />
               </div>
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+                <div>
+                  <p className="text-sm text-foreground">Content Rating</p>
+                  <p className="text-xs text-muted-foreground">Allow 18+ mature themes (violence, dark content, romance).</p>
+                </div>
+                <MatureToggle enabled={!!form.mature_content} onChange={v => setForm({ ...form, mature_content: v })} />
+              </div>
             </>
           ) : (
             <>
@@ -77,6 +85,7 @@ export default function CampaignDetails() {
                 <span className="text-muted-foreground">Difficulty: <span className="text-amber-300">{campaign.difficulty}</span></span>
                 <span className="text-muted-foreground">DM Style: <span className="text-amber-300">{campaign.dm_style}</span></span>
                 <span className="text-muted-foreground">Status: <span className="text-amber-300 capitalize">{campaign.status}</span></span>
+                <span className="text-muted-foreground">Content: <span className={campaign.mature_content ? 'text-red-400' : 'text-amber-300'}>{campaign.mature_content ? '18+ Mature' : 'General'}</span></span>
               </div>
               {character && (
                 <div className="mt-4 pt-4 border-t border-border">
