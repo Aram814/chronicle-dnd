@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Plus, Scroll, Swords, Sparkles } from 'lucide-react';
+import { Plus, Scroll, Swords, Sparkles, KeyRound } from 'lucide-react';
 import CampaignCard from '@/components/CampaignCard';
 import PullToRefresh from '@/components/PullToRefresh';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -108,9 +108,14 @@ export default function Dashboard() {
               <h2 className="text-xl font-serif text-amber-200 flex items-center gap-2">
                 <Scroll className="w-5 h-5 text-amber-500" /> Your Campaigns
               </h2>
-              <Link to="/new-campaign" className="touch-target inline-flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold transition-all">
-                <Plus className="w-4 h-4" /> New Campaign
-              </Link>
+              <div className="flex gap-2">
+                <Link to="/new-campaign" className="touch-target inline-flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold transition-all">
+                  <Plus className="w-4 h-4" /> New Campaign
+                </Link>
+                <Link to="/join" className="touch-target inline-flex items-center gap-2 px-4 py-2 bg-amber-800/40 hover:bg-amber-700/40 border border-amber-700/40 text-amber-100 rounded-lg text-sm font-semibold transition-all">
+                  <KeyRound className="w-4 h-4" /> Join
+                </Link>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {campaigns.map(c => (

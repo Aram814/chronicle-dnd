@@ -209,7 +209,7 @@ export default function NewCampaign() {
 
   const transitionToActive = async (payload) => {
     completedRef.current = true; // mark setup finished so cleanup keeps the record
-    const updates = { status: 'active', setup_stage: 'begin' };
+    const updates = { status: 'active', setup_stage: 'begin', members: [campaign.created_by_id] };
     if (payload) {
       if (payload.name) updates.name = payload.name;
       if (payload.setting) updates.setting = payload.setting;
@@ -221,6 +221,15 @@ export default function NewCampaign() {
       if (payload.current_location) updates.current_location = payload.current_location;
     }
     await base44.entities.Campaign.update(campaign.id, updates);
+    // Register the host as a CampaignMember so multiplayer lookups find them.
+    await base44.entities.CampaignMember.create({
+      campaign_id: campaign.id,
+      user_id: campaign.created_by_id,
+      role: 'host',
+      character_id: campaign.character_id || undefined,
+      character_name: character?.name || undefined,
+      status: 'active'
+    }).catch(() => {});
     // Navigate to the game after a short delay so the player sees the final setup message
     setTimeout(() => navigate(`/campaign/${campaign.id}`), 2000);
   };

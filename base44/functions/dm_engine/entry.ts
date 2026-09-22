@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
-import { buildCharacterContext, buildWorldContext, buildNPCContext, buildQuestContext, buildLocationContext, DM_SYSTEM_BASE } from '../../shared/dmPrompts.js';
+import { buildCharacterContext, buildPartyContext, buildWorldContext, buildNPCContext, buildQuestContext, buildLocationContext, DM_SYSTEM_BASE } from '../../shared/dmPrompts.js';
 
 export default async function(req) {
   try {
@@ -70,20 +70,30 @@ If you are generating a world and want to store structured world data, include:
   const conversation = (messages || []).map(m => `${m.sender === 'player' ? 'PLAYER' : 'DM'}: ${m.content}`).join('\n\n');
   const prompt = `Campaign settings: ${JSON.stringify(campaign)}\n\nConversation so far:\n${conversation}\n\nContinue the setup conversation. Respond as the DM.`;
 
-  const res = await base44.asServiceRole.integrations.Core.InvokeLLM({ prompt, model: 'automatic' });
+  const res = await base44.asServiceRole.integrations.Core.InvokeLLM({ prompt: system + '\n\n' + prompt, model: 'automatic' });
   return Response.json({ reply: res });
 }
 
 async function handlePlay(base44, body) {
-  const { campaign_id, session_id, messages, campaign, character, npcs, quests, locations, diceResult, opening } = body;
+  const { campaign_id, session_id, messages, campaign, character, players, active_player, npcs, quests, locations, diceResult, opening } = body;
+
+  // Multiplayer: accept a `players` array; fall back to single `character` for solo campaigns.
+  const party = players && players.length ? players : (character ? [character] : []);
 
   let system = DM_SYSTEM_BASE + '\n\n';
   system += buildWorldContext(campaign);
-  system += '\n' + buildCharacterContext(character);
+  if (party.length > 1) {
+    system += '\n' + buildPartyContext(party);
+  } else {
+    system += '\n' + buildCharacterContext(party[0] || character);
+  }
   system += '\n' + buildNPCContext(npcs);
   system += '\n' + buildQuestContext(quests);
   system += '\n' + buildLocationContext(locations);
-  system += '\n\nIMPORTANT: The character stats above are AUTHORITATIVE. Do not change them in narration. If the player takes damage, loses items, gains XP, etc., describe it — the application will update the actual stats based on your narration using the state update format below.';
+  if (party.length > 1) {
+    system += '\n\nMULTIPLAYER: This campaign has multiple players. Each message is tagged with the speaker\'s character name. Address players by their character name. Track each character\'s HP, conditions, and resources separately. When narrating outcomes, be clear about which character is affected. All players share the same world, NPCs, quests, and locations.';
+  }
+  system += '\n\nIMPORTANT: The character stats above are AUTHORITATIVE. Do not change them in narration. If a player takes damage, loses items, gains XP, etc., describe it — the application will update the actual stats based on your narration using the state update format below.';
 
   system += `
 
@@ -113,30 +123,33 @@ Only include updates that actually happened in this turn. If nothing changed, in
 
   let prompt;
   if (opening) {
-    prompt = `This is the very first scene of the campaign — no conversation has happened yet. You are SETTING THE STAGE for a brand-new adventure. Build the scene up gradually — do NOT drop the player into the middle of an ongoing action sequence, combat, or crisis.
+    const isMultiplayer = party.length > 1;
+    prompt = `This is the very first scene of the campaign — no conversation has happened yet. You are SETTING THE STAGE for a brand-new adventure. Build the scene up gradually — do NOT drop the ${isMultiplayer ? 'players' : 'player'} into the middle of an ongoing action sequence, combat, or crisis.
 
 Follow this structure:
-1. CAMPAIGN BACKGROUND: Begin by telling the player about the world and the campaign's premise — the setting, the broader situation, and what is happening in this place. Draw on the campaign's name, setting, description, and world state to paint the big picture. This is the story backdrop the character is stepping into.
-2. CHARACTER & GOALS: Introduce who the player's character is — their name, species, class, and background — and what brings them here or what they are setting out to accomplish. If the campaign has active quests or a clear objective, frame the character's goals in that context. If no explicit quest exists yet, give the character a personal motivation or reason for being in this place (drawn from their background, bonds, or backstory). Make the player feel their character has purpose and direction.
-3. PAINT THE WORLD: Describe the starting location with calm, vivid sensory detail — the time of day, the weather, the sounds and smells, the texture of the place. Let the player take in their surroundings before anything demands their attention.
-4. INTRODUCE A GENTLE HOOK: Only after the scene is established, present a subtle invitation — a person approaching, a rumor overheard, a notice on a board, a sound in the distance, a letter waiting for them. This is the seed of adventure, not an emergency. Give the player space to choose how to engage with it.
+1. CAMPAIGN BACKGROUND: Begin by telling the ${isMultiplayer ? 'players' : 'player'} about the world and the campaign's premise — the setting, the broader situation, and what is happening in this place. Draw on the campaign's name, setting, description, and world state to paint the big picture. This is the story backdrop the ${isMultiplayer ? 'party' : 'character'} is stepping into.
+2. ${isMultiplayer ? 'PARTY' : 'CHARACTER'} & GOALS: ${isMultiplayer ? 'Introduce each member of the party using their EXACT names, species, class, and background as listed in the PARTY MEMBERS section above — do NOT invent or rename characters. Introduce each one briefly, then explain what brings them together and what they are setting out to accomplish as a group. Establish why they are travelling together. If the campaign has active quests or a clear objective, frame the party\'s shared goals in that context. If no explicit quest exists yet, give the group a common purpose or reason for being in this place.' : 'Introduce the player\'s character using their EXACT name, species, class, and background as listed in the CHARACTER section above — do NOT invent or rename them. Explain what brings them here and what they are setting out to accomplish. If the campaign has active quests or a clear objective, frame the character\'s goals in that context. If no explicit quest exists yet, give the character a personal motivation or reason for being in this place (drawn from their background, bonds, or backstory). Make the player feel their character has purpose and direction.'}
+3. PAINT THE WORLD: Describe the starting location with calm, vivid sensory detail — the time of day, the weather, the sounds and smells, the texture of the place. Let the ${isMultiplayer ? 'party' : 'player'} take in their surroundings before anything demands their attention.
+4. INTRODUCE A GENTLE HOOK: Only after the scene is established, present a subtle invitation — a person approaching, a rumor overheard, a notice on a board, a sound in the distance, a letter waiting for them. This is the seed of adventure, not an emergency. Give the ${isMultiplayer ? 'players' : 'player'} space to choose how to engage with it.
 
-Keep it immersive and unhurried (4-6 paragraphs). Do not force urgency or threaten the character in the opening. End with an open-ended prompt that invites the player to act — "What do you do?" — or a gentle question, NOT a roll request. The first roll should come only after the player has chosen to engage.`;
+Keep it immersive and unhurried (${isMultiplayer ? '5-7' : '4-6'} paragraphs). Do not force urgency or threaten the ${isMultiplayer ? 'party' : 'character'} in the opening. End with an open-ended prompt that invites the ${isMultiplayer ? 'players' : 'player'} to act — "${isMultiplayer ? 'What do you do?' : 'What do you do?'}" — or a gentle question, NOT a roll request. The first roll should come only after a ${isMultiplayer ? 'player' : 'player'} has chosen to engage.`;
   } else {
     let conversation = (messages || []).slice(-20).map(m => {
-      let line = `${m.sender === 'player' ? 'PLAYER' : 'DM'}: ${m.content}`;
+      const speaker = m.sender === 'player' ? (m.sender_name || 'PLAYER') : 'DM';
+      let line = `${speaker}: ${m.content}`;
       if (m.dice_roll) line += `\n[DICE ROLL RESULT: ${m.dice_roll.dice_type} => ${m.dice_roll.result} + ${m.dice_roll.modifier} = ${m.dice_roll.total} (${m.dice_roll.reason || ''})]`;
       return line;
     }).join('\n\n');
 
     prompt = `Conversation so far:\n${conversation}\n\n`;
     if (diceResult) {
-      prompt += `The player just rolled: ${diceResult.dice_type} => ${diceResult.result} + ${diceResult.modifier} = ${diceResult.total} for ${diceResult.reason}.\nNarrate the outcome of this roll honestly and impartially. If it is a failure (total below the DC, or a natural 1), the action fails — narrate the real, in-fiction consequence without softening it or rescuing the character. Do not tilt the outcome toward success.\n\n`;
+      const roller = active_player || diceResult.character_name || 'The player';
+      prompt += `${roller} just rolled: ${diceResult.dice_type} => ${diceResult.result} + ${diceResult.modifier} = ${diceResult.total} for ${diceResult.reason}.\nNarrate the outcome of this roll honestly and impartially. If it is a failure (total below the DC, or a natural 1), the action fails — narrate the real, in-fiction consequence without softening it or rescuing the character. Do not tilt the outcome toward success.\n\n`;
     }
     prompt += `Continue as the DM. Narrate the outcome and end with an open prompt or a roll request if needed.`;
   }
 
-  const res = await base44.asServiceRole.integrations.Core.InvokeLLM({ prompt, model: 'automatic' });
+  const res = await base44.asServiceRole.integrations.Core.InvokeLLM({ prompt: system + '\n\n' + prompt, model: 'automatic' });
   return Response.json({ reply: res });
 }
 

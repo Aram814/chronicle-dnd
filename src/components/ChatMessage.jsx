@@ -21,7 +21,7 @@ export default function ChatMessage({ message, onRollRequest, isLatest }) {
       <div className={`max-w-[85%] ${isPlayer ? 'order-2' : ''}`}>
         <div className={`flex items-center gap-2 mb-1 ${isPlayer ? 'justify-end' : ''}`}>
           <span className={`text-xs font-semibold ${isDM ? 'text-amber-600' : 'text-rose-400'}`}>
-            {isDM ? '⚔ Dungeon Master' : '🗡 You'}
+            {isDM ? '⚔ Dungeon Master' : (message.sender_name ? `🗡 ${message.sender_name}` : '🗡 You')}
           </span>
         </div>
         <div

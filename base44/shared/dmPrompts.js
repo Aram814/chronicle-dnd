@@ -44,6 +44,17 @@ export function buildWorldContext(campaign) {
   return text;
 }
 
+export function buildPartyContext(players) {
+  if (!players || !players.length) return "No party members yet.\n";
+  let text = "PARTY MEMBERS:\n";
+  for (const p of players) {
+    if (!p) continue;
+    text += buildCharacterContext(p);
+    text += "\n";
+  }
+  return text;
+}
+
 export function buildNPCContext(npcs) {
   if (!npcs || !npcs.length) return "";
   let text = "KNOWN NPCs:\n";

@@ -1,55 +1,50 @@
 {
-  "name": "Quest",
+  "name": "CampaignMember",
   "type": "object",
   "properties": {
     "campaign_id": {
       "type": "string"
     },
-    "name": {
+    "user_id": {
       "type": "string"
     },
-    "description": {
+    "user_email": {
       "type": "string"
     },
-    "type": {
+    "user_name": {
+      "type": "string"
+    },
+    "role": {
       "type": "string",
       "enum": [
-        "main",
-        "side"
+        "host",
+        "player"
       ],
-      "default": "side"
+      "default": "player"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "character_name": {
+      "type": "string"
     },
     "status": {
       "type": "string",
       "enum": [
+        "pending",
         "active",
-        "completed",
-        "failed"
+        "removed"
       ],
-      "default": "active"
+      "default": "pending"
     },
-    "objectives": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "rewards": {
-      "type": "string"
-    },
-    "giver": {
-      "type": "string"
-    },
-    "members": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
+    "joined_date": {
+      "type": "string",
+      "format": "date-time"
     }
   },
   "required": [
     "campaign_id",
-    "name"
+    "role"
   ],
   "rls": {
     "read": {
@@ -58,7 +53,7 @@
           "created_by_id": "{{user.id}}"
         },
         {
-          "data.members": "{{user.id}}"
+          "data.user_id": "{{user.id}}"
         },
         {
           "user_condition": {
@@ -76,11 +71,7 @@
           "created_by_id": "{{user.id}}"
         },
         {
-          "data.members": {
-            "$in": [
-              "{{user.id}}"
-            ]
-          }
+          "data.user_id": "{{user.id}}"
         },
         {
           "user_condition": {
@@ -93,13 +84,6 @@
       "$or": [
         {
           "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.members": {
-            "$in": [
-              "{{user.id}}"
-            ]
-          }
         },
         {
           "user_condition": {

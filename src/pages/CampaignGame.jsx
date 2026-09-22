@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import {
   Send, Heart, Shield, Swords, MapPin, Scroll, Users, BookOpen,
@@ -33,8 +33,14 @@ export default function CampaignGame() {
   const [rollAnim, setRollAnim] = useState(null);
   const [confirmSaveStory, setConfirmSaveStory] = useState(false);
   const [info, setInfo] = useState(null);
+  const [members, setMembers] = useState([]);
+  const [players, setPlayers] = useState([]);
+  const [me, setMe] = useState(null);
   const messagesEndRef = useRef(null);
   const openingRef = useRef(false);
+
+  // All user IDs that can access this campaign's shared data (host + joined players).
+  const allMemberIds = campaign ? [...new Set([campaign.created_by_id, ...(campaign.members || [])])] : [];
 
   useEffect(() => {
     if (id) loadAll();
@@ -69,12 +75,42 @@ export default function CampaignGame() {
 
   const loadAll = async () => {
     try {
+      const user = await base44.auth.me();
+      setMe(user);
       const camp = await base44.entities.Campaign.get(id);
       setCampaign(camp);
-      if (camp.character_id) {
-        const char = await base44.entities.Character.get(camp.character_id);
-        setCharacter(char);
+
+      // Load campaign members (multiplayer). Solo campaigns may have none yet.
+      let memberList = [];
+      try {
+        const res = await base44.functions.invoke('campaign_members', { action: 'list_members', campaign_id: id });
+        memberList = (res.data.members || []).filter(m => m.status === 'active');
+        setMembers(memberList);
+      } catch (e) { /* solo campaign — no member records yet */ }
+
+      // Determine the current user's character: their CampaignMember character,
+      // or the campaign's character_id if they're the host.
+      const myMember = memberList.find(m => m.user_id === user.id);
+      const myCharId = myMember?.character_id || (camp.created_by_id === user.id ? camp.character_id : null);
+      if (myCharId) {
+        try {
+          const char = await base44.entities.Character.get(myCharId);
+          setCharacter(char);
+        } catch (e) {}
       }
+
+      // Load every active member's character for the party panel + DM context.
+      const charIds = [...new Set([
+        camp.character_id,
+        ...memberList.map(m => m.character_id).filter(Boolean)
+      ])].filter(Boolean);
+      if (charIds.length) {
+        const chars = await Promise.all(charIds.map(cid => base44.entities.Character.get(cid).catch(() => null)));
+        setPlayers(chars.filter(Boolean));
+      } else {
+        setPlayers([]);
+      }
+
       const [msgs, npcList, questList, locList] = await Promise.all([
         base44.entities.Message.filter({ campaign_id: id }),
         base44.entities.NPC.filter({ campaign_id: id }),
@@ -90,6 +126,36 @@ export default function CampaignGame() {
     }
   };
 
+  // Real-time: subscribe to new messages so all players see the thread live.
+  useEffect(() => {
+    if (!id) return;
+    const unsub = base44.entities.Message.subscribe((event) => {
+      if (event.data.campaign_id !== id) return;
+      setMessages(prev => {
+        if (event.type === 'create') {
+          if (prev.find(m => m.id === event.data.id)) return prev;
+          // Skip optimistic duplicates (same content + sender + name already in state)
+          if (prev.find(m => m.content === event.data.content && m.sender === event.data.sender && (m.sender_name || '') === (event.data.sender_name || ''))) return prev;
+          return [...prev, event.data];
+        }
+        if (event.type === 'update') return prev.map(m => m.id === event.data.id ? event.data : m);
+        if (event.type === 'delete') return prev.filter(m => m.id !== event.data.id);
+        return prev;
+      });
+    });
+    return unsub;
+  }, [id]);
+
+  // Real-time: subscribe to campaign state changes (combat, location, etc.)
+  useEffect(() => {
+    if (!id) return;
+    const unsub = base44.entities.Campaign.subscribe((event) => {
+      if (event.data.id !== id) return;
+      if (event.type === 'update') setCampaign(event.data);
+    });
+    return unsub;
+  }, [id]);
+
   const refreshCharacter = async () => {
     if (campaign?.character_id) {
       const char = await base44.entities.Character.get(campaign.character_id);
@@ -101,7 +167,11 @@ export default function CampaignGame() {
     if (!input.trim() || loading) return;
     const userText = input.trim();
     setInput('');
-    const playerMsg = { session_id: id, campaign_id: id, sender: 'player', content: userText };
+    const playerMsg = {
+      session_id: id, campaign_id: id, sender: 'player', content: userText,
+      sender_name: character?.name || me?.full_name || 'Player',
+      members: allMemberIds
+    };
     setMessages(prev => [...prev, playerMsg]);
     await base44.entities.Message.create(playerMsg);
     await getDMResponse([...messages, playerMsg]);
@@ -115,6 +185,8 @@ export default function CampaignGame() {
         campaign_id: id,
         campaign,
         character,
+        players,
+        active_player: character?.name,
         npcs,
         quests,
         locations,
@@ -123,7 +195,7 @@ export default function CampaignGame() {
         opening
       });
       const parsed = parseDMReply(res.data.reply);
-      const dmMsg = { session_id: id, campaign_id: id, sender: 'dm', content: parsed.narration, roll_request: parsed.rollRequest };
+      const dmMsg = { session_id: id, campaign_id: id, sender: 'dm', content: parsed.narration, roll_request: parsed.rollRequest, members: allMemberIds };
       await base44.entities.Message.create(dmMsg);
       setMessages(prev => [...prev, dmMsg]);
       setPendingRoll(parsed.rollRequest);
@@ -211,19 +283,19 @@ export default function CampaignGame() {
           break;
         }
         case 'npc_add':
-          npcAdds.push({ campaign_id: id, name: u.arg1, description: u.arg2, personality: u.arg3, relationship: u.arg4, location: u.arg5 });
+          npcAdds.push({ campaign_id: id, name: u.arg1, description: u.arg2, personality: u.arg3, relationship: u.arg4, location: u.arg5, members: allMemberIds });
           break;
         case 'npc_status':
           npcStatuses.push({ name: u.arg1, status: u.arg2 });
           break;
         case 'quest_add':
-          questAdds.push({ campaign_id: id, name: u.arg1, type: u.arg2 || 'side', description: u.arg3, status: 'active' });
+          questAdds.push({ campaign_id: id, name: u.arg1, type: u.arg2 || 'side', description: u.arg3, status: 'active', members: allMemberIds });
           break;
         case 'quest_update':
           questUpdates.push({ name: u.arg1, status: u.arg2 });
           break;
         case 'location_add':
-          locAdds.push({ campaign_id: id, name: u.arg1, type: u.arg2, description: u.arg3, discovered: true });
+          locAdds.push({ campaign_id: id, name: u.arg1, type: u.arg2, description: u.arg3, discovered: true, members: allMemberIds });
           break;
         case 'current_location':
           nextCamp.current_location = u.arg1;
@@ -324,14 +396,17 @@ export default function CampaignGame() {
       total: rollData.total,
       reason: rollData.reason,
       dc: rollData.dc ?? null,
-      npc_id: findNpcInReason(rollData.reason, npcs)
+      npc_id: findNpcInReason(rollData.reason, npcs),
+      members: allMemberIds
     });
     const rollMsg = {
       session_id: id,
       campaign_id: id,
       sender: 'player',
       content: `I roll for ${rollData.label || rollData.reason}.`,
-      dice_roll: rollData
+      sender_name: character?.name || me?.full_name || 'Player',
+      dice_roll: rollData,
+      members: allMemberIds
     };
     await base44.entities.Message.create(rollMsg);
     setMessages(prev => [...prev, rollMsg]);
@@ -348,14 +423,17 @@ export default function CampaignGame() {
       result: rollData.result,
       total: rollData.total,
       reason: rollData.reason,
-      npc_id: findNpcInReason(rollData.reason, npcs)
+      npc_id: findNpcInReason(rollData.reason, npcs),
+      members: allMemberIds
     });
     const rollMsg = {
       session_id: id,
       campaign_id: id,
       sender: 'player',
       content: `Manual roll: ${rollData.dice_type}`,
-      dice_roll: { ...rollData, label: rollData.reason }
+      sender_name: character?.name || me?.full_name || 'Player',
+      dice_roll: { ...rollData, label: rollData.reason },
+      members: allMemberIds
     };
     await base44.entities.Message.create(rollMsg);
     setMessages(prev => [...prev, rollMsg]);
@@ -403,6 +481,10 @@ export default function CampaignGame() {
         actions={
           <>
             {campaign.in_combat && <span className="text-xs px-2 py-1 bg-red-900/50 text-red-300 border border-red-700/40 rounded-full">⚔ Combat</span>}
+            {players.length > 1 && <span className="text-xs px-2 py-1 bg-amber-950/50 text-amber-300 border border-amber-800/40 rounded-full hidden sm:inline-flex items-center gap-1"><Users className="w-3 h-3" />{players.length}</span>}
+            <Link to={`/campaign/${id}/invite`} aria-label="Invite players" className="p-3 text-muted-foreground hover:text-amber-300 hover:bg-accent rounded-lg transition-all" title="Invite Players">
+              <Users className="w-5 h-5" />
+            </Link>
             <button onClick={() => setDiceOpen(true)} aria-label="Open dice roller" className="p-3 text-muted-foreground hover:text-amber-300 hover:bg-accent rounded-lg transition-all" title="Dice Roller">
               <Dices className="w-5 h-5" />
             </button>
@@ -429,7 +511,7 @@ export default function CampaignGame() {
       <div className="flex-1 flex overflow-hidden">
         {/* Left sidebar - desktop */}
         <div className="hidden md:flex w-64 border-r border-border bg-card/40 flex-col">
-          <LeftSidebar character={character} campaign={campaign} panel={leftPanel} setPanel={setLeftPanel} npcs={npcs} quests={quests} locations={locations} />
+          <LeftSidebar character={character} campaign={campaign} panel={leftPanel} setPanel={setLeftPanel} npcs={npcs} quests={quests} locations={locations} players={players} me={me} />
         </div>
 
         {/* Center chat */}
@@ -548,7 +630,8 @@ export default function CampaignGame() {
   );
 }
 
-function LeftSidebar({ character, campaign, panel, setPanel, npcs, quests, locations }) {
+function LeftSidebar({ character, campaign, panel, setPanel, npcs, quests, locations, players, me }) {
+  const partyMembers = (players || []).filter(p => p && (!character || p.id !== character.id));
   return (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b border-border">
@@ -570,6 +653,25 @@ function LeftSidebar({ character, campaign, panel, setPanel, npcs, quests, locat
         )}
         {campaign.current_location && (
           <p className="text-xs text-amber-700/80 text-center mt-2 flex items-center justify-center gap-1"><MapPin className="w-3 h-3" />{campaign.current_location}</p>
+        )}
+        {partyMembers.length > 0 && (
+          <div className="mt-3 pt-3 border-t border-border">
+            <p className="text-xs uppercase text-amber-600 font-semibold mb-2 flex items-center gap-1"><Users className="w-3 h-3" /> Party</p>
+            <div className="space-y-1.5">
+              {partyMembers.map(p => (
+                <div key={p.id} className="flex items-center gap-2 text-xs">
+                  <div className="w-7 h-7 rounded bg-muted border border-border flex items-center justify-center text-sm font-bold text-muted-foreground font-serif">
+                    {p.name?.[0]?.toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-foreground truncate">{p.name}</p>
+                    <p className="text-muted-foreground">{p.species} {p.class}</p>
+                  </div>
+                  <span className="flex items-center gap-0.5 text-rose-300"><Heart className="w-2.5 h-2.5" />{p.hp}/{p.max_hp}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
       <div className="p-2 flex-1 overflow-y-auto">
