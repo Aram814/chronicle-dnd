@@ -34,6 +34,7 @@ export default function CharacterSheet() {
     <div className="min-h-screen bg-background text-foreground">
       <ScreenHeader
         title="Character Sheet"
+        backTo="/characters"
         actions={
           <Link to={`/character/${id}/edit`} className="touch-target flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold"><Pencil className="w-4 h-4" /> Edit</Link>
         }
