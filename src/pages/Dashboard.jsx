@@ -182,7 +182,7 @@ export default function Dashboard() {
                     <h3 className="text-lg font-serif text-amber-200 mb-2">{s.name}</h3>
                     {s.premise && <p className="text-sm text-stone-400 mb-3">{s.premise}</p>}
                     {s.current_situation && <p className="text-sm text-stone-500 italic mb-3">"{s.current_situation}"</p>}
-                    <Link to={`/new-campaign?story=${s.id}`} className="inline-flex items-center gap-1 text-amber-400 hover:text-amber-300 text-sm font-semibold">
+                    <Link to={`/new-campaign?story=${s.id}`} className="touch-target inline-flex items-center gap-1 text-amber-400 hover:text-amber-300 text-sm font-semibold">
                       Continue this story <ChevronRight className="w-4 h-4" />
                     </Link>
                   </div>
@@ -211,7 +211,7 @@ function TabButton({ active, onClick, icon, label, count }) {
       onClick={onClick}
       role="tab"
       aria-selected={active}
-      className={`flex items-center gap-2 px-3 md:px-4 py-2.5 text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${
+      className={`touch-target flex items-center gap-2 px-3 md:px-4 py-2.5 text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${
         active ? 'border-amber-500 text-amber-200' : 'border-transparent text-stone-500 hover:text-stone-300'
       }`}
     >

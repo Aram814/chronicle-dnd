@@ -21,7 +21,7 @@ export default function InfoDialog({ open, onClose, title, description, buttonLa
           )}
         </AlertDialogHeader>
         <AlertDialogFooter className="sm:justify-end">
-          <Button onClick={onClose} className="bg-amber-700 hover:bg-amber-600 text-amber-50">
+          <Button onClick={onClose} className="touch-target bg-amber-700 hover:bg-amber-600 text-amber-50">
             {buttonLabel}
           </Button>
         </AlertDialogFooter>

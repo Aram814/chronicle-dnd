@@ -37,16 +37,16 @@ export default function CharacterCard({ character, onDuplicate, onDelete }) {
         <p className="text-sm text-stone-400 line-clamp-2 mb-3 min-h-[2.5rem]">{character.description}</p>
       )}
       <div className="flex flex-wrap gap-1.5">
-        <Link to={`/character/${character.id}`} className="flex items-center gap-1 px-2.5 py-1.5 bg-amber-900/40 hover:bg-amber-800/50 border border-amber-700/40 rounded text-amber-200 text-xs font-semibold transition-all">
+        <Link to={`/character/${character.id}`} className="touch-target flex items-center gap-1 px-2.5 py-1.5 bg-amber-900/40 hover:bg-amber-800/50 border border-amber-700/40 rounded text-amber-200 text-xs font-semibold transition-all">
           <Eye className="w-3 h-3" /> View
         </Link>
-        <Link to={`/character/${character.id}/edit`} className="flex items-center gap-1 px-2.5 py-1.5 bg-stone-800/60 hover:bg-stone-700/60 border border-stone-700 rounded text-stone-300 text-xs transition-all">
+        <Link to={`/character/${character.id}/edit`} className="touch-target flex items-center gap-1 px-2.5 py-1.5 bg-stone-800/60 hover:bg-stone-700/60 border border-stone-700 rounded text-stone-300 text-xs transition-all">
           <Pencil className="w-3 h-3" /> Edit
         </Link>
-        <button onClick={() => onDuplicate?.(character)} className="flex items-center gap-1 px-2.5 py-1.5 bg-stone-800/60 hover:bg-stone-700/60 border border-stone-700 rounded text-stone-300 text-xs transition-all">
+        <button onClick={() => onDuplicate?.(character)} className="touch-target flex items-center gap-1 px-2.5 py-1.5 bg-stone-800/60 hover:bg-stone-700/60 border border-stone-700 rounded text-stone-300 text-xs transition-all">
           <Copy className="w-3 h-3" /> Copy
         </button>
-        <button onClick={() => onDelete?.(character)} className="flex items-center gap-1 px-2.5 py-1.5 bg-red-950/40 hover:bg-red-900/40 border border-red-900/40 rounded text-red-400 text-xs transition-all">
+        <button onClick={() => onDelete?.(character)} className="touch-target flex items-center gap-1 px-2.5 py-1.5 bg-red-950/40 hover:bg-red-900/40 border border-red-900/40 rounded text-red-400 text-xs transition-all">
           <Trash2 className="w-3 h-3" />
         </button>
       </div>

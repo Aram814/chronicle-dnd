@@ -33,10 +33,10 @@ export default function CampaignCard({ campaign, character, onArchive, onDelete 
             </button>
             {menuOpen && (
               <div className="absolute right-0 top-8 z-10 w-40 bg-stone-900 border border-amber-900/40 rounded-lg shadow-xl py-1">
-                <button onClick={() => { onArchive?.(campaign); setMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-stone-300 hover:bg-amber-900/20 flex items-center gap-2">
+                <button onClick={() => { onArchive?.(campaign); setMenuOpen(false); }} className="touch-target w-full text-left px-3 py-2 text-sm text-stone-300 hover:bg-amber-900/20 flex items-center gap-2">
                   <Archive className="w-3 h-3" /> Archive
                 </button>
-                <button onClick={() => { onDelete?.(campaign); setMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-900/20 flex items-center gap-2">
+                <button onClick={() => { onDelete?.(campaign); setMenuOpen(false); }} className="touch-target w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-900/20 flex items-center gap-2">
                   Delete
                 </button>
               </div>
@@ -60,7 +60,7 @@ export default function CampaignCard({ campaign, character, onArchive, onDelete 
         </Link>
         <Link
           to={`/campaign/${campaign.id}/details`}
-          className="px-3 py-2 bg-stone-800/60 hover:bg-stone-700/60 border border-stone-700 rounded-lg text-stone-300 transition-all"
+          className="touch-target px-3 py-2 bg-stone-800/60 hover:bg-stone-700/60 border border-stone-700 rounded-lg text-stone-300 transition-all"
         >
           <Info className="w-4 h-4" />
         </Link>

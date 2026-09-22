@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Plus } from 'lucide-react';
 import CharacterCard from '@/components/CharacterCard';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import PullToRefresh from '@/components/PullToRefresh';
 import { toast } from '@/components/ui/use-toast';
 
 export default function Characters() {
@@ -57,13 +58,13 @@ export default function Characters() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-background text-foreground overscroll-none">
+    <PullToRefresh onRefresh={load} className="h-full bg-background text-foreground overscroll-none">
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-serif text-amber-200">Your Characters</h2>
           <Link
             to="/character/new/edit"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold transition-all"
+            className="touch-target inline-flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold transition-all"
           >
             <Plus className="w-4 h-4" /> New
           </Link>
@@ -89,6 +90,6 @@ export default function Characters() {
         confirmLabel="Delete"
         destructive
       />
-    </div>
+    </PullToRefresh>
   );
 }

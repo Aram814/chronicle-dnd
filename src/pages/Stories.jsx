@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { ChevronRight, BookOpen } from 'lucide-react';
+import PullToRefresh from '@/components/PullToRefresh';
 
 export default function Stories() {
   const [stories, setStories] = useState([]);
@@ -31,7 +32,7 @@ export default function Stories() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-stone-950 text-stone-200 overscroll-none">
+    <PullToRefresh onRefresh={load} className="h-full bg-stone-950 text-stone-200 overscroll-none">
       <div className="max-w-2xl mx-auto px-4 py-6">
         <h2 className="text-xl font-serif text-amber-200 mb-4">Saved Stories</h2>
         {stories.length === 0 ? (
@@ -53,7 +54,7 @@ export default function Stories() {
                 )}
                 <Link
                   to={`/new-campaign?story=${s.id}`}
-                  className="inline-flex items-center gap-1 text-amber-400 hover:text-amber-300 text-sm font-semibold"
+                  className="touch-target inline-flex items-center gap-1 text-amber-400 hover:text-amber-300 text-sm font-semibold"
                 >
                   Continue this story <ChevronRight className="w-4 h-4" />
                 </Link>
@@ -62,6 +63,6 @@ export default function Stories() {
           </div>
         )}
       </div>
-    </div>
+    </PullToRefresh>
   );
 }

@@ -31,11 +31,11 @@ export default function ConfirmDialog({
           )}
         </AlertDialogHeader>
         <AlertDialogFooter className="flex-row gap-2 sm:justify-end">
-          <AlertDialogCancel className="border-border bg-transparent text-foreground hover:bg-accent mt-0">
+          <AlertDialogCancel className="touch-target border-border bg-transparent text-foreground hover:bg-accent mt-0">
             {cancelLabel}
           </AlertDialogCancel>
           <AlertDialogAction
-            className={`mt-0 ${destructive ? 'bg-red-700 hover:bg-red-600 text-white' : 'bg-amber-700 hover:bg-amber-600 text-amber-50'}`}
+            className={`touch-target mt-0 ${destructive ? 'bg-red-700 hover:bg-red-600 text-white' : 'bg-amber-700 hover:bg-amber-600 text-amber-50'}`}
             onClick={onConfirm}
           >
             {confirmLabel}
