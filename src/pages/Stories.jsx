@@ -14,8 +14,21 @@ export default function Stories() {
 
   const load = async () => {
     try {
-      const sts = await base44.entities.SavedStory.filter({});
-      setStories(sts || []);
+      const sts = await base44.entities.SavedStory.filter({}, '-updated_date');
+      // One saved story per campaign — keep the most recent, drop older duplicates.
+      const byCampaign = new Map();
+      const standalone = [];
+      (sts || []).forEach(s => {
+        if (s.campaign_id) {
+          const existing = byCampaign.get(s.campaign_id);
+          if (!existing || new Date(s.updated_date) > new Date(existing.updated_date)) {
+            byCampaign.set(s.campaign_id, s);
+          }
+        } else {
+          standalone.push(s);
+        }
+      });
+      setStories([...standalone, ...Array.from(byCampaign.values())]);
     } catch (e) {
       console.error(e);
     } finally {
