@@ -475,10 +475,13 @@ export default function CampaignGame() {
       dice_roll: rollData,
       members: allMemberIds
     };
-    await base44.entities.Message.create(rollMsg);
-    setMessages(prev => [...prev, rollMsg]);
+    const createdRollMsg = await base44.entities.Message.create(rollMsg);
+    setMessages(prev => {
+      if (prev.find(m => m.id === createdRollMsg.id || (m.content === createdRollMsg.content && m.sender === 'player' && (m.sender_name || '') === (createdRollMsg.sender_name || '')))) return prev;
+      return [...prev, createdRollMsg];
+    });
     setPendingRoll(null);
-    await getDMResponse([...messages, rollMsg], rollData);
+    await getDMResponse([...messages, createdRollMsg], rollData);
   };
 
   const handleManualRoll = async (rollData) => {
@@ -503,8 +506,11 @@ export default function CampaignGame() {
       dice_roll: { ...rollData, label: rollData.reason },
       members: allMemberIds
     };
-    await base44.entities.Message.create(rollMsg);
-    setMessages(prev => [...prev, rollMsg]);
+    const createdRollMsg = await base44.entities.Message.create(rollMsg);
+    setMessages(prev => {
+      if (prev.find(m => m.id === createdRollMsg.id || (m.content === createdRollMsg.content && m.sender === 'player' && (m.sender_name || '') === (createdRollMsg.sender_name || '')))) return prev;
+      return [...prev, createdRollMsg];
+    });
   };
 
   const saveStory = () => setConfirmSaveStory(true);
