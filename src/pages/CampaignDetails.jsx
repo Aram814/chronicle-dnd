@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Save, Play, Archive, Trash2, Bookmark, UserPlus } from 'lucide-react';
+import { Save, Play, Archive, Trash2, Bookmark, UserPlus, MapIcon } from 'lucide-react';
 import BottomSheetPicker from '@/components/BottomSheetPicker';
 import ScreenHeader from '@/components/ScreenHeader';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -98,6 +98,7 @@ export default function CampaignDetails() {
 
         <div className="flex flex-wrap gap-2">
           <Link to={`/campaign/${id}`} className="flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold"><Play className="w-4 h-4" /> Continue Campaign</Link>
+          <Link to={`/campaign/${id}/map`} className="flex items-center gap-2 px-4 py-2 bg-amber-800/60 hover:bg-amber-700/60 border border-amber-700/40 text-amber-100 rounded-lg text-sm font-semibold"><MapIcon className="w-4 h-4" /> World Map</Link>
           <Link to={`/campaign/${id}/invite`} className="flex items-center gap-2 px-4 py-2 bg-amber-800/60 hover:bg-amber-700/60 border border-amber-700/40 text-amber-100 rounded-lg text-sm font-semibold"><UserPlus className="w-4 h-4" /> Invite Players</Link>
           <button onClick={archive} className="flex items-center gap-2 px-4 py-2 bg-muted hover:bg-accent text-foreground rounded-lg text-sm"><Archive className="w-4 h-4" /> Archive</button>
           <button onClick={() => setConfirmDelete(true)} className="flex items-center gap-2 px-4 py-2 bg-red-950/40 hover:bg-red-900/40 border border-red-900/40 text-red-400 rounded-lg text-sm"><Trash2 className="w-4 h-4" /> Delete</button>
