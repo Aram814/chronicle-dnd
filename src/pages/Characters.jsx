@@ -70,7 +70,7 @@ export default function Characters() {
           </Link>
         </div>
         {characters.length === 0 ? (
-          <div className="text-center py-12 text-stone-500 border border-dashed border-stone-800 rounded-xl">
+          <div className="text-center py-12 text-muted-foreground border border-dashed border-border rounded-xl">
             No characters yet. Create a hero for your adventures!
           </div>
         ) : (

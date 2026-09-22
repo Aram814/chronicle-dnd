@@ -49,42 +49,42 @@ export default function Settings() {
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-stone-950 text-stone-200 overscroll-none">
+    <div className="h-full overflow-y-auto bg-background text-foreground overscroll-none">
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         {/* General */}
-        <section className="bg-gradient-to-br from-stone-900/80 to-stone-950/80 border border-amber-900/30 rounded-xl p-5">
+        <section className="bg-gradient-to-br from-card/80 to-background/80 border border-amber-900/30 rounded-xl p-5">
           <h2 className="font-serif text-amber-200 text-lg mb-3 flex items-center gap-2">
             <Shield className="w-5 h-5 text-amber-500" /> General
           </h2>
           <button
             type="button"
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-stone-200 hover:bg-stone-800/60 transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-foreground hover:bg-muted/60 transition-colors"
           >
-            <LogOut className="w-5 h-5 text-stone-400" />
+            <LogOut className="w-5 h-5 text-muted-foreground" />
             <span className="flex-1 text-left">Log out</span>
-            <ChevronRight className="w-4 h-4 text-stone-600" />
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
           </button>
         </section>
 
         {/* Appearance */}
-        <section className="bg-gradient-to-br from-stone-900/80 to-stone-950/80 border border-amber-900/30 rounded-xl p-5">
+        <section className="bg-gradient-to-br from-card/80 to-background/80 border border-amber-900/30 rounded-xl p-5">
           <h2 className="font-serif text-amber-200 text-lg mb-1">Appearance</h2>
-          <p className="text-sm text-stone-400 mb-3">
+          <p className="text-sm text-muted-foreground mb-3">
             Chronicle uses a dark fantasy theme by default and follows your system preference automatically.
           </p>
         </section>
 
         {/* Danger zone */}
-        <section className="bg-gradient-to-br from-red-950/40 to-stone-950/80 border border-red-900/40 rounded-xl p-5">
+        <section className="bg-gradient-to-br from-red-950/40 to-background/80 border border-red-900/40 rounded-xl p-5">
           <h2 className="font-serif text-red-300 text-lg mb-2 flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-red-400" /> Delete Account
           </h2>
-          <p className="text-sm text-stone-400 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             Permanently delete your account and all associated data, including every campaign, character,
             and saved story. This action cannot be undone.
           </p>
-          <ul className="text-sm text-stone-400 space-y-1.5 mb-4 list-disc list-inside">
+          <ul className="text-sm text-muted-foreground space-y-1.5 mb-4 list-disc list-inside">
             <li>All campaigns and their chat history will be erased.</li>
             <li>All characters and inventory will be removed.</li>
             <li>All saved stories will be deleted.</li>
@@ -100,15 +100,15 @@ export default function Settings() {
           </Button>
         </section>
 
-        <p className="text-center text-sm text-stone-600 pt-2">Chronicle D&D · AI Dungeon Master</p>
+        <p className="text-center text-sm text-muted-foreground pt-2">Chronicle D&D · AI Dungeon Master</p>
       </div>
 
       {/* Confirmation drawer */}
       <Drawer open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DrawerContent className="bg-stone-900 border-red-900/40 text-stone-200 rounded-t-2xl">
+        <DrawerContent className="bg-card border-red-900/40 text-foreground rounded-t-2xl">
           <DrawerHeader className="text-center">
             <DrawerTitle className="font-serif text-red-300 text-xl">Delete account?</DrawerTitle>
-            <DrawerDescription className="text-stone-400 text-sm">
+            <DrawerDescription className="text-muted-foreground text-sm">
               This will permanently erase all your campaigns, characters, and stories. This cannot be undone.
             </DrawerDescription>
           </DrawerHeader>
@@ -123,7 +123,7 @@ export default function Settings() {
               variant="outline"
               onClick={() => setConfirmOpen(false)}
               disabled={deleting}
-              className="flex-1 bg-stone-800 border-stone-700 text-stone-200 hover:bg-stone-700"
+              className="flex-1 bg-muted border-border text-foreground hover:bg-accent"
             >
               Cancel
             </Button>

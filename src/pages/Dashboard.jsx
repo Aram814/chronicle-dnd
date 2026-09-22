@@ -109,14 +109,14 @@ export default function Dashboard() {
             <Swords className="w-7 h-7 md:w-8 md:h-8 text-amber-500" />
             The Adventure Awaits
           </h1>
-          <p className="text-stone-400">Your campaigns, characters, and stories — all in one place.</p>
+          <p className="text-muted-foreground">Your campaigns, characters, and stories — all in one place.</p>
         </div>
 
         {isEmpty && (
-          <div className="text-center py-16 mb-8 bg-gradient-to-br from-stone-900/60 to-stone-950/60 border border-amber-900/30 rounded-2xl">
+          <div className="text-center py-16 mb-8 bg-gradient-to-br from-card/60 to-background/60 border border-amber-900/30 rounded-2xl">
             <Sparkles className="w-12 h-12 text-amber-500 mx-auto mb-4" />
             <h2 className="text-2xl font-serif text-amber-200 mb-2">Your adventure begins here</h2>
-            <p className="text-stone-400 mb-6 max-w-md mx-auto">Create your first campaign and let the AI Dungeon Master guide you into a world of fantasy and adventure.</p>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">Create your first campaign and let the AI Dungeon Master guide you into a world of fantasy and adventure.</p>
             <Link to="/new-campaign" className="touch-target inline-flex items-center gap-2 px-6 py-3 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg font-semibold transition-all">
               <Plus className="w-5 h-5" /> Start New Campaign
             </Link>
@@ -124,7 +124,7 @@ export default function Dashboard() {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 border-b border-stone-800 overflow-x-auto" role="tablist">
+        <div className="flex gap-2 mb-6 border-b border-border overflow-x-auto" role="tablist">
           <TabButton active={tab === 'campaigns'} onClick={() => setTab('campaigns')} icon={<Scroll className="w-4 h-4" />} label="Campaigns" count={campaigns.length} />
           <TabButton active={tab === 'characters'} onClick={() => setTab('characters')} icon={<Users className="w-4 h-4" />} label="Characters" count={characters.length} />
           <TabButton active={tab === 'stories'} onClick={() => setTab('stories')} icon={<BookOpen className="w-4 h-4" />} label="Saved Stories" count={stories.length} />
@@ -178,10 +178,10 @@ export default function Dashboard() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {stories.map(s => (
-                  <div key={s.id} className="bg-gradient-to-br from-stone-900/80 to-stone-950/80 border border-amber-900/30 rounded-xl p-5">
+                  <div key={s.id} className="bg-gradient-to-br from-card/80 to-background/80 border border-amber-900/30 rounded-xl p-5">
                     <h3 className="text-lg font-serif text-amber-200 mb-2">{s.name}</h3>
-                    {s.premise && <p className="text-sm text-stone-400 mb-3">{s.premise}</p>}
-                    {s.current_situation && <p className="text-sm text-stone-500 italic mb-3">"{s.current_situation}"</p>}
+                    {s.premise && <p className="text-sm text-muted-foreground mb-3">{s.premise}</p>}
+                    {s.current_situation && <p className="text-sm text-muted-foreground italic mb-3">"{s.current_situation}"</p>}
                     <Link to={`/new-campaign?story=${s.id}`} className="touch-target inline-flex items-center gap-1 text-amber-400 hover:text-amber-300 text-sm font-semibold">
                       Continue this story <ChevronRight className="w-4 h-4" />
                     </Link>
@@ -212,18 +212,18 @@ function TabButton({ active, onClick, icon, label, count }) {
       role="tab"
       aria-selected={active}
       className={`touch-target flex items-center gap-2 px-3 md:px-4 py-2.5 text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${
-        active ? 'border-amber-500 text-amber-200' : 'border-transparent text-stone-500 hover:text-stone-300'
+        active ? 'border-amber-500 text-amber-200' : 'border-transparent text-muted-foreground hover:text-foreground'
       }`}
     >
       {icon} {label}
-      <span className="text-xs bg-stone-800 px-1.5 py-0.5 rounded-full">{count}</span>
+      <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">{count}</span>
     </button>
   );
 }
 
 function EmptyState({ text }) {
   return (
-    <div className="text-center py-12 text-stone-500 border border-dashed border-stone-800 rounded-xl">
+    <div className="text-center py-12 text-muted-foreground border border-dashed border-border rounded-xl">
       {text}
     </div>
   );

@@ -204,7 +204,7 @@ export default function NewCampaign() {
           <ChatMessage key={i} message={m} isLatest={i === messages.length - 1} />
         ))}
         {loading && (
-          <div className="flex items-center gap-2 text-stone-500 text-sm ml-2">
+          <div className="flex items-center gap-2 text-muted-foreground text-sm ml-2">
             <div className="w-2 h-2 bg-amber-500 rounded-full animate-bounce"></div>
             <div className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
             <div className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
@@ -213,7 +213,7 @@ export default function NewCampaign() {
         )}
         <div ref={messagesEndRef} />
       </div>
-      <div className="border-t border-stone-800 p-4 bg-stone-900/50">
+      <div className="border-t border-border p-4 bg-card/50">
         <div className="max-w-3xl mx-auto flex gap-2">
           <textarea
             value={input}
@@ -222,7 +222,7 @@ export default function NewCampaign() {
             placeholder="Respond to the Dungeon Master..."
             rows={1}
             aria-label="Type your response"
-            className="flex-1 px-4 py-3 bg-stone-950 border border-amber-900/40 rounded-lg text-stone-200 placeholder-stone-500 resize-none focus:outline-none focus:ring-2 focus:ring-amber-700/50 focus:border-amber-700"
+            className="flex-1 px-4 py-3 bg-background border border-amber-900/40 rounded-lg text-foreground placeholder-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-amber-700/50 focus:border-amber-700"
           />
           <button onClick={send} disabled={loading || !input.trim()} aria-label="Send message" className="touch-target px-4 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-amber-50 rounded-lg transition-all">
             <Send className="w-5 h-5" />

@@ -52,17 +52,17 @@ export default function CampaignDetails() {
         actions={editing ? (
           <button onClick={save} className="touch-target flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold"><Save className="w-4 h-4" /> Save</button>
         ) : (
-          <button onClick={() => setEditing(true)} className="touch-target px-4 py-2 bg-stone-800 hover:bg-stone-700 rounded-lg text-sm">Edit</button>
+          <button onClick={() => setEditing(true)} className="touch-target px-4 py-2 bg-muted hover:bg-accent rounded-lg text-sm">Edit</button>
         )}
       />
       <div className="max-w-3xl mx-auto px-4 py-8">
 
-        <div className="bg-gradient-to-br from-stone-900/80 to-stone-950/80 border border-amber-900/30 rounded-xl p-6 mb-4">
+        <div className="bg-gradient-to-br from-card/80 to-background/80 border border-amber-900/30 rounded-xl p-6 mb-4">
           {editing ? (
             <>
-              <input value={form.name || ''} onChange={e => setForm({...form, name: e.target.value})} className="text-xl font-serif bg-stone-950 border border-amber-900/40 rounded px-2 py-1 text-amber-200 w-full mb-2" />
-              <textarea value={form.description || ''} onChange={e => setForm({...form, description: e.target.value})} placeholder="Description" rows={3} className="w-full bg-stone-950 border border-stone-700 rounded px-2 py-1 text-stone-300 text-sm resize-none mb-2" />
-              <textarea value={form.setting || ''} onChange={e => setForm({...form, setting: e.target.value})} placeholder="Setting" rows={2} className="w-full bg-stone-950 border border-stone-700 rounded px-2 py-1 text-stone-300 text-sm resize-none mb-2" />
+              <input value={form.name || ''} onChange={e => setForm({...form, name: e.target.value})} className="text-xl font-serif bg-background border border-amber-900/40 rounded px-2 py-1 text-amber-200 w-full mb-2" />
+              <textarea value={form.description || ''} onChange={e => setForm({...form, description: e.target.value})} placeholder="Description" rows={3} className="w-full bg-background border border-border rounded px-2 py-1 text-foreground text-sm resize-none mb-2" />
+              <textarea value={form.setting || ''} onChange={e => setForm({...form, setting: e.target.value})} placeholder="Setting" rows={2} className="w-full bg-background border border-border rounded px-2 py-1 text-foreground text-sm resize-none mb-2" />
               <div className="grid grid-cols-2 gap-2">
                 <BottomSheetPicker label="Difficulty" value={form.difficulty} options={['Casual', 'Normal', 'Challenging', 'Hardcore']} onChange={v => setForm({ ...form, difficulty: v })} />
                 <BottomSheetPicker label="DM Style" value={form.dm_style} options={['Story-focused', 'Rules-focused', 'Balanced', 'Cinematic', 'Tactical']} onChange={v => setForm({ ...form, dm_style: v })} />
@@ -71,16 +71,16 @@ export default function CampaignDetails() {
           ) : (
             <>
               <h2 className="text-xl font-serif text-amber-200">{campaign.name}</h2>
-              <p className="text-stone-400 mt-1">{campaign.description || 'No description'}</p>
-              {campaign.setting && <p className="text-sm text-stone-500 mt-2">Setting: {campaign.setting}</p>}
+              <p className="text-muted-foreground mt-1">{campaign.description || 'No description'}</p>
+              {campaign.setting && <p className="text-sm text-muted-foreground mt-2">Setting: {campaign.setting}</p>}
               <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-xs">
-                <span className="text-stone-500">Difficulty: <span className="text-amber-300">{campaign.difficulty}</span></span>
-                <span className="text-stone-500">DM Style: <span className="text-amber-300">{campaign.dm_style}</span></span>
-                <span className="text-stone-500">Status: <span className="text-amber-300 capitalize">{campaign.status}</span></span>
+                <span className="text-muted-foreground">Difficulty: <span className="text-amber-300">{campaign.difficulty}</span></span>
+                <span className="text-muted-foreground">DM Style: <span className="text-amber-300">{campaign.dm_style}</span></span>
+                <span className="text-muted-foreground">Status: <span className="text-amber-300 capitalize">{campaign.status}</span></span>
               </div>
               {character && (
-                <div className="mt-4 pt-4 border-t border-stone-800">
-                  <p className="text-sm text-stone-400">Character: <Link to={`/character/${character.id}`} className="text-amber-300 hover:underline">{character.name}</Link> — {character.species} {character.class} Lvl {character.level}</p>
+                <div className="mt-4 pt-4 border-t border-border">
+                  <p className="text-sm text-muted-foreground">Character: <Link to={`/character/${character.id}`} className="text-amber-300 hover:underline">{character.name}</Link> — {character.species} {character.class} Lvl {character.level}</p>
                 </div>
               )}
             </>
@@ -89,7 +89,7 @@ export default function CampaignDetails() {
 
         <div className="flex flex-wrap gap-2">
           <Link to={`/campaign/${id}`} className="flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold"><Play className="w-4 h-4" /> Continue Campaign</Link>
-          <button onClick={archive} className="flex items-center gap-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-lg text-sm"><Archive className="w-4 h-4" /> Archive</button>
+          <button onClick={archive} className="flex items-center gap-2 px-4 py-2 bg-muted hover:bg-accent text-foreground rounded-lg text-sm"><Archive className="w-4 h-4" /> Archive</button>
           <button onClick={() => setConfirmDelete(true)} className="flex items-center gap-2 px-4 py-2 bg-red-950/40 hover:bg-red-900/40 border border-red-900/40 text-red-400 rounded-lg text-sm"><Trash2 className="w-4 h-4" /> Delete</button>
         </div>
       </div>

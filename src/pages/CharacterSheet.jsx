@@ -40,31 +40,31 @@ export default function CharacterSheet() {
         actions={editing ? (
           <button onClick={save} className="touch-target flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold"><Save className="w-4 h-4" /> Save</button>
         ) : (
-          <button onClick={() => { setForm(character); setEditing(true); }} className="touch-target px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-lg text-sm">Edit</button>
+          <button onClick={() => { setForm(character); setEditing(true); }} className="touch-target px-4 py-2 bg-muted hover:bg-accent text-foreground rounded-lg text-sm">Edit</button>
         )}
       />
       <div className="max-w-4xl mx-auto px-4 py-8">
 
         {/* Header card */}
-        <div className="bg-gradient-to-br from-stone-900/80 to-stone-950/80 border border-amber-900/30 rounded-xl p-6 mb-4">
+        <div className="bg-gradient-to-br from-card/80 to-background/80 border border-amber-900/30 rounded-xl p-6 mb-4">
           <div className="flex items-start gap-4">
-            <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-amber-900/50 to-stone-800 border border-amber-700/40 flex items-center justify-center text-3xl font-bold text-amber-400 font-serif">
+            <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-amber-900/50 to-muted border border-amber-700/40 flex items-center justify-center text-3xl font-bold text-amber-400 font-serif">
               {character.name?.[0]?.toUpperCase()}
             </div>
             <div className="flex-1">
               {editing ? (
-                <input value={form.name || ''} onChange={e => setForm({...form, name: e.target.value})} className="text-2xl font-serif bg-stone-950 border border-amber-900/40 rounded px-2 py-1 text-amber-200 w-full" />
+                <input value={form.name || ''} onChange={e => setForm({...form, name: e.target.value})} className="text-2xl font-serif bg-background border border-amber-900/40 rounded px-2 py-1 text-amber-200 w-full" />
               ) : (
                 <h2 className="text-2xl font-serif text-amber-200">{character.name}</h2>
               )}
-              <p className="text-stone-400">{character.species} {character.class} {character.subclass}</p>
-              <p className="text-sm text-stone-500">Level {character.level} · {character.background} · {character.alignment}</p>
+              <p className="text-muted-foreground">{character.species} {character.class} {character.subclass}</p>
+              <p className="text-sm text-muted-foreground">Level {character.level} · {character.background} · {character.alignment}</p>
             </div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
             <Stat label="HP" value={`${character.hp}/${character.max_hp}`} icon={<Heart className="w-3 h-3" />} color="text-rose-300" />
             <Stat label="AC" value={character.ac} icon={<Shield className="w-3 h-3" />} color="text-sky-300" />
-            <Stat label="Speed" value={character.speed} color="text-stone-300" />
+            <Stat label="Speed" value={character.speed} color="text-foreground" />
             <Stat label="Gold" value={character.gold || 0} icon={<Coins className="w-3 h-3" />} color="text-amber-300" />
           </div>
         </div>
@@ -76,14 +76,14 @@ export default function CharacterSheet() {
               const score = scores[key] || 10;
               const mod = abilityModifier(score);
               return (
-                <div key={key} className="bg-stone-950/60 border border-stone-800 rounded-lg p-3 text-center">
-                  <div className="text-xs text-stone-500 uppercase">{label}</div>
+                <div key={key} className="bg-background/60 border border-border rounded-lg p-3 text-center">
+                  <div className="text-xs text-muted-foreground uppercase">{label}</div>
                   {editing ? (
-                    <input type="number" value={form.ability_scores?.[key] || 10} onChange={e => setForm({...form, ability_scores: {...(form.ability_scores||{}), [key]: parseInt(e.target.value)||10}})} className="w-12 bg-stone-900 border border-stone-700 rounded text-center text-amber-200 mt-1" />
+                    <input type="number" value={form.ability_scores?.[key] || 10} onChange={e => setForm({...form, ability_scores: {...(form.ability_scores||{}), [key]: parseInt(e.target.value)||10}})} className="w-12 bg-card border border-border rounded text-center text-amber-200 mt-1" />
                   ) : (
                     <>
                       <div className="text-2xl font-bold text-amber-200 mt-1">{score}</div>
-                      <div className="text-sm text-stone-400">{mod >= 0 ? `+${mod}` : mod}</div>
+                      <div className="text-sm text-muted-foreground">{mod >= 0 ? `+${mod}` : mod}</div>
                     </>
                   )}
                 </div>
@@ -100,10 +100,10 @@ export default function CharacterSheet() {
               const proficient = (character.proficiencies || []).includes(key) || (character.proficiencies || []).includes(SKILL_LABELS[key]);
               const total = mod + (proficient ? profBonus : 0);
               return (
-                <div key={key} className="flex items-center justify-between bg-stone-950/50 border border-stone-800 rounded px-3 py-1.5 text-sm">
+                <div key={key} className="flex items-center justify-between bg-background/50 border border-border rounded px-3 py-1.5 text-sm">
                   <span className="flex items-center gap-2">
                     {proficient && <Star className="w-3 h-3 text-amber-500" />}
-                    <span className="text-stone-300">{SKILL_LABELS[key]}</span>
+                    <span className="text-foreground">{SKILL_LABELS[key]}</span>
                   </span>
                   <span className="text-amber-300 font-semibold">{total >= 0 ? `+${total}` : total}</span>
                 </div>
@@ -120,10 +120,10 @@ export default function CharacterSheet() {
               const proficient = (character.saving_throws || []).includes(key) || (character.saving_throws || []).includes(label);
               const total = mod + (proficient ? profBonus : 0);
               return (
-                <div key={key} className="flex items-center justify-between bg-stone-950/50 border border-stone-800 rounded px-3 py-1.5 text-sm">
+                <div key={key} className="flex items-center justify-between bg-background/50 border border-border rounded px-3 py-1.5 text-sm">
                   <span className="flex items-center gap-2">
                     {proficient && <Star className="w-3 h-3 text-amber-500" />}
-                    <span className="text-stone-300">{label}</span>
+                    <span className="text-foreground">{label}</span>
                   </span>
                   <span className="text-amber-300 font-semibold">{total >= 0 ? `+${total}` : total}</span>
                 </div>
@@ -137,16 +137,16 @@ export default function CharacterSheet() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <h4 className="text-sm text-amber-600 mb-2 flex items-center gap-1"><Sword className="w-3 h-3" /> Weapons</h4>
-              {(character.weapons || []).length === 0 ? <p className="text-xs text-stone-500">None</p> : (
+              {(character.weapons || []).length === 0 ? <p className="text-xs text-muted-foreground">None</p> : (
                 <ul className="space-y-1">
-                  {character.weapons.map((w, i) => <li key={i} className="text-sm text-stone-300">{w.name || w}{w.damage && <span className="text-xs text-stone-500"> · {w.damage}</span>}</li>)}
+                  {character.weapons.map((w, i) => <li key={i} className="text-sm text-foreground">{w.name || w}{w.damage && <span className="text-xs text-muted-foreground"> · {w.damage}</span>}</li>)}
                 </ul>
               )}
-              {character.armor && <p className="text-sm text-stone-300 mt-2">Armor: {character.armor}</p>}
+              {character.armor && <p className="text-sm text-foreground mt-2">Armor: {character.armor}</p>}
             </div>
             <div>
               <h4 className="text-sm text-amber-600 mb-2">Conditions</h4>
-              {(character.conditions || []).length === 0 ? <p className="text-xs text-stone-500">None</p> : (
+              {(character.conditions || []).length === 0 ? <p className="text-xs text-muted-foreground">None</p> : (
                 <div className="flex flex-wrap gap-1">
                   {character.conditions.map((c, i) => <span key={i} className="text-xs px-2 py-1 bg-amber-900/30 text-amber-300 border border-amber-800/40 rounded">{c}</span>)}
                 </div>
@@ -160,17 +160,17 @@ export default function CharacterSheet() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <h4 className="text-sm text-amber-600 mb-2">Items</h4>
-              {(character.inventory || []).length === 0 ? <p className="text-xs text-stone-500">Empty</p> : (
+              {(character.inventory || []).length === 0 ? <p className="text-xs text-muted-foreground">Empty</p> : (
                 <ul className="space-y-1">
-                  {character.inventory.map((item, i) => <li key={i} className="text-sm text-stone-300">{item.name || item}</li>)}
+                  {character.inventory.map((item, i) => <li key={i} className="text-sm text-foreground">{item.name || item}</li>)}
                 </ul>
               )}
             </div>
             <div>
               <h4 className="text-sm text-amber-600 mb-2 flex items-center gap-1"><Sparkles className="w-3 h-3" /> Spells</h4>
-              {(character.spells || []).length === 0 ? <p className="text-xs text-stone-500">None</p> : (
+              {(character.spells || []).length === 0 ? <p className="text-xs text-muted-foreground">None</p> : (
                 <ul className="space-y-1">
-                  {character.spells.map((s, i) => <li key={i} className="text-sm text-stone-300">{s.name || s}{s.level && <span className="text-xs text-stone-500"> · Lvl {s.level}</span>}</li>)}
+                  {character.spells.map((s, i) => <li key={i} className="text-sm text-foreground">{s.name || s}{s.level && <span className="text-xs text-muted-foreground"> · Lvl {s.level}</span>}</li>)}
                 </ul>
               )}
             </div>
@@ -196,7 +196,7 @@ export default function CharacterSheet() {
 
 function Section({ title, children }) {
   return (
-    <div className="bg-gradient-to-br from-stone-900/60 to-stone-950/60 border border-amber-900/20 rounded-xl p-5 mb-4">
+    <div className="bg-gradient-to-br from-card/60 to-background/60 border border-amber-900/20 rounded-xl p-5 mb-4">
       <h3 className="font-serif text-amber-200 mb-3">{title}</h3>
       {children}
     </div>
@@ -205,8 +205,8 @@ function Section({ title, children }) {
 
 function Stat({ label, value, icon, color }) {
   return (
-    <div className="bg-stone-950/60 border border-stone-800 rounded-lg p-3 text-center">
-      <div className="text-xs text-stone-500 flex items-center justify-center gap-1">{icon}{label}</div>
+    <div className="bg-background/60 border border-border rounded-lg p-3 text-center">
+      <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">{icon}{label}</div>
       <div className={`text-lg font-bold ${color}`}>{value}</div>
     </div>
   );
@@ -216,7 +216,7 @@ function Field({ label, value }) {
   return (
     <div>
       <span className="text-amber-600 font-semibold">{label}: </span>
-      <span className="text-stone-300">{value}</span>
+      <span className="text-foreground">{value}</span>
     </div>
   );
 }

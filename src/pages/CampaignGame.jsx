@@ -389,7 +389,7 @@ export default function CampaignGame() {
       />
 
       {/* Mobile panel nav */}
-      <div className="md:hidden border-b border-stone-800 px-2 py-1.5 flex gap-1 overflow-x-auto bg-stone-900/70 flex-shrink-0" role="navigation" aria-label="Game panels">
+      <div className="md:hidden border-b border-border px-2 py-1.5 flex gap-1 overflow-x-auto bg-card/70 flex-shrink-0" role="navigation" aria-label="Game panels">
         <MobileNavButton active={leftPanel === 'sheet'} onClick={() => setLeftPanel(leftPanel === 'sheet' ? null : 'sheet')} icon={<Users className="w-4 h-4" />} label="Sheet" />
         <MobileNavButton active={leftPanel === 'inventory'} onClick={() => setLeftPanel(leftPanel === 'inventory' ? null : 'inventory')} icon={<BookOpen className="w-4 h-4" />} label="Bag" />
         <MobileNavButton active={leftPanel === 'spells'} onClick={() => setLeftPanel(leftPanel === 'spells' ? null : 'spells')} icon={<Star className="w-4 h-4" />} label="Spells" />
@@ -400,7 +400,7 @@ export default function CampaignGame() {
 
       <div className="flex-1 flex overflow-hidden">
         {/* Left sidebar - desktop */}
-        <div className="hidden md:flex w-64 border-r border-stone-800 bg-stone-900/40 flex-col">
+        <div className="hidden md:flex w-64 border-r border-border bg-card/40 flex-col">
           <LeftSidebar character={character} campaign={campaign} panel={leftPanel} setPanel={setLeftPanel} npcs={npcs} quests={quests} locations={locations} />
         </div>
 
@@ -412,7 +412,7 @@ export default function CampaignGame() {
                 <ChatMessage key={i} message={m} isLatest={i === messages.length - 1 && m.sender === 'dm'} onRollRequest={handleRollRequest} />
               ))}
               {loading && (
-                <div className="flex items-center gap-2 text-stone-500 text-sm ml-2 mb-4">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm ml-2 mb-4">
                   <div className="w-2 h-2 bg-amber-500 rounded-full animate-bounce"></div>
                   <div className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                   <div className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
@@ -430,7 +430,7 @@ export default function CampaignGame() {
               <div ref={messagesEndRef} />
             </div>
           </PullToRefresh>
-          <div className="border-t border-stone-800 p-3 bg-stone-900/50 flex-shrink-0 input-safe">
+          <div className="border-t border-border p-3 bg-card/50 flex-shrink-0 input-safe">
             <div className="max-w-3xl mx-auto flex gap-2">
               <textarea
                 value={input}
@@ -439,7 +439,7 @@ export default function CampaignGame() {
                 placeholder="What do you do?"
                 rows={1}
                 aria-label="Type your action"
-                className="flex-1 px-4 py-3 bg-stone-950 border border-amber-900/40 rounded-lg text-stone-200 placeholder-stone-500 resize-none focus:outline-none focus:ring-2 focus:ring-amber-700/50 focus:border-amber-700 max-h-32"
+                className="flex-1 px-4 py-3 bg-background border border-amber-900/40 rounded-lg text-foreground placeholder-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-amber-700/50 focus:border-amber-700 max-h-32"
               />
               <button onClick={send} disabled={loading || !input.trim()} aria-label="Send message" className="touch-target px-4 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-amber-50 rounded-lg transition-all">
                 <Send className="w-5 h-5" />
@@ -449,7 +449,7 @@ export default function CampaignGame() {
         </div>
 
         {/* Right sidebar - desktop */}
-        <div className="hidden md:flex w-64 border-l border-stone-800 bg-stone-900/40 flex-col overflow-y-auto">
+        <div className="hidden md:flex w-64 border-l border-border bg-card/40 flex-col overflow-y-auto">
           <RightSidebar campaign={campaign} character={character} quests={quests} npcs={npcs} />
         </div>
       </div>
@@ -458,8 +458,8 @@ export default function CampaignGame() {
       {rightOpen && (
         <div className="md:hidden fixed inset-0 z-40 flex">
           <div className="absolute inset-0 bg-black/60" onClick={() => setRightOpen(false)} />
-          <div className="relative w-72 bg-stone-900 border-l border-stone-800 overflow-y-auto ml-auto safe-top safe-bottom">
-            <button onClick={() => setRightOpen(false)} aria-label="Close panel" className="absolute top-2 right-2 p-1 text-stone-400"><X className="w-5 h-5" /></button>
+          <div className="relative w-72 bg-card border-l border-border overflow-y-auto ml-auto safe-top safe-bottom">
+            <button onClick={() => setRightOpen(false)} aria-label="Close panel" className="absolute top-2 right-2 p-1 text-muted-foreground"><X className="w-5 h-5" /></button>
             <div className="p-4 pt-12">
               <RightSidebar campaign={campaign} character={character} quests={quests} npcs={npcs} />
             </div>
@@ -471,8 +471,8 @@ export default function CampaignGame() {
       {leftPanel && (
         <div className="fixed inset-0 z-40 flex">
           <div className="absolute inset-0 bg-black/60" onClick={() => setLeftPanel(null)} />
-          <div className="relative w-80 bg-stone-900 border-r border-stone-800 overflow-y-auto max-h-full safe-top safe-bottom">
-            <button onClick={() => setLeftPanel(null)} aria-label="Close panel" className="absolute top-2 right-2 p-1 text-stone-400 z-10"><X className="w-5 h-5" /></button>
+          <div className="relative w-80 bg-card border-r border-border overflow-y-auto max-h-full safe-top safe-bottom">
+            <button onClick={() => setLeftPanel(null)} aria-label="Close panel" className="absolute top-2 right-2 p-1 text-muted-foreground z-10"><X className="w-5 h-5" /></button>
             <LeftSidebarContent character={character} campaign={campaign} panel={leftPanel} npcs={npcs} quests={quests} locations={locations} />
           </div>
         </div>
@@ -482,10 +482,10 @@ export default function CampaignGame() {
       {diceOpen && (
         <div className="fixed inset-0 z-40 flex items-end md:items-center justify-center">
           <div className="absolute inset-0 bg-black/60" onClick={() => setDiceOpen(false)} />
-          <div className="relative bg-stone-900 border border-amber-900/40 rounded-t-2xl md:rounded-2xl p-5 w-full max-w-sm">
+          <div className="relative bg-card border border-amber-900/40 rounded-t-2xl md:rounded-2xl p-5 w-full max-w-sm">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-serif text-amber-200 flex items-center gap-2"><Dices className="w-5 h-5" /> Dice Roller</h3>
-              <button onClick={() => setDiceOpen(false)} aria-label="Close dice roller" className="text-stone-400"><X className="w-5 h-5" /></button>
+              <button onClick={() => setDiceOpen(false)} aria-label="Close dice roller" className="text-muted-foreground"><X className="w-5 h-5" /></button>
             </div>
             <DiceRoller onRoll={handleManualRoll} />
           </div>
@@ -495,7 +495,7 @@ export default function CampaignGame() {
       {/* Requested-roll animation overlay */}
       {rollAnim && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75">
-          <div className="flex flex-col items-center gap-3 p-8 bg-stone-900 border border-amber-900/40 rounded-2xl shadow-2xl">
+          <div className="flex flex-col items-center gap-3 p-8 bg-card border border-amber-900/40 rounded-2xl shadow-2xl">
             <p className="text-sm text-amber-200 font-serif">Rolling {rollAnim.rollData.label || rollAnim.rollData.reason}…</p>
             <RollingDie sides={20} finalResult={rollAnim.rollData.result} onComplete={finishRequestedRoll} />
           </div>
@@ -523,14 +523,14 @@ export default function CampaignGame() {
 function LeftSidebar({ character, campaign, panel, setPanel, npcs, quests, locations }) {
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-stone-800">
+      <div className="p-4 border-b border-border">
         {character ? (
           <div className="text-center">
-            <div className="w-16 h-16 mx-auto rounded-lg bg-gradient-to-br from-amber-900/50 to-stone-800 border border-amber-700/40 flex items-center justify-center text-2xl font-bold text-amber-400 font-serif mb-2">
+            <div className="w-16 h-16 mx-auto rounded-lg bg-gradient-to-br from-amber-900/50 to-muted border border-amber-700/40 flex items-center justify-center text-2xl font-bold text-amber-400 font-serif mb-2">
               {character.name?.[0]?.toUpperCase()}
             </div>
             <h3 className="font-serif text-amber-200">{character.name}</h3>
-            <p className="text-xs text-stone-400">{character.species} {character.class}</p>
+            <p className="text-xs text-muted-foreground">{character.species} {character.class}</p>
             <div className="flex justify-center gap-3 mt-2 text-xs">
               <span className="flex items-center gap-1 text-rose-300"><Heart className="w-3 h-3" />{character.hp}/{character.max_hp}</span>
               <span className="flex items-center gap-1 text-sky-300"><Shield className="w-3 h-3" />{character.ac}</span>
@@ -538,7 +538,7 @@ function LeftSidebar({ character, campaign, panel, setPanel, npcs, quests, locat
             </div>
           </div>
         ) : (
-          <p className="text-sm text-stone-500 text-center">No character</p>
+          <p className="text-sm text-muted-foreground text-center">No character</p>
         )}
         {campaign.current_location && (
           <p className="text-xs text-amber-700/80 text-center mt-2 flex items-center justify-center gap-1"><MapPin className="w-3 h-3" />{campaign.current_location}</p>
@@ -553,7 +553,7 @@ function LeftSidebar({ character, campaign, panel, setPanel, npcs, quests, locat
         <NavButton active={panel === 'map'} onClick={() => setPanel(panel === 'map' ? null : 'map')} icon={<MapPin className="w-4 h-4" />} label="World Map" />
       </div>
       {panel && (
-        <div className="border-t border-stone-800 p-3 max-h-[50vh] overflow-y-auto hidden md:block">
+        <div className="border-t border-border p-3 max-h-[50vh] overflow-y-auto hidden md:block">
           <LeftSidebarContent character={character} campaign={campaign} panel={panel} npcs={npcs} quests={quests} locations={locations} />
         </div>
       )}
@@ -572,15 +572,15 @@ function LeftSidebarContent({ character, campaign, panel, npcs, quests, location
             const score = scores[key] || 10;
             const mod = abilityModifier(score);
             return (
-              <div key={key} className="bg-stone-950/60 border border-stone-800 rounded p-2 text-center">
-                <div className="text-xs text-stone-500">{label.slice(0, 3)}</div>
+              <div key={key} className="bg-background/60 border border-border rounded p-2 text-center">
+                <div className="text-xs text-muted-foreground">{label.slice(0, 3)}</div>
                 <div className="text-lg font-bold text-amber-200">{score}</div>
-                <div className="text-xs text-stone-400">{mod >= 0 ? `+${mod}` : mod}</div>
+                <div className="text-xs text-muted-foreground">{mod >= 0 ? `+${mod}` : mod}</div>
               </div>
             );
           })}
         </div>
-        <div className="text-xs text-stone-400 space-y-1">
+        <div className="text-xs text-muted-foreground space-y-1">
           <div>Speed: {character.speed}</div>
           <div>Initiative: +{abilityModifier(scores.dex || 10)}</div>
           <div>Proficiency: +{character.proficiency_bonus || 2}</div>
@@ -595,13 +595,13 @@ function LeftSidebarContent({ character, campaign, panel, npcs, quests, location
         <h4 className="font-serif text-amber-200 text-sm">Inventory</h4>
         <div className="text-sm text-amber-300">Gold: {character.gold || 0}</div>
         {(character.inventory || []).length === 0 ? (
-          <p className="text-xs text-stone-500">Empty</p>
+          <p className="text-xs text-muted-foreground">Empty</p>
         ) : (
           <ul className="space-y-1">
             {character.inventory.map((item, i) => (
-              <li key={i} className="text-sm text-stone-300 bg-stone-950/50 border border-stone-800 rounded px-2 py-1">
+              <li key={i} className="text-sm text-foreground bg-background/50 border border-border rounded px-2 py-1">
                 {item.name || item}
-                {item.description && <p className="text-xs text-stone-500">{item.description}</p>}
+                {item.description && <p className="text-xs text-muted-foreground">{item.description}</p>}
               </li>
             ))}
           </ul>
@@ -609,7 +609,7 @@ function LeftSidebarContent({ character, campaign, panel, npcs, quests, location
         {character.weapons?.length > 0 && (
           <>
             <h4 className="font-serif text-amber-200 text-sm pt-2">Weapons</h4>
-            {character.weapons.map((w, i) => <div key={i} className="text-sm text-stone-300">{w.name || w}</div>)}
+            {character.weapons.map((w, i) => <div key={i} className="text-sm text-foreground">{w.name || w}</div>)}
           </>
         )}
       </div>
@@ -620,13 +620,13 @@ function LeftSidebarContent({ character, campaign, panel, npcs, quests, location
       <div className="space-y-2">
         <h4 className="font-serif text-amber-200 text-sm">Spells</h4>
         {(character.spells || []).length === 0 ? (
-          <p className="text-xs text-stone-500">No spells known</p>
+          <p className="text-xs text-muted-foreground">No spells known</p>
         ) : (
           <ul className="space-y-1">
             {character.spells.map((s, i) => (
-              <li key={i} className="text-sm text-stone-300 bg-stone-950/50 border border-stone-800 rounded px-2 py-1">
+              <li key={i} className="text-sm text-foreground bg-background/50 border border-border rounded px-2 py-1">
                 {s.name || s}
-                {s.level && <span className="text-xs text-stone-500"> · Lvl {s.level}</span>}
+                {s.level && <span className="text-xs text-muted-foreground"> · Lvl {s.level}</span>}
               </li>
             ))}
           </ul>
@@ -638,15 +638,15 @@ function LeftSidebarContent({ character, campaign, panel, npcs, quests, location
     return (
       <div className="space-y-2">
         <h4 className="font-serif text-amber-200 text-sm">Quest Journal</h4>
-        {quests.length === 0 ? <p className="text-xs text-stone-500">No quests yet</p> : (
+        {quests.length === 0 ? <p className="text-xs text-muted-foreground">No quests yet</p> : (
           quests.map(q => (
-            <div key={q.id} className="bg-stone-950/50 border border-stone-800 rounded p-2">
+            <div key={q.id} className="bg-background/50 border border-border rounded p-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-stone-200">{q.name}</span>
+                <span className="text-sm text-foreground">{q.name}</span>
                 <span className={`text-xs px-1.5 py-0.5 rounded ${q.status === 'completed' ? 'bg-emerald-900/40 text-emerald-300' : q.status === 'failed' ? 'bg-red-900/40 text-red-300' : 'bg-amber-900/40 text-amber-300'}`}>{q.status}</span>
               </div>
               {q.type === 'main' && <span className="text-xs text-amber-500">Main Quest</span>}
-              {q.description && <p className="text-xs text-stone-500 mt-1">{q.description}</p>}
+              {q.description && <p className="text-xs text-muted-foreground mt-1">{q.description}</p>}
             </div>
           ))
         )}
@@ -657,15 +657,15 @@ function LeftSidebarContent({ character, campaign, panel, npcs, quests, location
     return (
       <div className="space-y-2">
         <h4 className="font-serif text-amber-200 text-sm">Known NPCs</h4>
-        {npcs.length === 0 ? <p className="text-xs text-stone-500">No NPCs discovered</p> : (
+        {npcs.length === 0 ? <p className="text-xs text-muted-foreground">No NPCs discovered</p> : (
           npcs.map(n => (
-            <div key={n.id} className="bg-stone-950/50 border border-stone-800 rounded p-2">
+            <div key={n.id} className="bg-background/50 border border-border rounded p-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-stone-200">{n.name}</span>
-                <span className={`text-xs ${n.status === 'dead' ? 'text-red-400' : 'text-stone-500'}`}>{n.status}</span>
+                <span className="text-sm text-foreground">{n.name}</span>
+                <span className={`text-xs ${n.status === 'dead' ? 'text-red-400' : 'text-muted-foreground'}`}>{n.status}</span>
               </div>
               {n.relationship && <p className="text-xs text-amber-600">Relationship: {n.relationship}</p>}
-              {n.description && <p className="text-xs text-stone-500 mt-1">{n.description}</p>}
+              {n.description && <p className="text-xs text-muted-foreground mt-1">{n.description}</p>}
             </div>
           ))
         )}
@@ -676,13 +676,13 @@ function LeftSidebarContent({ character, campaign, panel, npcs, quests, location
     return (
       <div className="space-y-2">
         <h4 className="font-serif text-amber-200 text-sm">World Map</h4>
-        {locations.length === 0 ? <p className="text-xs text-stone-500">No locations discovered yet</p> : (
+        {locations.length === 0 ? <p className="text-xs text-muted-foreground">No locations discovered yet</p> : (
           <ul className="space-y-1">
             {locations.map(l => (
-              <li key={l.id} className="text-sm text-stone-300 bg-stone-950/50 border border-stone-800 rounded px-2 py-1">
+              <li key={l.id} className="text-sm text-foreground bg-background/50 border border-border rounded px-2 py-1">
                 <span className="text-amber-300">{l.name}</span>
-                <span className="text-xs text-stone-500"> · {l.type}</span>
-                {l.description && <p className="text-xs text-stone-500">{l.description}</p>}
+                <span className="text-xs text-muted-foreground"> · {l.type}</span>
+                {l.description && <p className="text-xs text-muted-foreground">{l.description}</p>}
               </li>
             ))}
           </ul>
@@ -702,20 +702,20 @@ function RightSidebar({ campaign, character, quests, npcs }) {
         <div>
           <h4 className="text-xs uppercase text-amber-600 font-semibold mb-1">Current Objective</h4>
           <p className="text-sm text-amber-200">{mainQuest.name}</p>
-          {mainQuest.description && <p className="text-xs text-stone-400 mt-1">{mainQuest.description}</p>}
+          {mainQuest.description && <p className="text-xs text-muted-foreground mt-1">{mainQuest.description}</p>}
         </div>
       )}
       {campaign.in_combat && campaign.combat_state && (
         <div>
           <h4 className="text-xs uppercase text-red-500 font-semibold mb-1 flex items-center gap-1"><Crosshair className="w-3 h-3" /> Combat</h4>
-          <p className="text-xs text-stone-400">Combat is active. Roll initiative and take your actions.</p>
+          <p className="text-xs text-muted-foreground">Combat is active. Roll initiative and take your actions.</p>
         </div>
       )}
       <div>
         <h4 className="text-xs uppercase text-amber-600 font-semibold mb-1">Active Quests</h4>
-        {activeQuests.length === 0 ? <p className="text-xs text-stone-500">No active quests</p> : (
+        {activeQuests.length === 0 ? <p className="text-xs text-muted-foreground">No active quests</p> : (
           <ul className="space-y-1">
-            {activeQuests.map(q => <li key={q.id} className="text-xs text-stone-300">{q.name}</li>)}
+            {activeQuests.map(q => <li key={q.id} className="text-xs text-foreground">{q.name}</li>)}
           </ul>
         )}
       </div>
@@ -723,9 +723,9 @@ function RightSidebar({ campaign, character, quests, npcs }) {
         <div>
           <h4 className="text-xs uppercase text-amber-600 font-semibold mb-1">Status</h4>
           <div className="text-xs space-y-1">
-            <div className="flex justify-between"><span class="text-stone-500">HP</span><span class="text-rose-300">{character.hp}/{character.max_hp}</span></div>
-            <div className="flex justify-between"><span class="text-stone-500">AC</span><span class="text-sky-300">{character.ac}</span></div>
-            <div className="flex justify-between"><span class="text-stone-500">XP</span><span class="text-amber-300">{character.xp || 0}</span></div>
+            <div className="flex justify-between"><span class="text-muted-foreground">HP</span><span class="text-rose-300">{character.hp}/{character.max_hp}</span></div>
+            <div className="flex justify-between"><span class="text-muted-foreground">AC</span><span class="text-sky-300">{character.ac}</span></div>
+            <div className="flex justify-between"><span class="text-muted-foreground">XP</span><span class="text-amber-300">{character.xp || 0}</span></div>
             {character.conditions?.length > 0 && <div className="text-amber-400">Conditions: {character.conditions.join(', ')}</div>}
           </div>
         </div>
@@ -736,7 +736,7 @@ function RightSidebar({ campaign, character, quests, npcs }) {
 
 function NavButton({ active, onClick, icon, label }) {
   return (
-    <button onClick={onClick} className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${active ? 'bg-amber-900/30 text-amber-200 border border-amber-800/40' : 'text-stone-400 hover:bg-stone-800/50 hover:text-stone-200'}`}>
+    <button onClick={onClick} className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${active ? 'bg-amber-900/30 text-amber-200 border border-amber-800/40' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
       {icon} {label}
     </button>
   );
@@ -744,7 +744,7 @@ function NavButton({ active, onClick, icon, label }) {
 
 function MobileNavButton({ active, onClick, icon, label }) {
   return (
-    <button onClick={onClick} aria-label={label} aria-pressed={active} className={`flex items-center gap-1 px-3 py-2.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${active ? 'bg-amber-900/40 text-amber-200 border border-amber-800/50' : 'text-stone-400 hover:bg-stone-800/50'}`}>
+    <button onClick={onClick} aria-label={label} aria-pressed={active} className={`flex items-center gap-1 px-3 py-2.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${active ? 'bg-amber-900/40 text-amber-200 border border-amber-800/50' : 'text-muted-foreground hover:bg-muted/50'}`}>
       {icon} {label}
     </button>
   );

@@ -9,16 +9,16 @@ export default function CampaignCard({ campaign, character, onArchive, onDelete 
     active: 'bg-emerald-900/40 text-emerald-300 border-emerald-700/40',
     paused: 'bg-amber-900/40 text-amber-300 border-amber-700/40',
     completed: 'bg-purple-900/40 text-purple-300 border-purple-700/40',
-    archived: 'bg-stone-800 text-stone-400 border-stone-700'
+    archived: 'bg-muted text-muted-foreground border-border'
   };
 
   return (
-    <div className="group relative bg-gradient-to-br from-stone-900/80 to-stone-950/80 border border-amber-900/30 rounded-xl p-5 hover:border-amber-700/50 transition-all">
+    <div className="group relative bg-gradient-to-br from-card/80 to-background/80 border border-amber-900/30 rounded-xl p-5 hover:border-amber-700/50 transition-all">
       <div className="flex items-start justify-between mb-3">
         <div>
           <h3 className="text-lg font-bold text-amber-100 font-serif">{campaign.name}</h3>
           {character && (
-            <p className="text-sm text-stone-400">
+            <p className="text-sm text-muted-foreground">
               {character.name} · {character.class} · Lvl {character.level}
             </p>
           )}
@@ -28,12 +28,12 @@ export default function CampaignCard({ campaign, character, onArchive, onDelete 
             {campaign.status}
           </span>
           <div className="relative">
-            <button onClick={() => setMenuOpen(!menuOpen)} aria-label="Campaign options" aria-expanded={menuOpen} className="p-2 text-stone-500 hover:text-amber-300">
+            <button onClick={() => setMenuOpen(!menuOpen)} aria-label="Campaign options" aria-expanded={menuOpen} className="p-2 text-muted-foreground hover:text-amber-300">
               <MoreVertical className="w-4 h-4" />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-8 z-10 w-40 bg-stone-900 border border-amber-900/40 rounded-lg shadow-xl py-1">
-                <button onClick={() => { onArchive?.(campaign); setMenuOpen(false); }} className="touch-target w-full text-left px-3 py-2 text-sm text-stone-300 hover:bg-amber-900/20 flex items-center gap-2">
+              <div className="absolute right-0 top-8 z-10 w-40 bg-card border border-amber-900/40 rounded-lg shadow-xl py-1">
+                <button onClick={() => { onArchive?.(campaign); setMenuOpen(false); }} className="touch-target w-full text-left px-3 py-2 text-sm text-foreground hover:bg-amber-900/20 flex items-center gap-2">
                   <Archive className="w-3 h-3" /> Archive
                 </button>
                 <button onClick={() => { onDelete?.(campaign); setMenuOpen(false); }} className="touch-target w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-900/20 flex items-center gap-2">
@@ -44,7 +44,7 @@ export default function CampaignCard({ campaign, character, onArchive, onDelete 
           </div>
         </div>
       </div>
-      <p className="text-sm text-stone-400 line-clamp-2 mb-3 min-h-[2.5rem]">
+      <p className="text-sm text-muted-foreground line-clamp-2 mb-3 min-h-[2.5rem]">
         {campaign.description || 'An untold adventure awaits...'}
       </p>
       {campaign.current_location && (
@@ -60,7 +60,7 @@ export default function CampaignCard({ campaign, character, onArchive, onDelete 
         </Link>
         <Link
           to={`/campaign/${campaign.id}/details`}
-          className="touch-target px-3 py-2 bg-stone-800/60 hover:bg-stone-700/60 border border-stone-700 rounded-lg text-stone-300 transition-all"
+          className="touch-target px-3 py-2 bg-muted/60 hover:bg-accent/60 border border-border rounded-lg text-foreground transition-all"
         >
           <Info className="w-4 h-4" />
         </Link>

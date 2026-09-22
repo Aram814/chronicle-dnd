@@ -116,8 +116,8 @@ export default function CharacterEditor() {
             <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
               {['str', 'dex', 'con', 'int', 'wis', 'cha'].map(key => (
                 <div key={key} className="text-center">
-                  <label className="text-xs text-stone-500 uppercase">{key}</label>
-                  <input type="number" value={form.ability_scores?.[key] || 10} onChange={e => setScore(key, e.target.value)} className="w-full bg-stone-950 border border-stone-700 rounded px-2 py-1 text-center text-amber-200 mt-1" />
+                  <label className="text-xs text-muted-foreground uppercase">{key}</label>
+                  <input type="number" value={form.ability_scores?.[key] || 10} onChange={e => setScore(key, e.target.value)} className="w-full bg-background border border-border rounded px-2 py-1 text-center text-amber-200 mt-1" />
                 </div>
               ))}
             </div>
@@ -162,7 +162,7 @@ export default function CharacterEditor() {
 
 function Card({ title, children, action }) {
   return (
-    <div className="bg-gradient-to-br from-stone-900/80 to-stone-950/80 border border-amber-900/30 rounded-xl p-5">
+    <div className="bg-gradient-to-br from-card/80 to-background/80 border border-amber-900/30 rounded-xl p-5">
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-serif text-amber-200">{title}</h3>
         {action}
@@ -175,11 +175,11 @@ function Card({ title, children, action }) {
 function Input({ label, value, onChange, type = 'text', options }) {
   return (
     <div>
-      <label className="text-xs text-stone-500 uppercase">{label}</label>
+      <label className="text-xs text-muted-foreground uppercase">{label}</label>
       {type === 'select' ? (
         <BottomSheetPicker label={label} value={value} options={options} onChange={onChange} />
       ) : (
-        <input type={type} value={value || ''} onChange={e => onChange(e.target.value)} className="w-full bg-stone-950 border border-stone-700 rounded px-2 py-1.5 text-stone-200 mt-1" />
+        <input type={type} value={value || ''} onChange={e => onChange(e.target.value)} className="w-full bg-background border border-border rounded px-2 py-1.5 text-foreground mt-1" />
       )}
     </div>
   );
@@ -188,8 +188,8 @@ function Input({ label, value, onChange, type = 'text', options }) {
 function TextArea({ label, value, onChange }) {
   return (
     <div>
-      <label className="text-xs text-stone-500 uppercase">{label}</label>
-      <textarea value={value || ''} onChange={e => onChange(e.target.value)} rows={2} className="w-full bg-stone-950 border border-stone-700 rounded px-2 py-1.5 text-stone-200 mt-1 text-sm resize-none" />
+      <label className="text-xs text-muted-foreground uppercase">{label}</label>
+      <textarea value={value || ''} onChange={e => onChange(e.target.value)} rows={2} className="w-full bg-background border border-border rounded px-2 py-1.5 text-foreground mt-1 text-sm resize-none" />
     </div>
   );
 }
