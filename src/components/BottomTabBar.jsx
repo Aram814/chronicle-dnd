@@ -27,7 +27,7 @@ export default function BottomTabBar() {
               aria-label={t.label}
               aria-current={isActive ? 'page' : undefined}
               onClick={() => switchToTab(t.to)}
-              className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-2 text-sm transition-colors ${
+              className={`touch-target flex flex-col items-center justify-center gap-0.5 flex-1 py-2 text-sm transition-colors ${
                 isActive ? 'text-amber-300' : 'text-muted-foreground hover:text-foreground'
               }`}
             >

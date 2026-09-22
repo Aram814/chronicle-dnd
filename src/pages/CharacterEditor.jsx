@@ -89,10 +89,10 @@ export default function CharacterEditor() {
         title={isNew ? 'New Character' : 'Edit Character'}
         actions={
           <>
-            <button onClick={generate} disabled={generating} aria-label="Generate character with AI" className="flex items-center gap-2 px-3 py-2 bg-purple-900/40 hover:bg-purple-800/50 border border-purple-700/40 text-purple-200 rounded-lg text-sm flex-shrink-0">
+            <button onClick={generate} disabled={generating} aria-label="Generate character with AI" className="touch-target flex items-center gap-2 px-3 py-2 bg-purple-900/40 hover:bg-purple-800/50 border border-purple-700/40 text-purple-200 rounded-lg text-sm flex-shrink-0">
               <Sparkles className="w-4 h-4" /> <span className="hidden sm:inline">{generating ? 'Generating...' : 'AI Generate'}</span>
             </button>
-            <button onClick={save} disabled={saving} aria-label="Save character" className="flex items-center gap-2 px-3 md:px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold flex-shrink-0">
+            <button onClick={save} disabled={saving} aria-label="Save character" className="touch-target flex items-center gap-2 px-3 md:px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold flex-shrink-0">
               <Save className="w-4 h-4" /> <span className="hidden sm:inline">Save</span>
             </button>
           </>

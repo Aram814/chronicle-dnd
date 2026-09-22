@@ -38,9 +38,9 @@ export default function CharacterSheet() {
       <ScreenHeader
         title="Character Sheet"
         actions={editing ? (
-          <button onClick={save} className="flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold"><Save className="w-4 h-4" /> Save</button>
+          <button onClick={save} className="touch-target flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold"><Save className="w-4 h-4" /> Save</button>
         ) : (
-          <button onClick={() => { setForm(character); setEditing(true); }} className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-lg text-sm">Edit</button>
+          <button onClick={() => { setForm(character); setEditing(true); }} className="touch-target px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-lg text-sm">Edit</button>
         )}
       />
       <div className="max-w-4xl mx-auto px-4 py-8">

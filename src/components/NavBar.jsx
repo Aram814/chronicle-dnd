@@ -24,7 +24,7 @@ export default function NavBar({ title, showBack = false, onBack }) {
             type="button"
             onClick={() => (onBack ? onBack() : navigate(-1))}
             aria-label="Go back"
-            className="text-muted-foreground hover:text-amber-300 flex items-center"
+            className="text-muted-foreground hover:text-amber-300 flex items-center p-3"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>

@@ -94,7 +94,7 @@ export default function Settings() {
             type="button"
             variant="destructive"
             onClick={() => setConfirmOpen(true)}
-            className="bg-red-900/60 hover:bg-red-800/70 border border-red-700/50 text-red-100"
+            className="touch-target bg-red-900/60 hover:bg-red-800/70 border border-red-700/50 text-red-100"
           >
             <Trash2 className="w-4 h-4 mr-2" /> Delete Account
           </Button>
@@ -131,7 +131,7 @@ export default function Settings() {
               type="button"
               onClick={handleDelete}
               disabled={deleting}
-              className="flex-1 bg-red-900/70 hover:bg-red-800 border border-red-700/50 text-red-50"
+              className="touch-target flex-1 bg-red-900/70 hover:bg-red-800 border border-red-700/50 text-red-50"
             >
               {deleting ? 'Deleting…' : 'Delete Forever'}
             </Button>

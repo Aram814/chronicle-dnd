@@ -375,13 +375,13 @@ export default function CampaignGame() {
         actions={
           <>
             {campaign.in_combat && <span className="text-xs px-2 py-1 bg-red-900/50 text-red-300 border border-red-700/40 rounded-full">⚔ Combat</span>}
-            <button onClick={() => setDiceOpen(true)} aria-label="Open dice roller" className="p-2 text-muted-foreground hover:text-amber-300 hover:bg-accent rounded-lg transition-all" title="Dice Roller">
+            <button onClick={() => setDiceOpen(true)} aria-label="Open dice roller" className="p-3 text-muted-foreground hover:text-amber-300 hover:bg-accent rounded-lg transition-all" title="Dice Roller">
               <Dices className="w-5 h-5" />
             </button>
-            <button onClick={saveStory} aria-label="Save story" className="p-2 text-muted-foreground hover:text-amber-300 hover:bg-accent rounded-lg transition-all" title="Save Story">
+            <button onClick={saveStory} aria-label="Save story" className="p-3 text-muted-foreground hover:text-amber-300 hover:bg-accent rounded-lg transition-all" title="Save Story">
               <Bookmark className="w-5 h-5" />
             </button>
-            <button onClick={() => setRightOpen(!rightOpen)} aria-label="Open campaign info" className="p-2 text-muted-foreground hover:text-amber-300 hover:bg-accent rounded-lg transition-all md:hidden" title="Info">
+            <button onClick={() => setRightOpen(!rightOpen)} aria-label="Open campaign info" className="p-3 text-muted-foreground hover:text-amber-300 hover:bg-accent rounded-lg transition-all md:hidden" title="Info">
               <Menu className="w-5 h-5" />
             </button>
           </>
@@ -422,7 +422,7 @@ export default function CampaignGame() {
               {pendingRoll && !loading && (
                 <div className="my-3 p-4 bg-amber-950/40 border border-amber-800/50 rounded-xl">
                   <p className="text-sm text-amber-200 mb-3">⚔ The DM requests a roll: <strong>{pendingRoll.reason}</strong></p>
-                  <button onClick={() => executeRoll(pendingRoll)} className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg font-semibold transition-all">
+                  <button onClick={() => executeRoll(pendingRoll)} className="touch-target inline-flex items-center gap-2 px-5 py-2.5 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg font-semibold transition-all">
                     <Dices className="w-5 h-5" /> Roll {pendingRoll.skillOrAbility}
                   </button>
                 </div>
@@ -441,7 +441,7 @@ export default function CampaignGame() {
                 aria-label="Type your action"
                 className="flex-1 px-4 py-3 bg-stone-950 border border-amber-900/40 rounded-lg text-stone-200 placeholder-stone-500 resize-none focus:outline-none focus:ring-2 focus:ring-amber-700/50 focus:border-amber-700 max-h-32"
               />
-              <button onClick={send} disabled={loading || !input.trim()} aria-label="Send message" className="px-4 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-amber-50 rounded-lg transition-all">
+              <button onClick={send} disabled={loading || !input.trim()} aria-label="Send message" className="touch-target px-4 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-amber-50 rounded-lg transition-all">
                 <Send className="w-5 h-5" />
               </button>
             </div>
@@ -458,7 +458,7 @@ export default function CampaignGame() {
       {rightOpen && (
         <div className="md:hidden fixed inset-0 z-40 flex">
           <div className="absolute inset-0 bg-black/60" onClick={() => setRightOpen(false)} />
-          <div className="relative w-72 bg-stone-900 border-l border-stone-800 overflow-y-auto ml-auto">
+          <div className="relative w-72 bg-stone-900 border-l border-stone-800 overflow-y-auto ml-auto safe-top safe-bottom">
             <button onClick={() => setRightOpen(false)} aria-label="Close panel" className="absolute top-2 right-2 p-1 text-stone-400"><X className="w-5 h-5" /></button>
             <div className="p-4 pt-12">
               <RightSidebar campaign={campaign} character={character} quests={quests} npcs={npcs} />
@@ -471,7 +471,7 @@ export default function CampaignGame() {
       {leftPanel && (
         <div className="fixed inset-0 z-40 flex">
           <div className="absolute inset-0 bg-black/60" onClick={() => setLeftPanel(null)} />
-          <div className="relative w-80 bg-stone-900 border-r border-stone-800 overflow-y-auto max-h-full">
+          <div className="relative w-80 bg-stone-900 border-r border-stone-800 overflow-y-auto max-h-full safe-top safe-bottom">
             <button onClick={() => setLeftPanel(null)} aria-label="Close panel" className="absolute top-2 right-2 p-1 text-stone-400 z-10"><X className="w-5 h-5" /></button>
             <LeftSidebarContent character={character} campaign={campaign} panel={leftPanel} npcs={npcs} quests={quests} locations={locations} />
           </div>
@@ -744,7 +744,7 @@ function NavButton({ active, onClick, icon, label }) {
 
 function MobileNavButton({ active, onClick, icon, label }) {
   return (
-    <button onClick={onClick} aria-label={label} aria-pressed={active} className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${active ? 'bg-amber-900/40 text-amber-200 border border-amber-800/50' : 'text-stone-400 hover:bg-stone-800/50'}`}>
+    <button onClick={onClick} aria-label={label} aria-pressed={active} className={`flex items-center gap-1 px-3 py-2.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${active ? 'bg-amber-900/40 text-amber-200 border border-amber-800/50' : 'text-stone-400 hover:bg-stone-800/50'}`}>
       {icon} {label}
     </button>
   );

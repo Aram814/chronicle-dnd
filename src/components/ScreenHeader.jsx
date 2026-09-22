@@ -16,7 +16,7 @@ export default function ScreenHeader({ title, backTo = '/', onBack, actions, ico
             type="button"
             onClick={onBack}
             aria-label="Go back"
-            className="text-muted-foreground hover:text-amber-300 flex-shrink-0"
+            className="text-muted-foreground hover:text-amber-300 flex-shrink-0 p-3"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -24,7 +24,7 @@ export default function ScreenHeader({ title, backTo = '/', onBack, actions, ico
           <Link
             to={backTo}
             aria-label="Go back"
-            className="text-muted-foreground hover:text-amber-300 flex-shrink-0"
+            className="text-muted-foreground hover:text-amber-300 flex-shrink-0 p-3"
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>

@@ -224,7 +224,7 @@ export default function NewCampaign() {
             aria-label="Type your response"
             className="flex-1 px-4 py-3 bg-stone-950 border border-amber-900/40 rounded-lg text-stone-200 placeholder-stone-500 resize-none focus:outline-none focus:ring-2 focus:ring-amber-700/50 focus:border-amber-700"
           />
-          <button onClick={send} disabled={loading || !input.trim()} aria-label="Send message" className="px-4 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-amber-50 rounded-lg transition-all">
+          <button onClick={send} disabled={loading || !input.trim()} aria-label="Send message" className="touch-target px-4 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-amber-50 rounded-lg transition-all">
             <Send className="w-5 h-5" />
           </button>
         </div>
