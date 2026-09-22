@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Heart, Shield, Star, Coins, Sword, Sparkles, Save } from 'lucide-react';
+import { Heart, Shield, Star, Coins, Sword, Sparkles, Pencil } from 'lucide-react';
 import { abilityModifier, ABILITY_LABELS, SKILL_LABELS, SKILLS, proficiencyBonusForLevel } from '@/lib/dndClient';
 import ScreenHeader from '@/components/ScreenHeader';
 
@@ -9,8 +9,6 @@ export default function CharacterSheet() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [character, setCharacter] = useState(null);
-  const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState(null);
 
   useEffect(() => {
     if (id) load();
@@ -21,16 +19,9 @@ export default function CharacterSheet() {
     try {
       const c = await base44.entities.Character.get(id);
       setCharacter(c);
-      setForm(c);
     } catch (e) {
       navigate('/characters', { replace: true });
     }
-  };
-
-  const save = async () => {
-    const updated = await base44.entities.Character.update(id, form);
-    setCharacter(updated);
-    setEditing(false);
   };
 
   if (!character) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 border-4 border-amber-900 border-t-amber-500 rounded-full animate-spin"></div></div>;
@@ -42,11 +33,9 @@ export default function CharacterSheet() {
     <div className="min-h-screen bg-background text-foreground">
       <ScreenHeader
         title="Character Sheet"
-        actions={editing ? (
-          <button onClick={save} className="touch-target flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold"><Save className="w-4 h-4" /> Save</button>
-        ) : (
-          <button onClick={() => { setForm(character); setEditing(true); }} className="touch-target px-4 py-2 bg-muted hover:bg-accent text-foreground rounded-lg text-sm">Edit</button>
-        )}
+        actions={
+          <Link to={`/character/${id}/edit`} className="touch-target flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold"><Pencil className="w-4 h-4" /> Edit</Link>
+        }
       />
       <div className="max-w-4xl mx-auto px-4 py-8">
 
@@ -57,11 +46,7 @@ export default function CharacterSheet() {
               {character.name?.[0]?.toUpperCase()}
             </div>
             <div className="flex-1">
-              {editing ? (
-                <input value={form.name || ''} onChange={e => setForm({...form, name: e.target.value})} className="text-2xl font-serif bg-background border border-amber-900/40 rounded px-2 py-1 text-amber-200 w-full" />
-              ) : (
-                <h2 className="text-2xl font-serif text-amber-200">{character.name}</h2>
-              )}
+              <h2 className="text-2xl font-serif text-amber-200">{character.name}</h2>
               <p className="text-muted-foreground">{character.species} {character.class} {character.subclass}</p>
               <p className="text-sm text-muted-foreground">Level {character.level} · {character.background} · {character.alignment}</p>
             </div>
@@ -83,14 +68,10 @@ export default function CharacterSheet() {
               return (
                 <div key={key} className="bg-background/60 border border-border rounded-lg p-3 text-center">
                   <div className="text-xs text-muted-foreground uppercase">{label}</div>
-                  {editing ? (
-                    <input type="number" value={form.ability_scores?.[key] || 10} onChange={e => setForm({...form, ability_scores: {...(form.ability_scores||{}), [key]: parseInt(e.target.value)||10}})} className="w-12 bg-card border border-border rounded text-center text-amber-200 mt-1" />
-                  ) : (
-                    <>
-                      <div className="text-2xl font-bold text-amber-200 mt-1">{score}</div>
-                      <div className="text-sm text-muted-foreground">{mod >= 0 ? `+${mod}` : mod}</div>
-                    </>
-                  )}
+                  <>
+                    <div className="text-2xl font-bold text-amber-200 mt-1">{score}</div>
+                    <div className="text-sm text-muted-foreground">{mod >= 0 ? `+${mod}` : mod}</div>
+                  </>
                 </div>
               );
             })}
