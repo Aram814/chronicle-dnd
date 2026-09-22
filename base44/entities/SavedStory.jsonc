@@ -1,0 +1,105 @@
+{
+  "name": "SavedStory",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "campaign_id": {
+      "type": "string"
+    },
+    "premise": {
+      "type": "string"
+    },
+    "world_overview": {
+      "type": "string"
+    },
+    "character_summary": {
+      "type": "string"
+    },
+    "major_events": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "important_npcs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "locations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "factions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "major_decisions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "completed_quests": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "unresolved_quests": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "important_items": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "current_situation": {
+      "type": "string"
+    },
+    "future_hooks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "world_state": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

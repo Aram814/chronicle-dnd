@@ -1,0 +1,106 @@
+{
+  "name": "Campaign",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "setting": {
+      "type": "string"
+    },
+    "tone": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": [
+        "Casual",
+        "Normal",
+        "Challenging",
+        "Hardcore"
+      ],
+      "default": "Normal"
+    },
+    "dm_style": {
+      "type": "string",
+      "enum": [
+        "Story-focused",
+        "Rules-focused",
+        "Balanced",
+        "Cinematic",
+        "Tactical"
+      ],
+      "default": "Balanced"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "setup",
+        "active",
+        "paused",
+        "completed",
+        "archived"
+      ],
+      "default": "setup"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "current_location": {
+      "type": "string"
+    },
+    "world_state": {
+      "type": "object",
+      "properties": {}
+    },
+    "story_state": {
+      "type": "object",
+      "properties": {}
+    },
+    "summary": {
+      "type": "string"
+    },
+    "setup_stage": {
+      "type": "string",
+      "default": "world"
+    },
+    "setup_data": {
+      "type": "object",
+      "properties": {}
+    },
+    "in_combat": {
+      "type": "boolean",
+      "default": false
+    },
+    "combat_state": {
+      "type": "object",
+      "properties": {}
+    },
+    "cover_image": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

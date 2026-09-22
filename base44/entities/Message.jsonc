@@ -1,0 +1,54 @@
+{
+  "name": "Message",
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string"
+    },
+    "campaign_id": {
+      "type": "string"
+    },
+    "sender": {
+      "type": "string",
+      "enum": [
+        "dm",
+        "player",
+        "system"
+      ]
+    },
+    "content": {
+      "type": "string"
+    },
+    "dice_roll": {
+      "type": "object",
+      "properties": {}
+    },
+    "roll_request": {
+      "type": "object",
+      "properties": {}
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  "required": [
+    "session_id",
+    "sender",
+    "content"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

@@ -1,0 +1,186 @@
+{
+  "name": "Character",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "species": {
+      "type": "string"
+    },
+    "class": {
+      "type": "string"
+    },
+    "subclass": {
+      "type": "string"
+    },
+    "background": {
+      "type": "string"
+    },
+    "alignment": {
+      "type": "string"
+    },
+    "level": {
+      "type": "number",
+      "default": 1
+    },
+    "xp": {
+      "type": "number",
+      "default": 0
+    },
+    "ability_scores": {
+      "type": "object",
+      "properties": {
+        "str": {
+          "type": "number",
+          "default": 10
+        },
+        "dex": {
+          "type": "number",
+          "default": 10
+        },
+        "con": {
+          "type": "number",
+          "default": 10
+        },
+        "int": {
+          "type": "number",
+          "default": 10
+        },
+        "wis": {
+          "type": "number",
+          "default": 10
+        },
+        "cha": {
+          "type": "number",
+          "default": 10
+        }
+      }
+    },
+    "proficiency_bonus": {
+      "type": "number",
+      "default": 2
+    },
+    "hp": {
+      "type": "number",
+      "default": 10
+    },
+    "max_hp": {
+      "type": "number",
+      "default": 10
+    },
+    "temp_hp": {
+      "type": "number",
+      "default": 0
+    },
+    "ac": {
+      "type": "number",
+      "default": 10
+    },
+    "speed": {
+      "type": "number",
+      "default": 30
+    },
+    "initiative": {
+      "type": "number",
+      "default": 0
+    },
+    "gold": {
+      "type": "number",
+      "default": 0
+    },
+    "inventory": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    "weapons": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    "armor": {
+      "type": "string"
+    },
+    "spells": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    "spell_slots": {
+      "type": "object",
+      "properties": {}
+    },
+    "proficiencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "saving_throws": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "conditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "personality": {
+      "type": "string"
+    },
+    "ideals": {
+      "type": "string"
+    },
+    "bonds": {
+      "type": "string"
+    },
+    "flaws": {
+      "type": "string"
+    },
+    "backstory": {
+      "type": "string"
+    },
+    "appearance": {
+      "type": "string"
+    },
+    "goals": {
+      "type": "string"
+    },
+    "relationships": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "portrait": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

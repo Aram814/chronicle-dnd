@@ -1,0 +1,57 @@
+{
+  "name": "DiceRoll",
+  "type": "object",
+  "properties": {
+    "campaign_id": {
+      "type": "string"
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "character_id": {
+      "type": "string"
+    },
+    "dice_type": {
+      "type": "string"
+    },
+    "modifier": {
+      "type": "number",
+      "default": 0
+    },
+    "result": {
+      "type": "number"
+    },
+    "total": {
+      "type": "number"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "advantage": {
+      "type": "boolean",
+      "default": false
+    },
+    "disadvantage": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "campaign_id",
+    "dice_type"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
