@@ -4,8 +4,8 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
-import AuthLayout from "@/components/AuthLayout";
+import { Mail, Lock, Loader2 } from "lucide-react";
+import LoginSplash from "@/components/LoginSplash";
 import AppleIcon from "@/components/AppleIcon";
 import { safeReturnTo } from "@/lib/authReturnTo";
 
@@ -37,10 +37,7 @@ export default function Login() {
   };
 
   return (
-    <AuthLayout
-      icon={LogIn}
-      title="Welcome back"
-      subtitle="Log in to your account"
+    <LoginSplash
       footer={
         <>
           Don't have an account?{" "}
@@ -67,7 +64,7 @@ export default function Login() {
           <div className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-3 text-muted-foreground">or</span>
+          <span className="bg-stone-950/80 px-3 text-amber-700/80">or</span>
         </div>
       </div>
 
@@ -127,6 +124,6 @@ export default function Login() {
           )}
         </Button>
       </form>
-    </AuthLayout>
+    </LoginSplash>
   );
 }
