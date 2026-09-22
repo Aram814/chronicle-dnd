@@ -196,8 +196,13 @@ export default function CampaignGame() {
       });
       const parsed = parseDMReply(res.data.reply);
       const dmMsg = { session_id: id, campaign_id: id, sender: 'dm', content: parsed.narration, roll_request: parsed.rollRequest, members: allMemberIds };
-      await base44.entities.Message.create(dmMsg);
-      setMessages(prev => [...prev, dmMsg]);
+      const createdMsg = await base44.entities.Message.create(dmMsg);
+      setMessages(prev => {
+        // The realtime subscription may have already added this message;
+        // skip if the id or content already exists to avoid duplicates.
+        if (prev.find(m => m.id === createdMsg.id || (m.content === createdMsg.content && m.sender === 'dm'))) return prev;
+        return [...prev, createdMsg];
+      });
       setPendingRoll(parsed.rollRequest);
 
       // Apply state updates
