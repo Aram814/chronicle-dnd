@@ -17,9 +17,14 @@ export default function CharacterSheet() {
   }, [id]);
 
   const load = async () => {
-    const c = await base44.entities.Character.get(id);
-    setCharacter(c);
-    setForm(c);
+    if (id === 'new') { navigate('/character/new/edit', { replace: true }); return; }
+    try {
+      const c = await base44.entities.Character.get(id);
+      setCharacter(c);
+      setForm(c);
+    } catch (e) {
+      navigate('/characters', { replace: true });
+    }
   };
 
   const save = async () => {
