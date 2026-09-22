@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Wand2, ChevronDown } from 'lucide-react';
+import { Wand2, ChevronDown, Dices } from 'lucide-react';
 import BottomSheetPicker from '@/components/BottomSheetPicker';
-import { RACES, CLASSES, BACKGROUNDS, ALIGNMENTS, STANDARD_ARRAY, ABILITIES, validateForm, previewStats, autoAssign } from '@/lib/characterData';
+import AbilityRollDialog from '@/components/AbilityRollDialog';
+import { RACES, CLASSES, BACKGROUNDS, ALIGNMENTS, ABILITIES, validateForm, previewStats, autoAssign } from '@/lib/characterData';
 import { abilityModifier } from '@/lib/dndRules';
 
 const inputCls = "w-full bg-background border border-amber-900/40 rounded-lg px-3 py-2.5 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-amber-700/50";
@@ -14,6 +15,7 @@ export default function CharacterBuildForm({ onChange }) {
     personality: '', ideals: '', bonds: '', flaws: '', backstory: ''
   });
   const [showOptional, setShowOptional] = useState(false);
+  const [rollAbilities, setRollAbilities] = useState(null);
 
   useEffect(() => { onChange(validateForm(form) ? form : null); }, [form, onChange]);
 
@@ -32,8 +34,11 @@ export default function CharacterBuildForm({ onChange }) {
   const bonuses = subrace?.bonuses || {};
   const stats = previewStats(form);
 
-  const usedElsewhere = (key, val) => Object.entries(form.ability_scores).some(([k, v]) => k !== key && v === val);
   const setAbility = (key, val) => set({ ability_scores: { ...form.ability_scores, [key]: val === '' ? null : Number(val) } });
+  const suggest = () => { if (cls) set({ ability_scores: autoAssign(cls.abilityPriority) }); };
+  const rollOne = (key, label) => setRollAbilities([{ key, label }]);
+  const rollAll = () => setRollAbilities(ABILITIES.map(([key, label]) => ({ key, label })));
+  const handleRollUse = (map) => { set({ ability_scores: { ...form.ability_scores, ...map } }); setRollAbilities(null); };
 
   return (
     <div className="space-y-4">
@@ -63,11 +68,16 @@ export default function CharacterBuildForm({ onChange }) {
       <section className="bg-card/60 border border-border rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-amber-200">Ability Scores</h3>
-          <button onClick={() => cls && set({ ability_scores: autoAssign(cls.abilityPriority) })} disabled={!cls} className="touch-target inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-900/40 hover:bg-amber-800/50 disabled:opacity-40 border border-amber-700/40 rounded-lg text-amber-200 text-xs font-semibold">
-            <Wand2 className="w-3.5 h-3.5" /> Suggest
-          </button>
+          <div className="flex gap-2">
+            <button onClick={suggest} disabled={!cls} className="touch-target inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-900/40 hover:bg-amber-800/50 disabled:opacity-40 border border-amber-700/40 rounded-lg text-amber-200 text-xs font-semibold">
+              <Wand2 className="w-3.5 h-3.5" /> Suggest
+            </button>
+            <button onClick={rollAll} className="touch-target inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-900/40 hover:bg-amber-800/50 border border-amber-700/40 rounded-lg text-amber-200 text-xs font-semibold">
+              <Dices className="w-3.5 h-3.5" /> Roll All
+            </button>
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground mb-3">Assign the standard array {STANDARD_ARRAY.join(', ')}. Racial bonuses apply automatically.</p>
+        <p className="text-xs text-muted-foreground mb-3">Enter values, use Suggest, or roll 4d6 (drop lowest). Racial bonuses apply automatically.</p>
         <div className="space-y-2">
           {ABILITIES.map(([key, label]) => {
             const base = form.ability_scores[key];
@@ -75,12 +85,24 @@ export default function CharacterBuildForm({ onChange }) {
             const final = base != null ? base + bonus : null;
             const mod = final != null ? abilityModifier(final) : 0;
             return (
-              <div key={key} className="flex items-center gap-3">
+              <div key={key} className="flex items-center gap-2">
                 <span className="w-10 text-sm font-semibold text-foreground">{label}</span>
-                <select value={base ?? ''} onChange={e => setAbility(key, e.target.value)} className="touch-target bg-background border border-amber-900/40 rounded-lg px-2 py-1.5 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-amber-700/50">
-                  <option value="">—</option>
-                  {STANDARD_ARRAY.filter(v => !usedElsewhere(key, v)).map(v => <option key={v} value={v}>{v}</option>)}
-                </select>
+                <input
+                  type="number"
+                  min={3}
+                  max={20}
+                  value={base ?? ''}
+                  onChange={e => setAbility(key, e.target.value)}
+                  placeholder="—"
+                  className="touch-target w-16 bg-background border border-amber-900/40 rounded-lg px-2 py-1.5 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-amber-700/50"
+                />
+                <button
+                  onClick={() => rollOne(key, label)}
+                  aria-label={`Roll ${label}`}
+                  className="touch-target p-2 text-amber-300 hover:text-amber-200 hover:bg-amber-900/30 border border-amber-800/40 rounded-lg"
+                >
+                  <Dices className="w-4 h-4" />
+                </button>
                 {bonus ? <span className="text-xs text-emerald-400">+{bonus}</span> : <span className="text-xs text-transparent">+0</span>}
                 <span className="ml-auto text-sm font-bold text-amber-200">{final ?? '—'}</span>
                 <span className="text-xs text-muted-foreground w-8 text-right">{mod >= 0 ? '+' : ''}{mod}</span>
@@ -116,6 +138,14 @@ export default function CharacterBuildForm({ onChange }) {
           </div>
         )}
       </section>
+
+      {rollAbilities && (
+        <AbilityRollDialog
+          abilities={rollAbilities}
+          onUse={handleRollUse}
+          onClose={() => setRollAbilities(null)}
+        />
+      )}
     </div>
   );
 }
