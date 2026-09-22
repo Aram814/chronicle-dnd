@@ -221,7 +221,10 @@ export default function NewCampaign() {
   const handleCharacterCreated = async (charData) => {
     setCreating(true);
     try {
-      const char = await base44.entities.Character.create({ ...charData, level: 1, xp: 0 });
+      // An existing character (already has an id) is linked, not re-created.
+      const char = charData.id
+        ? charData
+        : await base44.entities.Character.create({ ...charData, level: 1, xp: 0 });
       const isDefaultName = campaign.name === 'Untitled Campaign' || campaign.name === 'New Campaign';
       const name = isDefaultName ? `${char.name}'s Tale` : campaign.name;
       const updated = { ...campaign, character_id: char.id, name, setup_stage: 'world' };

@@ -181,7 +181,8 @@ export function buildCharacterFromForm(form) {
     bonds: form.bonds || '',
     flaws: form.flaws || '',
     backstory: form.backstory || '',
-    appearance: '', goals: '', relationships: '', description: '', portrait: ''
+    appearance: '', goals: '', relationships: '', description: '',
+    portrait: form.portrait || ''
   };
 }
 
@@ -197,7 +198,8 @@ export const PREBUILT_TEMPLATES = [
       ideals: 'Greater good. The well-being of the many outweighs the few.',
       bonds: 'I would die for my comrades-in-arms.',
       flaws: 'I have a deep fear of failing my friends.',
-      backstory: 'A veteran of many battles, Bran now seeks a new purpose beyond the army.'
+      backstory: 'A veteran of many battles, Bran now seeks a new purpose beyond the army.',
+      portrait: 'https://media.base44.com/images/public/6ab1f1781754d99d63c58e01/72871db5d_generated_image.png'
     }
   },
   {
@@ -211,7 +213,8 @@ export const PREBUILT_TEMPLATES = [
       ideals: 'Knowledge. The path to power is through understanding.',
       bonds: 'I owe my life to the mentor who taught me magic.',
       flaws: 'I am oblivious to practical matters when lost in study.',
-      backstory: 'Raised in a great library, Lyra left to find lost lore in the wider world.'
+      backstory: 'Raised in a great library, Lyra left to find lost lore in the wider world.',
+      portrait: 'https://media.base44.com/images/public/6ab1f1781754d99d63c58e01/5a8001cb9_generated_image.png'
     }
   },
   {
@@ -225,7 +228,8 @@ export const PREBUILT_TEMPLATES = [
       ideals: 'Freedom. Chains are meant to be slipped, not worn.',
       bonds: 'I am loyal to my old crew, wherever they are.',
       flaws: 'I cannot resist a locked door or a shiny trinket.',
-      backstory: 'A street thief who graduated to bigger scores — and bigger risks.'
+      backstory: 'A street thief who graduated to bigger scores — and bigger risks.',
+      portrait: 'https://media.base44.com/images/public/6ab1f1781754d99d63c58e01/f38a7b048_generated_image.png'
     }
   },
   {
@@ -239,7 +243,8 @@ export const PREBUILT_TEMPLATES = [
       ideals: 'Faith. I trust that my deity guides my steps.',
       bonds: 'I would lay down my life for the people of my temple.',
       flaws: 'I can be too trusting of those who speak of faith.',
-      backstory: 'A temple acolyte called to adventure by visions of a gathering darkness.'
+      backstory: 'A temple acolyte called to adventure by visions of a gathering darkness.',
+      portrait: 'https://media.base44.com/images/public/6ab1f1781754d99d63c58e01/064014c57_generated_image.png'
     }
   },
   {
@@ -253,7 +258,8 @@ export const PREBUILT_TEMPLATES = [
       ideals: 'Might. The strong protect the weak — or rule them.',
       bonds: 'My clan is my family; I will avenge their fall.',
       flaws: 'My rage can get the better of me when friends are threatened.',
-      backstory: 'Exiled from his clan, Gorrak wanders seeking a new warband.'
+      backstory: 'Exiled from his clan, Gorrak wanders seeking a new warband.',
+      portrait: 'https://media.base44.com/images/public/6ab1f1781754d99d63c58e01/b9340bf01_generated_image.png'
     }
   },
   {
@@ -267,7 +273,8 @@ export const PREBUILT_TEMPLATES = [
       ideals: 'Nature. The wilds must be guarded from those who would spoil them.',
       bonds: 'I protect a sacred grove that few know of.',
       flaws: 'I am slow to trust those who live behind city walls.',
-      backstory: 'A guardian of the deep woods drawn out by a growing corruption.'
+      backstory: 'A guardian of the deep woods drawn out by a growing corruption.',
+      portrait: 'https://media.base44.com/images/public/6ab1f1781754d99d63c58e01/1427a5b2b_generated_image.png'
     }
   }
 ];
