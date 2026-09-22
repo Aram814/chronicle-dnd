@@ -154,7 +154,7 @@ export default function Dashboard() {
           <div>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-serif text-amber-200">Your Characters</h2>
-              <Link to="/character/new" className="touch-target inline-flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold transition-all">
+              <Link to="/character/new/edit" className="touch-target inline-flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-lg text-sm font-semibold transition-all">
                 <Plus className="w-4 h-4" /> New Character
               </Link>
             </div>
