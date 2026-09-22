@@ -23,6 +23,7 @@ const CampaignGame = lazy(() => import('@/pages/CampaignGame'));
 const CampaignDetails = lazy(() => import('@/pages/CampaignDetails'));
 const CharacterSheet = lazy(() => import('@/pages/CharacterSheet'));
 const CharacterEditor = lazy(() => import('@/pages/CharacterEditor'));
+const CharacterForge = lazy(() => import('@/pages/CharacterForge'));
 const Characters = lazy(() => import('@/pages/Characters'));
 const Stories = lazy(() => import('@/pages/Stories'));
 const Settings = lazy(() => import('@/pages/Settings'));
@@ -94,6 +95,7 @@ const AuthenticatedApp = () => {
           <Route path="/campaign/:id/details" element={<PageWrapper><CampaignDetails /></PageWrapper>} />
           <Route path="/character/:id" element={<PageWrapper><CharacterSheet /></PageWrapper>} />
           <Route path="/character/:id/edit" element={<PageWrapper><CharacterEditor /></PageWrapper>} />
+          <Route path="/character-forge" element={<PageWrapper><CharacterForge /></PageWrapper>} />
         </Route>
         <Route path="*" element={<LazyPageNotFound />} />
       </Routes>
