@@ -75,7 +75,7 @@ If you are generating a world and want to store structured world data, include:
 }
 
 async function handlePlay(base44, body) {
-  const { campaign_id, session_id, messages, campaign, character, npcs, quests, locations, diceResult } = body;
+  const { campaign_id, session_id, messages, campaign, character, npcs, quests, locations, diceResult, opening } = body;
 
   let system = DM_SYSTEM_BASE + '\n\n';
   system += buildWorldContext(campaign);
@@ -111,17 +111,22 @@ After your narration, if the game state changed, include one or more update comm
 
 Only include updates that actually happened in this turn. If nothing changed, include no update lines.`;
 
-  let conversation = (messages || []).slice(-20).map(m => {
-    let line = `${m.sender === 'player' ? 'PLAYER' : 'DM'}: ${m.content}`;
-    if (m.dice_roll) line += `\n[DICE ROLL RESULT: ${m.dice_roll.dice_type} => ${m.dice_roll.result} + ${m.dice_roll.modifier} = ${m.dice_roll.total} (${m.dice_roll.reason || ''})]`;
-    return line;
-  }).join('\n\n');
+  let prompt;
+  if (opening) {
+    prompt = `This is the very first scene of the campaign — no conversation has happened yet. SET THE STAGE: write the opening scene that launches this adventure. Describe the starting location with vivid sensory detail, establish the immediate situation, introduce any NPCs present, and present a clear hook that invites the player to act. Give the player a concrete situation to respond to rather than asking what they want to do in a generic way. Keep it immersive and concise (3-5 paragraphs). End with an open prompt or a roll request if appropriate.`;
+  } else {
+    let conversation = (messages || []).slice(-20).map(m => {
+      let line = `${m.sender === 'player' ? 'PLAYER' : 'DM'}: ${m.content}`;
+      if (m.dice_roll) line += `\n[DICE ROLL RESULT: ${m.dice_roll.dice_type} => ${m.dice_roll.result} + ${m.dice_roll.modifier} = ${m.dice_roll.total} (${m.dice_roll.reason || ''})]`;
+      return line;
+    }).join('\n\n');
 
-  let prompt = `Conversation so far:\n${conversation}\n\n`;
-  if (diceResult) {
-    prompt += `The player just rolled: ${diceResult.dice_type} => ${diceResult.result} + ${diceResult.modifier} = ${diceResult.total} for ${diceResult.reason}.\nNarrate the outcome of this roll honestly and impartially. If it is a failure (total below the DC, or a natural 1), the action fails — narrate the real, in-fiction consequence without softening it or rescuing the character. Do not tilt the outcome toward success.\n\n`;
+    prompt = `Conversation so far:\n${conversation}\n\n`;
+    if (diceResult) {
+      prompt += `The player just rolled: ${diceResult.dice_type} => ${diceResult.result} + ${diceResult.modifier} = ${diceResult.total} for ${diceResult.reason}.\nNarrate the outcome of this roll honestly and impartially. If it is a failure (total below the DC, or a natural 1), the action fails — narrate the real, in-fiction consequence without softening it or rescuing the character. Do not tilt the outcome toward success.\n\n`;
+    }
+    prompt += `Continue as the DM. Narrate the outcome and end with an open prompt or a roll request if needed.`;
   }
-  prompt += `Continue as the DM. Narrate the outcome and end with an open prompt or a roll request if needed.`;
 
   const res = await base44.asServiceRole.integrations.Core.InvokeLLM({ prompt, model: 'automatic' });
   return Response.json({ reply: res });

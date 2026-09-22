@@ -34,6 +34,7 @@ export default function CampaignGame() {
   const [confirmSaveStory, setConfirmSaveStory] = useState(false);
   const [info, setInfo] = useState(null);
   const messagesEndRef = useRef(null);
+  const openingRef = useRef(false);
 
   useEffect(() => {
     if (id) loadAll();
@@ -42,6 +43,29 @@ export default function CampaignGame() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // When an active campaign is first entered and the DM hasn't set the stage yet,
+  // automatically generate the opening scene-setting narration.
+  useEffect(() => {
+    if (campaign && campaign.status === 'active' && !campaign.story_state?.opening_set && !openingRef.current && !loading) {
+      openingRef.current = true;
+      generateOpening();
+    }
+  }, [campaign, loading]);
+
+  const generateOpening = async () => {
+    try {
+      await getDMResponse([], null, true);
+      const nextStoryState = { ...(campaign?.story_state || {}), opening_set: true };
+      await base44.entities.Campaign.update(id, { story_state: nextStoryState });
+      setCampaign(prev => ({ ...prev, story_state: nextStoryState }));
+    } catch (e) {
+      // Still mark opening as set so we don't retry on every load.
+      const nextStoryState = { ...(campaign?.story_state || {}), opening_set: true };
+      await base44.entities.Campaign.update(id, { story_state: nextStoryState }).catch(() => {});
+      setCampaign(prev => ({ ...prev, story_state: nextStoryState }));
+    }
+  };
 
   const loadAll = async () => {
     try {
@@ -83,7 +107,7 @@ export default function CampaignGame() {
     await getDMResponse([...messages, playerMsg]);
   };
 
-  const getDMResponse = async (allMsgs, diceResult = null) => {
+  const getDMResponse = async (allMsgs, diceResult = null, opening = false) => {
     setLoading(true);
     try {
       const res = await base44.functions.invoke('dm_engine', {
@@ -95,7 +119,8 @@ export default function CampaignGame() {
         quests,
         locations,
         messages: allMsgs,
-        diceResult
+        diceResult,
+        opening
       });
       const parsed = parseDMReply(res.data.reply);
       const dmMsg = { session_id: id, campaign_id: id, sender: 'dm', content: parsed.narration, roll_request: parsed.rollRequest };
