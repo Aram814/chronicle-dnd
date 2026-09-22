@@ -44,10 +44,11 @@ You are currently in CAMPAIGN SETUP mode. You are guiding the player through cre
 Current setup stage: ${setupStage}
 Setup data so far: ${JSON.stringify(setup_data || {})}
 
+The player has ALREADY created their character via the character builder (see the Campaign settings / character context). Do NOT ask them to create a character or gather character details — reference their existing hero when relevant.
+
 Your job right now:
 - If stage is "world": help the player choose/create their world. Ask about setting type (original fantasy, dark fantasy, horror, comedic, political intrigue, low/high magic, custom). Once they've decided, suggest a world name and brief overview, then move to tone.
-- If stage is "tone": ask about desired tone(s) (serious, epic, dark, horror, comedic, whimsical, mystery, political intrigue, romance, survival, exploration, high adventure — multiple allowed), difficulty (casual/normal/challenging/hardcore), and DM style (story/rules/balanced/cinematic/tactical). Then move to character.
-- If stage is "character": help the player create their character. Offer: create manually, get AI suggestions, or have the AI generate one. Gather name, species, class, background, alignment, ability scores, personality, ideals, bonds, flaws, backstory. Move to ready when done.
+- If stage is "tone": ask about desired tone(s) (serious, epic, dark, horror, comedic, whimsical, mystery, political intrigue, romance, survival, exploration, high adventure — multiple allowed), difficulty (casual/normal/challenging/hardcore), and DM style (story/rules/balanced/cinematic/tactical). Then move to ready.
 - If stage is "ready": give a brief opening situation overview or ask if they want to discover through play. Then signal the campaign is ready to begin.
 
 CONTENT RATING:
@@ -59,13 +60,10 @@ Ask ONE question or one logical group of questions at a time. Be warm, welcoming
 
 When you have gathered enough info for the current stage, include this line on its own:
 [[STAGE_COMPLETE: <next stage>]]
-where next stage is one of: tone, character, ready, begin
+where next stage is one of: tone, ready, begin
 
 If you are generating a world and want to store structured world data, include:
-[[WORLD_DATA: <JSON object with world_name, overview, continents, kingdoms, cities, factions, religions, conflicts> ]]
-
-If you are generating a full character and want to store it, include:
-[[CHARACTER_DATA: <JSON object with name, species, class, subclass, background, alignment, ability_scores{str,dex,con,int,wis,cha}, hp, max_hp, ac, speed, gold, proficiency_bonus, proficiencies[], saving_throws[], weapons[], inventory[], spells[], personality, ideals, bonds, flaws, backstory, appearance, goals> ]]`;
+[[WORLD_DATA: <JSON object with world_name, overview, continents, kingdoms, cities, factions, religions, conflicts> ]]`;
 
   const conversation = (messages || []).map(m => `${m.sender === 'player' ? 'PLAYER' : 'DM'}: ${m.content}`).join('\n\n');
   const prompt = `Campaign settings: ${JSON.stringify(campaign)}\n\nConversation so far:\n${conversation}\n\nContinue the setup conversation. Respond as the DM.`;

@@ -6,6 +6,7 @@ import ChatMessage from '@/components/ChatMessage';
 import { parseDMReply } from '@/lib/dndClient';
 import ScreenHeader from '@/components/ScreenHeader';
 import MatureToggle from '@/components/MatureToggle';
+import CharacterSetup from '@/components/CharacterSetup';
 
 export default function NewCampaign() {
   const navigate = useNavigate();
@@ -20,6 +21,8 @@ export default function NewCampaign() {
   const [stage, setStage] = useState('world');
   const [storyContext, setStoryContext] = useState('');
   const [mature, setMature] = useState(false);
+  const [step, setStep] = useState('character');
+  const [creating, setCreating] = useState(false);
   const messagesEndRef = useRef(null);
   // Guards against duplicate campaign creation (StrictMode/HMR re-mounts) and
   // tracks the in-flight campaign so abandoned setups can be cleaned up.
@@ -71,6 +74,7 @@ export default function NewCampaign() {
         campaignRef.current = existing;
         setCampaign(existing);
         setMature(!!existing.mature_content);
+        setStep(existing.character_id ? 'chat' : 'character');
         setSetupData(existing.setup_data || {});
         setStage(existing.setup_stage || 'world');
         const msgs = await base44.entities.Message.filter({ campaign_id: resumeId });
@@ -112,16 +116,25 @@ export default function NewCampaign() {
     campaignRef.current = newCampaign;
     setCampaign(newCampaign);
     setMature(!!newCampaign.mature_content);
-    // Initial DM greeting
-    sendInitialMessage(newCampaign, ctx);
+    if (storyId) {
+      // Continuing a saved story: go straight to world-setup chat.
+      setStep('chat');
+      sendInitialMessage(newCampaign, null, ctx);
+    } else {
+      // Fresh campaign: build the character first, then start world setup.
+      setStep('character');
+    }
   };
 
-  const sendInitialMessage = async (camp, ctx) => {
+  const sendInitialMessage = async (camp, character, ctx) => {
     setLoading(true);
     try {
+      const charLine = character
+        ? `The player has just created their character: ${character.name}, a ${character.species} ${character.class} (Level 1). Background: ${character.background || '—'}. Briefly welcome their hero, then begin WORLD SETUP. Ask what kind of world they want (original fantasy, traditional high-fantasy, dark fantasy, horror, comedic, political intrigue, low/high magic, or custom). Ask ONE question.`
+        : `Welcome the adventurer. Before we begin, let's build the world and tone for the campaign. Ask about what kind of world they want (original fantasy, traditional high-fantasy, dark fantasy, horror, comedic, political intrigue, low/high magic, or custom). Ask ONE question.`;
       const greetingPrompt = ctx
         ? `The player is continuing from a saved story. ${ctx}\n\nWelcome them back and ask how they'd like to continue this story — same character or new, and any changes to the world.`
-        : `Welcome the adventurer. Say something like: "Welcome, adventurer. Before we begin, let's build your world, your story, and your character. I'll guide you through everything." Then ask about what kind of world they want (original fantasy, traditional high-fantasy, dark fantasy, horror, comedic, political intrigue, low/high magic, or custom). Ask ONE question.`;
+        : charLine;
       const res = await base44.functions.invoke('dm_engine', {
         mode: 'setup',
         campaign_id: camp.id,
@@ -173,22 +186,14 @@ export default function NewCampaign() {
         setStage(nextStage);
         const newSetupData = { ...setupData };
         if (parsed.worldData) newSetupData.world = parsed.worldData;
-        if (parsed.characterData) newSetupData.character = parsed.characterData;
         setSetupData(newSetupData);
         await base44.entities.Campaign.update(campaign.id, { setup_stage: nextStage, setup_data: newSetupData });
-
-        if (nextStage === 'begin' || parsed.characterData) {
-          // Save character and transition to active
-          await transitionToActive(parsed.characterData || newSetupData.character, parsed.worldData || newSetupData.world);
+        if (nextStage === 'begin') {
+          await transitionToActive(parsed.worldData || newSetupData.world);
         }
       }
       if (parsed.worldData) {
         const newSetupData = { ...setupData, world: parsed.worldData };
-        setSetupData(newSetupData);
-        await base44.entities.Campaign.update(campaign.id, { setup_data: newSetupData });
-      }
-      if (parsed.characterData) {
-        const newSetupData = { ...setupData, character: parsed.characterData };
         setSetupData(newSetupData);
         await base44.entities.Campaign.update(campaign.id, { setup_data: newSetupData });
       }
@@ -200,22 +205,9 @@ export default function NewCampaign() {
     }
   };
 
-  const transitionToActive = async (charData, worldData) => {
+  const transitionToActive = async (worldData) => {
     completedRef.current = true; // mark setup finished so cleanup keeps the record
-    let characterId = campaign.character_id;
-    if (charData) {
-      const char = await base44.entities.Character.create({
-        ...charData,
-        level: charData.level || 1,
-        xp: 0
-      });
-      characterId = char.id;
-    }
-    const updates = {
-      status: 'active',
-      character_id: characterId,
-      setup_stage: 'begin'
-    };
+    const updates = { status: 'active', setup_stage: 'begin' };
     if (worldData) {
       updates.setting = worldData.world_name || worldData.overview || '';
       updates.world_state = worldData;
@@ -226,12 +218,33 @@ export default function NewCampaign() {
     setTimeout(() => navigate(`/campaign/${campaign.id}`), 2000);
   };
 
+  const handleCharacterCreated = async (charData) => {
+    setCreating(true);
+    try {
+      const char = await base44.entities.Character.create({ ...charData, level: 1, xp: 0 });
+      const isDefaultName = campaign.name === 'Untitled Campaign' || campaign.name === 'New Campaign';
+      const name = isDefaultName ? `${char.name}'s Tale` : campaign.name;
+      const updated = { ...campaign, character_id: char.id, name, setup_stage: 'world' };
+      await base44.entities.Campaign.update(campaign.id, { character_id: char.id, name, setup_stage: 'world' });
+      setCampaign(updated);
+      setStage('world');
+      setStep('chat');
+      await sendInitialMessage(updated, char, storyContext);
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const toggleMature = async (val) => {
     setMature(val);
     if (!campaign) return;
     setCampaign({ ...campaign, mature_content: val });
     await base44.entities.Campaign.update(campaign.id, { mature_content: val }).catch(() => {});
   };
+
+  if (step === 'character') {
+    return <CharacterSetup onComplete={handleCharacterCreated} saving={creating} />;
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
