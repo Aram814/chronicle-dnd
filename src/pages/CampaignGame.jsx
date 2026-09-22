@@ -15,6 +15,8 @@ import InfoDialog from '@/components/InfoDialog';
 import { toast } from '@/components/ui/use-toast';
 import { parseDMReply, abilityModifier, SKILL_LABELS, ABILITY_LABELS, proficiencyBonusForLevel, checkLevelUp } from '@/lib/dndClient';
 import { rollForRequest } from '@/lib/dice';
+import { sound } from '@/lib/soundManager';
+import SoundToggle from '@/components/SoundToggle';
 
 export default function CampaignGame() {
   const { id } = useParams();
@@ -156,6 +158,20 @@ export default function CampaignGame() {
     return unsub;
   }, [id]);
 
+  // Ambient music: unlock audio on first interaction, then play; stop on unmount.
+  useEffect(() => {
+    const unlock = () => {
+      sound.resume();
+      if (!sound.isMuted()) sound.startMusic();
+      window.removeEventListener('pointerdown', unlock);
+    };
+    window.addEventListener('pointerdown', unlock);
+    return () => {
+      window.removeEventListener('pointerdown', unlock);
+      sound.stopMusic();
+    };
+  }, []);
+
   const refreshCharacter = async () => {
     if (campaign?.character_id) {
       const char = await base44.entities.Character.get(campaign.character_id);
@@ -203,6 +219,7 @@ export default function CampaignGame() {
         if (prev.find(m => m.id === createdMsg.id || (m.content === createdMsg.content && m.sender === 'dm'))) return prev;
         return [...prev, createdMsg];
       });
+      sound.playMessage();
       setPendingRoll(parsed.rollRequest);
 
       // Apply state updates
@@ -311,6 +328,7 @@ export default function CampaignGame() {
           nextCamp.in_combat = true;
           campaignUpdates.in_combat = true;
           try { const cs = JSON.parse(u.arg1); nextCamp.combat_state = cs; campaignUpdates.combat_state = cs; } catch (e) { /* ignore */ }
+          sound.playCombat();
           campChanged = true;
           break;
         case 'combat_end':
@@ -384,6 +402,7 @@ export default function CampaignGame() {
   const executeRoll = (rollRequest) => {
     if (!character) return;
     const rollData = rollForRequest(character, rollRequest);
+    sound.playDiceRoll();
     // Show the tumbling die; persist + forward to DM once it settles.
     setRollAnim({ rollData });
   };
@@ -420,6 +439,7 @@ export default function CampaignGame() {
   };
 
   const handleManualRoll = async (rollData) => {
+    sound.playDiceRoll();
     await base44.entities.DiceRoll.create({
       campaign_id: id,
       character_id: character?.id,
@@ -487,6 +507,7 @@ export default function CampaignGame() {
           <>
             {campaign.in_combat && <span className="text-xs px-2 py-1 bg-red-900/50 text-red-300 border border-red-700/40 rounded-full">⚔ Combat</span>}
             {players.length > 1 && <span className="text-xs px-2 py-1 bg-amber-950/50 text-amber-300 border border-amber-800/40 rounded-full hidden sm:inline-flex items-center gap-1"><Users className="w-3 h-3" />{players.length}</span>}
+            <SoundToggle />
             <Link to={`/campaign/${id}/invite`} aria-label="Invite players" className="p-3 text-muted-foreground hover:text-amber-300 hover:bg-accent rounded-lg transition-all" title="Invite Players">
               <Users className="w-5 h-5" />
             </Link>
