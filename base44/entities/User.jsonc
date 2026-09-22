@@ -7,6 +7,15 @@
         "admin",
         "user"
       ]
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Custom display name shown in the app"
+    },
+    "preferences": {
+      "type": "object",
+      "properties": {},
+      "description": "User notification and app preferences"
     }
   },
   "required": [
