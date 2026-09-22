@@ -67,7 +67,7 @@ export default function CharacterSheet() {
               const mod = abilityModifier(score);
               return (
                 <div key={key} className="bg-background/60 border border-border rounded-lg p-3 text-center">
-                  <div className="text-xs text-muted-foreground uppercase">{label}</div>
+                  <div className="text-xs text-muted-foreground uppercase" title={label}>{label.slice(0, 3)}</div>
                   <>
                     <div className="text-2xl font-bold text-amber-200 mt-1">{score}</div>
                     <div className="text-sm text-muted-foreground">{mod >= 0 ? `+${mod}` : mod}</div>
