@@ -87,7 +87,8 @@ export default function StoryRecap() {
             <BottomSheetPicker
               label="Campaign to recap"
               value={campaignId}
-              options={['', ...campaigns.map(c => c.id)]}
+              placeholder="Let the Chronicler ask me"
+              options={[{ label: 'Let the Chronicler ask me', value: '' }, ...campaigns.map(c => ({ label: c.name, value: c.id }))]}
               onChange={setCampaignId}
             />
             {campaignId && (
