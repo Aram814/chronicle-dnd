@@ -113,7 +113,14 @@ Only include updates that actually happened in this turn. If nothing changed, in
 
   let prompt;
   if (opening) {
-    prompt = `This is the very first scene of the campaign — no conversation has happened yet. SET THE STAGE: write the opening scene that launches this adventure. Describe the starting location with vivid sensory detail, establish the immediate situation, introduce any NPCs present, and present a clear hook that invites the player to act. Give the player a concrete situation to respond to rather than asking what they want to do in a generic way. Keep it immersive and concise (3-5 paragraphs). End with an open prompt or a roll request if appropriate.`;
+    prompt = `This is the very first scene of the campaign — no conversation has happened yet. You are SETTING THE STAGE for a brand-new adventure. Build the scene up gradually — do NOT drop the player into the middle of an ongoing action sequence, combat, or crisis.
+
+Follow this structure:
+1. ESTABLISH THE CHARACTER: Begin by grounding the player in who their character is and where they are right now. Reference their background, class, and species to situate them in the world. Write as though the character has just arrived at or is waking into this moment — not as though events are already in motion around them.
+2. PAINT THE WORLD: Describe the starting location with calm, vivid sensory detail — the time of day, the weather, the sounds and smells, the texture of the place. Let the player take in their surroundings before anything demands their attention.
+3. INTRODUCE A GENTLE HOOK: Only after the scene is established, present a subtle invitation — a person approaching, a rumor overheard, a notice on a board, a sound in the distance, a letter waiting for them. This is the seed of adventure, not an emergency. Give the player space to choose how to engage with it.
+
+Keep it immersive and unhurried (3-5 paragraphs). Do not force urgency or threaten the character in the opening. End with an open-ended prompt that invites the player to act — "What do you do?" — or a gentle question, NOT a roll request. The first roll should come only after the player has chosen to engage.`;
   } else {
     let conversation = (messages || []).slice(-20).map(m => {
       let line = `${m.sender === 'player' ? 'PLAYER' : 'DM'}: ${m.content}`;
