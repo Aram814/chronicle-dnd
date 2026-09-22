@@ -1,0 +1,40 @@
+{
+  "name": "Quest Tracker",
+  "description": "When a player makes a dice roll, the Quest Tracker agent evaluates the outcome, updates active quest progress, and narrates the evolving story as a system message for the DM bot.",
+  "trigger": {
+    "config": {
+      "trigger_type": "entity",
+      "entity_name": "DiceRoll",
+      "events": [
+        "create"
+      ]
+    },
+    "condition": "${ .trigger.data.campaign_id != null and .trigger.data.campaign_id != \"\" }"
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "quest_tracker",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "track_progress": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "track_quest_progress",
+            "args": {
+              "roll_id": "${ .trigger.entity_id }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Track quest progress",
+            "description": "Evaluate roll, update quests, narrate story"
+          }
+        }
+      }
+    ]
+  }
+}

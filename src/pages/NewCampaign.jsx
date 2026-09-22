@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Send, Sparkles } from 'lucide-react';
 import ChatMessage from '@/components/ChatMessage';
+import WorldBuilderChat from '@/components/WorldBuilderChat';
 import { parseDMReply } from '@/lib/dndClient';
 import ScreenHeader from '@/components/ScreenHeader';
 import MatureToggle from '@/components/MatureToggle';
@@ -260,9 +261,29 @@ export default function NewCampaign() {
       await sendInitialMessage(campaign, character, storyContext);
       return;
     }
+    if (payload && payload.mode === 'world_builder') {
+      setStep('world_builder');
+      return;
+    }
     setCreating(true);
     try {
       await transitionToActive(payload);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleWorldBuilderBegin = async () => {
+    setCreating(true);
+    try {
+      // Reload campaign to pick up any name/setting the World Builder agent set
+      const updated = await base44.entities.Campaign.get(campaign.id);
+      setCampaign(updated);
+      await transitionToActive({
+        name: updated.name && updated.name !== 'Untitled Campaign' && updated.name !== 'New Campaign' ? updated.name : undefined,
+        setting: updated.setting || undefined,
+        description: updated.description || undefined
+      });
     } finally {
       setCreating(false);
     }
@@ -281,6 +302,10 @@ export default function NewCampaign() {
 
   if (step === 'campaign') {
     return <CampaignSetup onComplete={handleCampaignChosen} saving={creating} characterName={character?.name} mature={mature} onToggleMature={toggleMature} />;
+  }
+
+  if (step === 'world_builder') {
+    return <WorldBuilderChat campaign={campaign} character={character} onBegin={handleWorldBuilderBegin} onBack={() => setStep('campaign')} />;
   }
 
   return (

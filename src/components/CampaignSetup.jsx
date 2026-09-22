@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Scroll, Sparkles, Upload, Wand2, MapPin, Swords, MessageSquareQuote, Loader2 } from 'lucide-react';
+import { Scroll, Sparkles, Upload, Wand2, MapPin, Swords, MessageSquareQuote, Loader2, Globe } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import ScreenHeader from '@/components/ScreenHeader';
 import MatureToggle from '@/components/MatureToggle';
@@ -36,6 +36,7 @@ export default function CampaignSetup({ onComplete, saving, characterName, matur
   };
 
   const handleGuide = () => onComplete({ mode: 'guide' });
+  const handleWorldBuilder = () => onComplete({ mode: 'world_builder' });
 
   const canChoose =
     mode === 'prebuilt' ? selected != null
@@ -156,6 +157,17 @@ export default function CampaignSetup({ onComplete, saving, characterName, matur
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-amber-200">Let the DM guide me</div>
                   <div className="text-xs text-muted-foreground">Build the world through conversation — the DM asks you questions.</div>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={handleWorldBuilder}
+                className="touch-target w-full flex items-center gap-3 p-3 rounded-xl bg-indigo-950/30 border border-indigo-800/40 hover:bg-indigo-950/50 transition-all text-left"
+              >
+                <Globe className="w-5 h-5 text-indigo-400 flex-shrink-0" />
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-indigo-200">World Builder Assistant</div>
+                  <div className="text-xs text-muted-foreground">Design detailed locations and NPCs with a dedicated AI world-builder, saved to your campaign.</div>
                 </div>
               </button>
               <CampaignBuildForm onChange={setForm} />
