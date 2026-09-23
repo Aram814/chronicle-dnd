@@ -82,47 +82,51 @@ ${conversation.slice(-12000)}`;
     });
     const entries = (res && res.entries) || [];
 
-    const existing = await base44.asServiceRole.entities.NPC.filter({ campaign_id });
+    // NPCs and Monsters are now separate entities. Dedup within each one
+    // independently (same normalized name, 2+ records): keep the richest record,
+    // fold the others' interactions into it, then delete the extras.
+    const mergeDupes = async (entityName) => {
+      const list = await base44.asServiceRole.entities[entityName].filter({ campaign_id });
+      const groups = {};
+      for (const n of list) {
+        const key = normName(n.name);
+        if (!key) continue;
+        (groups[key] ||= []).push(n);
+      }
+      let merged = 0;
+      for (const key of Object.keys(groups)) {
+        const group = groups[key];
+        if (group.length < 2) continue;
+        const score = (n) =>
+          ['description', 'personality', 'portrait', 'location', 'faction'].filter(f => n[f]).length +
+          (n.interactions || []).length;
+        const sorted = [...group].sort((a, b) => score(b) - score(a));
+        const keeper = sorted[0];
+        const rest = sorted.slice(1);
+        const allInteractions = [...(keeper.interactions || []), ...rest.flatMap(n => n.interactions || [])];
+        const patch = {};
+        if (allInteractions.length > (keeper.interactions || []).length) patch.interactions = allInteractions;
+        if (!keeper.portrait) {
+          const withPortrait = rest.find(n => n.portrait);
+          if (withPortrait) patch.portrait = withPortrait.portrait;
+        }
+        if (Object.keys(patch).length) {
+          await base44.asServiceRole.entities[entityName].update(keeper.id, patch);
+        }
+        for (const n of rest) {
+          await base44.asServiceRole.entities[entityName].delete(n.id);
+          merged++;
+        }
+      }
+      return merged;
+    };
 
-    // --- Merge existing duplicates (same normalized name, 2+ records) ---
-    // Keeps the richest record, folds the others' interactions into it, then
-    // deletes the extras. This fixes "two Elara the Elder" entries.
-    const groups = {};
-    for (const n of existing) {
-      const key = normName(n.name);
-      if (!key) continue;
-      (groups[key] ||= []).push(n);
-    }
-    let merged = 0;
-    for (const key of Object.keys(groups)) {
-      const group = groups[key];
-      if (group.length < 2) continue;
-      // Pick the record with the most filled fields as the keeper.
-      const score = (n) =>
-        ['description', 'personality', 'portrait', 'location', 'faction'].filter(f => n[f]).length +
-        (n.interactions || []).length;
-      const sorted = [...group].sort((a, b) => score(b) - score(a));
-      const keeper = sorted[0];
-      const rest = sorted.slice(1);
-      const allInteractions = [...(keeper.interactions || []), ...rest.flatMap(n => n.interactions || [])];
-      const patch = {};
-      if (allInteractions.length > (keeper.interactions || []).length) patch.interactions = allInteractions;
-      // Carry over a portrait from a duplicate if the keeper lacks one.
-      if (!keeper.portrait) {
-        const withPortrait = rest.find(n => n.portrait);
-        if (withPortrait) patch.portrait = withPortrait.portrait;
-      }
-      if (Object.keys(patch).length) {
-        await base44.asServiceRole.entities.NPC.update(keeper.id, patch);
-      }
-      for (const n of rest) {
-        await base44.asServiceRole.entities.NPC.delete(n.id);
-        merged++;
-      }
-    }
+    let merged = await mergeDupes('NPC');
+    merged += await mergeDupes('Monster');
 
     // Re-fetch after merges so matching uses the surviving records.
-    const current = await base44.asServiceRole.entities.NPC.filter({ campaign_id });
+    let npcs = await base44.asServiceRole.entities.NPC.filter({ campaign_id });
+    let monsters = await base44.asServiceRole.entities.Monster.filter({ campaign_id });
 
     let created = 0;
     let updated = 0;
@@ -132,42 +136,97 @@ ${conversation.slice(-12000)}`;
       const name = String(e.name || '').trim();
       if (!name) continue;
       const key = normName(name);
-      const match = current.find(n => normName(n.name) === key);
+      const isMonster = e.category === 'monster';
 
-      if (match) {
-        const patch = {};
-        // Recategorize a person that is actually a creature (e.g. Shroud-Stalker
-        // filed as an NPC before the monster/creature split existed).
-        if (e.category === 'monster' && (match.category || 'npc') !== 'monster') {
-          patch.category = 'monster';
-          patch.is_hostile = true;
-          recategorized++;
-        }
-        // Fill any missing fields from the extracted data (never overwrite
-        // existing richer values).
-        if (!match.description && e.description) patch.description = e.description;
-        if (!match.personality && e.personality) patch.personality = e.personality;
-        if (e.monster_type && !match.monster_type) patch.monster_type = e.monster_type;
-        if (e.location && !match.location) patch.location = e.location;
-        if (e.relationship && !match.relationship) patch.relationship = e.relationship;
-        if (Object.keys(patch).length) {
-          await base44.asServiceRole.entities.NPC.update(match.id, patch);
-          updated++;
+      if (isMonster) {
+        // A creature: belongs in the Monster entity.
+        const monsterMatch = monsters.find(n => normName(n.name) === key);
+        if (monsterMatch) {
+          const patch = {};
+          if (!monsterMatch.description && e.description) patch.description = e.description;
+          if (e.monster_type && !monsterMatch.monster_type) patch.monster_type = e.monster_type;
+          if (e.location && !monsterMatch.location) patch.location = e.location;
+          if (Object.keys(patch).length) {
+            await base44.asServiceRole.entities.Monster.update(monsterMatch.id, patch);
+            updated++;
+          }
+        } else {
+          const npcMatch = npcs.find(n => normName(n.name) === key);
+          if (npcMatch) {
+            // Misfiled as a person before the split — migrate it to Monster.
+            await base44.asServiceRole.entities.Monster.create({
+              campaign_id,
+              name,
+              description: e.description || npcMatch.description || '',
+              monster_type: e.monster_type || npcMatch.monster_type || '',
+              location: e.location || npcMatch.location || '',
+              is_hostile: true,
+              status: npcMatch.status || 'alive',
+              portrait: npcMatch.portrait || '',
+              interactions: npcMatch.interactions || [],
+              members: memberIds
+            });
+            await base44.asServiceRole.entities.NPC.delete(npcMatch.id);
+            npcs = npcs.filter(n => n.id !== npcMatch.id);
+            recategorized++;
+          } else {
+            await base44.asServiceRole.entities.Monster.create({
+              campaign_id,
+              name,
+              description: e.description || '',
+              monster_type: e.monster_type || '',
+              location: e.location || '',
+              is_hostile: true,
+              members: memberIds
+            });
+            created++;
+          }
         }
       } else {
-        await base44.asServiceRole.entities.NPC.create({
-          campaign_id,
-          name,
-          description: e.description || '',
-          personality: e.personality || '',
-          relationship: e.relationship || '',
-          monster_type: e.monster_type || '',
-          location: e.location || '',
-          category: e.category || 'npc',
-          is_hostile: e.category === 'monster',
-          members: memberIds
-        });
-        created++;
+        // A person: belongs in the NPC entity.
+        const npcMatch = npcs.find(n => normName(n.name) === key);
+        if (npcMatch) {
+          const patch = {};
+          if (!npcMatch.description && e.description) patch.description = e.description;
+          if (!npcMatch.personality && e.personality) patch.personality = e.personality;
+          if (e.location && !npcMatch.location) patch.location = e.location;
+          if (e.relationship && !npcMatch.relationship) patch.relationship = e.relationship;
+          if (Object.keys(patch).length) {
+            await base44.asServiceRole.entities.NPC.update(npcMatch.id, patch);
+            updated++;
+          }
+        } else {
+          const monsterMatch = monsters.find(n => normName(n.name) === key);
+          if (monsterMatch) {
+            // Misfiled as a creature — migrate it to NPC.
+            await base44.asServiceRole.entities.NPC.create({
+              campaign_id,
+              name,
+              description: e.description || monsterMatch.description || '',
+              personality: e.personality || '',
+              relationship: e.relationship || '',
+              location: e.location || monsterMatch.location || '',
+              status: monsterMatch.status || 'alive',
+              portrait: monsterMatch.portrait || '',
+              interactions: monsterMatch.interactions || [],
+              members: memberIds
+            });
+            await base44.asServiceRole.entities.Monster.delete(monsterMatch.id);
+            monsters = monsters.filter(n => n.id !== monsterMatch.id);
+            recategorized++;
+          } else {
+            await base44.asServiceRole.entities.NPC.create({
+              campaign_id,
+              name,
+              description: e.description || '',
+              personality: e.personality || '',
+              relationship: e.relationship || '',
+              location: e.location || '',
+              members: memberIds
+            });
+            created++;
+          }
+        }
       }
     }
 

@@ -3,27 +3,27 @@ import { Skull, ChevronDown, Sparkles, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Image } from '@/components/ui/image';
 
-// Bestiary: the campaign's catalog of monsters/creatures (NPC records with
-// category 'monster'). Shown separately from the NPC relationship tracker.
-export default function Bestiary({ npcs }) {
+// Bestiary: the campaign's catalog of monsters/creatures. Monsters now live
+// in their own Monster entity, fully separated from NPCs.
+export default function Bestiary({ monsters }) {
   const [expanded, setExpanded] = useState(null);
-  const [portraits, setPortraits] = useState({}); // npcId -> portrait url override
+  const [portraits, setPortraits] = useState({}); // monsterId -> portrait url override
   const [generating, setGenerating] = useState(null);
 
-  const monsters = (npcs || []).filter(n => n.category === 'monster');
+  const list = monsters || [];
 
   const generatePortrait = async (m) => {
     setGenerating(m.id);
     try {
       const res = await base44.functions.invoke('dm_engine', { mode: 'generate_npc_portrait', npc: m });
       if (res.data?.url) {
-        await base44.entities.NPC.update(m.id, { portrait: res.data.url });
+        await base44.entities.Monster.update(m.id, { portrait: res.data.url });
         setPortraits(prev => ({ ...prev, [m.id]: res.data.url }));
       }
     } catch (e) { /* ignore */ } finally { setGenerating(null); }
   };
 
-  if (monsters.length === 0) {
+  if (list.length === 0) {
     return (
       <div className="space-y-2">
         <h4 className="font-serif text-amber-200 text-sm flex items-center gap-1.5"><Skull className="w-4 h-4" /> Bestiary</h4>
@@ -35,7 +35,7 @@ export default function Bestiary({ npcs }) {
   return (
     <div className="space-y-2">
       <h4 className="font-serif text-amber-200 text-sm flex items-center gap-1.5"><Skull className="w-4 h-4" /> Bestiary</h4>
-      {monsters.map(m => {
+      {list.map(m => {
         const isOpen = expanded === m.id;
         const portrait = portraits[m.id] || m.portrait;
         const isLoading = generating === m.id;

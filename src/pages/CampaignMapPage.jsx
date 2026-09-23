@@ -9,6 +9,7 @@ export default function CampaignMapPage() {
   const [campaign, setCampaign] = useState(null);
   const [locations, setLocations] = useState([]);
   const [npcs, setNpcs] = useState([]);
+  const [monsters, setMonsters] = useState([]);
   const [quests, setQuests] = useState([]);
 
   useEffect(() => {
@@ -16,15 +17,17 @@ export default function CampaignMapPage() {
   }, [id]);
 
   const load = async () => {
-    const [c, locs, npcsList, questsList] = await Promise.all([
+    const [c, locs, npcsList, monstersList, questsList] = await Promise.all([
       base44.entities.Campaign.get(id),
       base44.entities.Location.filter({ campaign_id: id }),
       base44.entities.NPC.filter({ campaign_id: id }),
+      base44.entities.Monster.filter({ campaign_id: id }),
       base44.entities.Quest.filter({ campaign_id: id }),
     ]);
     setCampaign(c);
     setLocations(locs || []);
     setNpcs(npcsList || []);
+    setMonsters(monstersList || []);
     setQuests(questsList || []);
   };
 
@@ -38,7 +41,7 @@ export default function CampaignMapPage() {
     <div className="min-h-screen bg-background flex flex-col">
       <ScreenHeader title="World Map" backTo={`/campaign/${id}`} />
       <div className="flex-1">
-        <CampaignMap campaign={campaign} locations={locations} npcs={npcs} quests={quests} />
+        <CampaignMap campaign={campaign} locations={locations} npcs={npcs} monsters={monsters} quests={quests} />
       </div>
     </div>
   );

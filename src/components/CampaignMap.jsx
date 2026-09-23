@@ -12,7 +12,7 @@ const TYPE_ICONS = {
   wilderness: '🌲', road: '🛤️', region: '🗺️',
 };
 
-export default function CampaignMap({ campaign, locations, npcs, quests }) {
+export default function CampaignMap({ campaign, locations, npcs, monsters, quests }) {
   const [selectedId, setSelectedId] = useState(null);
   const [mapImage, setMapImage] = useState(campaign?.map_image || null);
   const [generatingMap, setGeneratingMap] = useState(false);
@@ -27,11 +27,11 @@ export default function CampaignMap({ campaign, locations, npcs, quests }) {
     .filter(l => l.discovered || l.name.toLowerCase() === currentName)
     .map(l => ({ id: l.id, x: l.normX, y: l.normY }));
 
-  const relatedNpcs = selected ? npcs.filter(n =>
-    n.location && n.location.toLowerCase() === selected.name.toLowerCase() && (n.category || 'npc') !== 'monster'
+  const relatedNpcs = selected ? (npcs || []).filter(n =>
+    n.location && n.location.toLowerCase() === selected.name.toLowerCase()
   ) : [];
-  const relatedMonsters = selected ? npcs.filter(n =>
-    n.location && n.location.toLowerCase() === selected.name.toLowerCase() && n.category === 'monster'
+  const relatedMonsters = selected ? (monsters || []).filter(n =>
+    n.location && n.location.toLowerCase() === selected.name.toLowerCase()
   ) : [];
   const relatedQuests = selected ? quests.filter(q => {
     if (q.status !== 'active') return false;
@@ -67,6 +67,17 @@ export default function CampaignMap({ campaign, locations, npcs, quests }) {
       if (res.data?.url) {
         await base44.entities.NPC.update(npc.id, { portrait: res.data.url });
         setNpcPortraits(prev => ({ ...prev, [npc.id]: res.data.url }));
+      }
+    } catch (e) { /* ignore */ } finally { setGeneratingLoc(null); }
+  };
+
+  const generateMonsterPortrait = async (m) => {
+    setGeneratingLoc('mon-' + m.id);
+    try {
+      const res = await base44.functions.invoke('dm_engine', { mode: 'generate_npc_portrait', npc: m });
+      if (res.data?.url) {
+        await base44.entities.Monster.update(m.id, { portrait: res.data.url });
+        setNpcPortraits(prev => ({ ...prev, [m.id]: res.data.url }));
       }
     } catch (e) { /* ignore */ } finally { setGeneratingLoc(null); }
   };
@@ -243,11 +254,11 @@ export default function CampaignMap({ campaign, locations, npcs, quests }) {
                 <ul className="space-y-2">
                   {relatedMonsters.map(n => {
                     const portrait = npcPortraits[n.id] || n.portrait;
-                    const loadingNpc = generatingLoc === 'npc-' + n.id;
+                    const loadingNpc = generatingLoc === 'mon-' + n.id;
                     return (
                       <li key={n.id} className="flex items-start gap-2">
                         <button
-                          onClick={() => !portrait && generateNpcPortrait(n)}
+                          onClick={() => !portrait && generateMonsterPortrait(n)}
                           disabled={loadingNpc}
                           className="relative w-11 h-11 rounded-md overflow-hidden border border-red-900/40 bg-stone-800 flex-shrink-0 flex items-center justify-center hover:border-red-600/60 transition-colors"
                           aria-label={portrait ? n.name : `Generate illustration for ${n.name}`}

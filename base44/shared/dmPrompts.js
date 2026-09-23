@@ -55,10 +55,10 @@ export function buildPartyContext(players) {
   return text;
 }
 
-export function buildNPCContext(npcs) {
-  if (!npcs || !npcs.length) return "";
-  const people = npcs.filter(n => (n.category || "npc") !== "monster");
-  const monsters = npcs.filter(n => n.category === "monster");
+export function buildNPCContext(npcs, monsters) {
+  const people = npcs || [];
+  const mons = monsters || [];
+  if (!people.length && !mons.length) return "";
   let text = "";
   if (people.length) {
     text += "KNOWN NPCs:\n";
@@ -68,9 +68,9 @@ export function buildNPCContext(npcs) {
       if (npc.known_info) text += `  Known Info: ${npc.known_info}\n`;
     }
   }
-  if (monsters.length) {
+  if (mons.length) {
     text += "KNOWN MONSTERS:\n";
-    for (const m of monsters) {
+    for (const m of mons) {
       text += `- ${m.name}${m.monster_type ? ` (${m.monster_type})` : ""}: ${m.description || ""} | Status: ${m.status || "alive"} | Location: ${m.location || "unknown"}\n`;
     }
   }

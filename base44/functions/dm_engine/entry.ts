@@ -90,7 +90,7 @@ If you are generating a world and want to store structured world data, include:
 }
 
 async function handlePlay(base44, body) {
-  const { campaign_id, session_id, messages, campaign, character, players, active_player, npcs, quests, locations, diceResult, opening } = body;
+  const { campaign_id, session_id, messages, campaign, character, players, active_player, npcs, monsters, quests, locations, diceResult, opening } = body;
 
   // Multiplayer: accept a `players` array; fall back to single `character` for solo campaigns.
   const party = players && players.length ? players : (character ? [character] : []);
@@ -102,7 +102,7 @@ async function handlePlay(base44, body) {
   } else {
     system += '\n' + buildCharacterContext(party[0] || character);
   }
-  system += '\n' + buildNPCContext(npcs);
+  system += '\n' + buildNPCContext(npcs, monsters);
   system += '\n' + buildQuestContext(quests);
   system += '\n' + buildLocationContext(locations);
   if (party.length > 1) {
@@ -340,7 +340,7 @@ async function handleGenerateMap(base44, body) {
 async function handleGenerateNpcPortrait(base44, body) {
   const { npc } = body;
   const n = npc || {};
-  const hostile = n.is_hostile || n.status === 'hostile' || n.status === 'dead' || n.category === 'monster';
+  const hostile = n.is_hostile || n.status === 'hostile' || n.status === 'dead' || !!n.monster_type;
   const traits = [
     n.name ? 'Named ' + n.name : '',
     n.description || '',

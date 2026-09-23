@@ -27,6 +27,7 @@ export default function CampaignGame() {
   const [character, setCharacter] = useState(null);
   const [messages, setMessages] = useState([]);
   const [npcs, setNpcs] = useState([]);
+  const [monsters, setMonsters] = useState([]);
   const [quests, setQuests] = useState([]);
   const [locations, setLocations] = useState([]);
   const [input, setInput] = useState('');
@@ -135,9 +136,10 @@ export default function CampaignGame() {
         setPlayers([]);
       }
 
-      const [msgs, npcList, questList, locList] = await Promise.all([
+      const [msgs, npcList, monsterList, questList, locList] = await Promise.all([
         base44.entities.Message.filter({ campaign_id: id }, 'created_date'),
         base44.entities.NPC.filter({ campaign_id: id }),
+        base44.entities.Monster.filter({ campaign_id: id }),
         base44.entities.Quest.filter({ campaign_id: id }),
         base44.entities.Location.filter({ campaign_id: id })
       ]);
@@ -150,6 +152,7 @@ export default function CampaignGame() {
       );
       setMessages(sortedMsgs);
       setNpcs(npcList || []);
+      setMonsters(monsterList || []);
       setQuests(questList || []);
       setLocations(locList || []);
       setDataLoaded(true);
@@ -273,6 +276,7 @@ export default function CampaignGame() {
         players,
         active_player: character?.name,
         npcs,
+        monsters,
         quests,
         locations,
         messages: (allMsgs || []).slice(-20),
@@ -313,6 +317,7 @@ export default function CampaignGame() {
     let nextCamp = { ...campaign };
     let campChanged = false;
     const npcAdds = [];
+    const monsterAdds = [];
     const npcStatuses = [];
     const npcDispositions = [];
     const questAdds = [];
@@ -379,15 +384,14 @@ export default function CampaignGame() {
           // the DM often re-emits NPC_ADD for known NPCs, which would duplicate.
           if (!npcs.some(n => (n.name || '').toLowerCase() === String(u.arg1).toLowerCase()) &&
               !npcAdds.some(n => n.name.toLowerCase() === String(u.arg1).toLowerCase())) {
-            npcAdds.push({ campaign_id: id, name: u.arg1, description: u.arg2, personality: u.arg3, relationship: u.arg4, location: u.arg5, category: 'npc', members: allMemberIds });
+            npcAdds.push({ campaign_id: id, name: u.arg1, description: u.arg2, personality: u.arg3, relationship: u.arg4, location: u.arg5, members: allMemberIds });
           }
           break;
         case 'monster_add':
-          // Monsters are stored in the NPC entity with category 'monster' so
-          // they can be shown in a separate Bestiary. Same dedup-by-name guard.
-          if (!npcs.some(n => (n.name || '').toLowerCase() === String(u.arg1).toLowerCase()) &&
-              !npcAdds.some(n => n.name.toLowerCase() === String(u.arg1).toLowerCase())) {
-            npcAdds.push({ campaign_id: id, name: u.arg1, description: u.arg2, monster_type: u.arg3, location: u.arg4, category: 'monster', is_hostile: true, members: allMemberIds });
+          // Monsters live in their own Monster entity, fully separated from NPCs.
+          if (!monsters.some(n => (n.name || '').toLowerCase() === String(u.arg1).toLowerCase()) &&
+              !monsterAdds.some(n => n.name.toLowerCase() === String(u.arg1).toLowerCase())) {
+            monsterAdds.push({ campaign_id: id, name: u.arg1, description: u.arg2, monster_type: u.arg3, location: u.arg4, is_hostile: true, members: allMemberIds });
           }
           break;
         case 'npc_status':
@@ -455,10 +459,17 @@ export default function CampaignGame() {
       createdNpcs = await base44.entities.NPC.bulkCreate(npcAdds);
       if (!Array.isArray(createdNpcs)) createdNpcs = createdNpcs?.data || [];
     }
+    let createdMonsters = [];
+    if (monsterAdds.length) {
+      createdMonsters = await base44.entities.Monster.bulkCreate(monsterAdds);
+      if (!Array.isArray(createdMonsters)) createdMonsters = createdMonsters?.data || [];
+    }
     if (npcStatuses.length) {
       for (const ns of npcStatuses) {
         const npc = npcs.find(n => n.name.toLowerCase() === ns.name.toLowerCase());
-        if (npc) await base44.entities.NPC.update(npc.id, { status: ns.status });
+        if (npc) { await base44.entities.NPC.update(npc.id, { status: ns.status }); continue; }
+        const mon = monsters.find(n => n.name.toLowerCase() === ns.name.toLowerCase());
+        if (mon) await base44.entities.Monster.update(mon.id, { status: ns.status });
       }
     }
     if (npcDispositions.length) {
@@ -468,6 +479,13 @@ export default function CampaignGame() {
           const newDisp = Math.max(-100, Math.min(100, (npc.disposition || 0) + nd.change));
           const interactions = [...(npc.interactions || []), { summary: nd.reason, change: nd.change, timestamp: new Date().toISOString() }];
           await base44.entities.NPC.update(npc.id, { disposition: newDisp, interactions });
+          continue;
+        }
+        const mon = monsters.find(n => n.name.toLowerCase() === nd.name.toLowerCase());
+        if (mon) {
+          const newDisp = Math.max(-100, Math.min(100, (mon.disposition || 0) + nd.change));
+          const interactions = [...(mon.interactions || []), { summary: nd.reason, change: nd.change, timestamp: new Date().toISOString() }];
+          await base44.entities.Monster.update(mon.id, { disposition: newDisp, interactions });
         }
       }
     }
@@ -481,13 +499,15 @@ export default function CampaignGame() {
     if (locAdds.length) await base44.entities.Location.bulkCreate(locAdds);
 
     // Reload related data
-    if (npcAdds.length || npcStatuses.length || npcDispositions.length || questAdds.length || questUpdates.length || locAdds.length) {
-      const [npcList, questList, locList] = await Promise.all([
+    if (npcAdds.length || monsterAdds.length || npcStatuses.length || npcDispositions.length || questAdds.length || questUpdates.length || locAdds.length) {
+      const [npcList, monsterList, questList, locList] = await Promise.all([
         base44.entities.NPC.filter({ campaign_id: id }),
+        base44.entities.Monster.filter({ campaign_id: id }),
         base44.entities.Quest.filter({ campaign_id: id }),
         base44.entities.Location.filter({ campaign_id: id })
       ]);
       setNpcs(npcList || []);
+      setMonsters(monsterList || []);
       setQuests(questList || []);
       setLocations(locList || []);
     }
@@ -496,21 +516,25 @@ export default function CampaignGame() {
     // so it never blocks the turn; each portrait is persisted and patched into
     // state as soon as its image is painted.
     if (createdNpcs.length) {
-      autoGeneratePortraits(createdNpcs);
+      autoGeneratePortraits(createdNpcs, 'NPC');
+    }
+    if (createdMonsters.length) {
+      autoGeneratePortraits(createdMonsters, 'Monster');
     }
   };
 
   // Generate and persist a portrait for each newly created NPC/monster in the
-  // background. Monsters (category 'monster') render as creature concept art.
-  const autoGeneratePortraits = async (created) => {
-    for (const npc of created) {
-      if (npc.portrait) continue;
+  // background. Monster records (Monster entity) render as creature concept art.
+  const autoGeneratePortraits = async (created, entityName) => {
+    for (const item of created) {
+      if (item.portrait) continue;
       try {
-        const res = await base44.functions.invoke('dm_engine', { mode: 'generate_npc_portrait', npc });
+        const res = await base44.functions.invoke('dm_engine', { mode: 'generate_npc_portrait', npc: item });
         const url = res.data?.url;
         if (url) {
-          await base44.entities.NPC.update(npc.id, { portrait: url });
-          setNpcs(prev => prev.map(n => (n.id === npc.id ? { ...n, portrait: url } : n)));
+          await base44.entities[entityName].update(item.id, { portrait: url });
+          const setter = entityName === 'Monster' ? setMonsters : setNpcs;
+          setter(prev => prev.map(n => (n.id === item.id ? { ...n, portrait: url } : n)));
         }
       } catch (e) { /* leave the manual generate fallback available */ }
     }
@@ -710,7 +734,7 @@ export default function CampaignGame() {
       <div className="flex-1 flex overflow-hidden">
         {/* Left sidebar - desktop */}
         <div className="hidden md:flex w-64 border-r border-border bg-card/40 flex-col">
-          <LeftSidebar character={character} campaign={campaign} panel={leftPanel} setPanel={setLeftPanel} npcs={npcs} quests={quests} locations={locations} players={players} me={me} />
+          <LeftSidebar character={character} campaign={campaign} panel={leftPanel} setPanel={setLeftPanel} npcs={npcs} monsters={monsters} quests={quests} locations={locations} players={players} me={me} />
         </div>
 
         {/* Center chat */}
@@ -801,7 +825,7 @@ export default function CampaignGame() {
           <div className="absolute inset-0 bg-black/60" onClick={() => setLeftPanel(null)} />
           <div className="relative w-80 bg-card border-r border-border overflow-y-auto max-h-full safe-top safe-bottom">
             <button onClick={() => setLeftPanel(null)} aria-label="Close panel" className="absolute top-2 right-2 p-1 text-muted-foreground z-10"><X className="w-5 h-5" /></button>
-            <LeftSidebarContent character={character} campaign={campaign} panel={leftPanel} npcs={npcs} quests={quests} locations={locations} />
+            <LeftSidebarContent character={character} campaign={campaign} panel={leftPanel} npcs={npcs} monsters={monsters} quests={quests} locations={locations} />
           </div>
         </div>
       )}
@@ -848,7 +872,7 @@ export default function CampaignGame() {
   );
 }
 
-function LeftSidebar({ character, campaign, panel, setPanel, npcs, quests, locations, players, me }) {
+function LeftSidebar({ character, campaign, panel, setPanel, npcs, monsters, quests, locations, players, me }) {
   const partyMembers = (players || []).filter(p => p && (!character || p.id !== character.id));
   return (
     <div className="flex flex-col h-full">
@@ -903,14 +927,14 @@ function LeftSidebar({ character, campaign, panel, setPanel, npcs, quests, locat
       </div>
       {panel && (
         <div className="border-t border-border p-3 max-h-[50vh] overflow-y-auto hidden md:block">
-          <LeftSidebarContent character={character} campaign={campaign} panel={panel} npcs={npcs} quests={quests} locations={locations} />
+          <LeftSidebarContent character={character} campaign={campaign} panel={panel} npcs={npcs} monsters={monsters} quests={quests} locations={locations} />
         </div>
       )}
     </div>
   );
 }
 
-function LeftSidebarContent({ character, campaign, panel, npcs, quests, locations }) {
+function LeftSidebarContent({ character, campaign, panel, npcs, monsters, quests, locations }) {
   if (panel === 'sheet' && character) {
     const scores = character.ability_scores || {};
     return (
@@ -1003,10 +1027,10 @@ function LeftSidebarContent({ character, campaign, panel, npcs, quests, location
     );
   }
   if (panel === 'npcs') {
-    return <RelationshipTracker npcs={(npcs || []).filter(n => (n.category || 'npc') !== 'monster')} />;
+    return <RelationshipTracker npcs={npcs} />;
   }
   if (panel === 'monsters') {
-    return <Bestiary npcs={npcs} />;
+    return <Bestiary monsters={monsters} />;
   }
   if (panel === 'map') {
     return <MapPanel campaign={campaign} locations={locations} />;

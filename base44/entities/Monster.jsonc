@@ -1,5 +1,5 @@
 {
-  "name": "NPC",
+  "name": "Monster",
   "type": "object",
   "properties": {
     "campaign_id": {
@@ -11,35 +11,19 @@
     "description": {
       "type": "string"
     },
-    "personality": {
-      "type": "string"
-    },
-    "relationship": {
+    "monster_type": {
       "type": "string"
     },
     "location": {
       "type": "string"
     },
-    "faction": {
-      "type": "string"
+    "is_hostile": {
+      "type": "boolean",
+      "default": true
     },
     "status": {
       "type": "string",
       "default": "alive"
-    },
-    "known_info": {
-      "type": "string"
-    },
-    "history": {
-      "type": "string"
-    },
-    "is_hostile": {
-      "type": "boolean",
-      "default": false
-    },
-    "disposition": {
-      "type": "number",
-      "default": 0
     },
     "portrait": {
       "type": "string"
