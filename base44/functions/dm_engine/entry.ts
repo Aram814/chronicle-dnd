@@ -104,7 +104,7 @@ After your narration, if the game state changed, include one or more update comm
 [[ITEM_ADD: <item name> | <optional description> ]]
 [[ITEM_REMOVE: <item name> ]]
 [[GOLD_CHANGE: <amount> ]]
-[[NPC_ADD: <name> | <description> | <personality> | <relationship> | <location> ]]
+[[NPC_ADD: <name> | <description> | <personality> | <relationship as a word: ally/friendly/neutral/wary/hostile/rival> | <location> ]]
 [[NPC_UPDATE: <name> | <field> | <value> ]]
 [[NPC_STATUS: <name> | <status e.g. dead/alive/friendly/hostile> ]]
 [[NPC_DISPOSITION: <name> | <signed change amount e.g. +5 or -10> | <short reason for the shift> ]]
@@ -121,7 +121,7 @@ After your narration, if the game state changed, include one or more update comm
 [[WORLD_EVENT: <event description> ]]
 
 TRACKING THE WORLD — CRITICAL:
-- When the player MEETS or INTERACTS WITH a new NPC for the first time, you MUST emit [[NPC_ADD: <name> | <description> | <personality> | <relationship> | <location> ]]. Even if the NPC is minor, add them so the player has a record. You may omit later fields if unknown, but always include at least the name and a short description.
+- When the player MEETS or INTERACTS WITH a new NPC for the first time, you MUST emit [[NPC_ADD: <name> | <description> | <personality> | <relationship> | <location> ]]. This includes hostile NPCs, enemies, guards, and named monsters — add them all so the player has a record. Even if the NPC is minor, add them. You may omit later fields if unknown, but always include at least the name and a short description.
 - When the player's dialogue or actions shift an NPC's attitude toward them, emit [[NPC_DISPOSITION: <name> | <signed change> | <reason> ]]. Track this honestly — a caught lie, insult, or broken promise lowers disposition; help, honesty, and respect raise it.
 - When the player ARRIVES AT or DISCOVERS a new location, you MUST emit [[LOCATION_ADD: <name> | <type> | <description> ]]. You may omit type/description if minimal, but always include the name.
 - When a new quest or objective is introduced, emit [[QUEST_ADD: <name> | <type main/side> | <description> ]].
@@ -140,6 +140,12 @@ Follow this structure:
 2. ${isMultiplayer ? 'PARTY' : 'CHARACTER'} & GOALS: ${isMultiplayer ? 'Introduce each member of the party using their EXACT names, species, class, and background as listed in the PARTY MEMBERS section above — do NOT invent or rename characters. Introduce each one briefly, then explain what brings them together and what they are setting out to accomplish as a group. Establish why they are travelling together. If the campaign has active quests or a clear objective, frame the party\'s shared goals in that context. If no explicit quest exists yet, give the group a common purpose or reason for being in this place.' : 'Introduce the player\'s character using their EXACT name, species, class, and background as listed in the CHARACTER section above — do NOT invent or rename them. Explain what brings them here and what they are setting out to accomplish. If the campaign has active quests or a clear objective, frame the character\'s goals in that context. If no explicit quest exists yet, give the character a personal motivation or reason for being in this place (drawn from their background, bonds, or backstory). Make the player feel their character has purpose and direction.'}
 3. PAINT THE WORLD: Describe the starting location with calm, vivid sensory detail — the time of day, the weather, the sounds and smells, the texture of the place. Let the ${isMultiplayer ? 'party' : 'player'} take in their surroundings before anything demands their attention.
 4. INTRODUCE A GENTLE HOOK: Only after the scene is established, present a subtle invitation — a person approaching, a rumor overheard, a notice on a board, a sound in the distance, a letter waiting for them. This is the seed of adventure, not an emergency. Give the ${isMultiplayer ? 'players' : 'player'} space to choose how to engage with it.
+
+5. TRACK THE WORLD — REQUIRED: After your narration, emit the state-update tags (formats listed above in STATE UPDATES) so the player's journal starts populated:
+   - [[CURRENT_LOCATION: <starting location name> ]]
+   - [[LOCATION_ADD: <starting location name> | <type e.g. tavern/village/city/wilderness> | <1-sentence description> ]]
+   - [[NPC_ADD: <name> | <description> | <personality> | <relationship word> | <location> ]] for every NPC you introduce in the opening (at minimum, whoever brings the hook).
+   Without these, the player's World Map and NPC list will be empty.
 
 Keep it immersive and unhurried (${isMultiplayer ? '5-7' : '4-6'} paragraphs). Do not force urgency or threaten the ${isMultiplayer ? 'party' : 'character'} in the opening. End with an open-ended prompt that invites the ${isMultiplayer ? 'players' : 'player'} to act — "${isMultiplayer ? 'What do you do?' : 'What do you do?'}" — or a gentle question, NOT a roll request. The first roll should come only after a ${isMultiplayer ? 'player' : 'player'} has chosen to engage.`;
   } else {

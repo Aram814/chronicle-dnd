@@ -51,11 +51,11 @@ export function parseDMReply(raw) {
 
   // State updates - all the [[XXX: ...]] patterns
   const patterns = [
-    { regex: /\[\[HP_CHANGE:\s*(-?\d+)\]\]/g, type: 'hp_change' },
-    { regex: /\[\[XP_GAIN:\s*(-?\d+)\]\]/g, type: 'xp_gain' },
-    { regex: /\[\[ITEM_ADD:\s*([^|]+)(?:\|\s*([^|]+?))?\]\]/g, type: 'item_add' },
-    { regex: /\[\[ITEM_REMOVE:\s*([^|]+?)\]\]/g, type: 'item_remove' },
-    { regex: /\[\[GOLD_CHANGE:\s*(-?\d+)\]\]/g, type: 'gold_change' },
+    { regex: /\[\[HP_CHANGE:\s*(-?\d+)\s*\]\]/g, type: 'hp_change' },
+    { regex: /\[\[XP_GAIN:\s*(-?\d+)\s*\]\]/g, type: 'xp_gain' },
+    { regex: /\[\[ITEM_ADD:\s*([^|]+)(?:\|\s*([^|]+?))?\s*\]\]/g, type: 'item_add' },
+    { regex: /\[\[ITEM_REMOVE:\s*([^|]+?)\s*\]\]/g, type: 'item_remove' },
+    { regex: /\[\[GOLD_CHANGE:\s*(-?\d+)\s*\]\]/g, type: 'gold_change' },
     { regex: /\[\[NPC_ADD:\s*([^|]+?)(?:\s*\|\s*([^|]*))?(?:\s*\|\s*([^|]*))?(?:\s*\|\s*([^|]*))?(?:\s*\|\s*([^|]*?))?\s*\]\]/g, type: 'npc_add' },
     { regex: /\[\[NPC_UPDATE:\s*([^|]+)\|\s*([^|]+)\|\s*([^|]+?)\]\]/g, type: 'npc_update' },
     { regex: /\[\[NPC_STATUS:\s*([^|]+)\|\s*([^|]+?)\]\]/g, type: 'npc_status' },
@@ -63,8 +63,8 @@ export function parseDMReply(raw) {
     { regex: /\[\[QUEST_ADD:\s*([^|]+?)(?:\s*\|\s*([^|]*))?(?:\s*\|\s*([^|]*?))?\s*\]\]/g, type: 'quest_add' },
     { regex: /\[\[QUEST_UPDATE:\s*([^|]+)\|\s*([^|]+?)\]\]/g, type: 'quest_update' },
     { regex: /\[\[LOCATION_ADD:\s*([^|]+?)(?:\s*\|\s*([^|]*))?(?:\s*\|\s*([^|]*?))?\s*\]\]/g, type: 'location_add' },
-    { regex: /\[\[LOCATION_UPDATE:\s*([^|]+)\|\s*(true|false)\]\]/g, type: 'location_update' },
-    { regex: /\[\[COMBAT_START:\s*(\[[\s\S]*?\])\]\]/g, type: 'combat_start' },
+    { regex: /\[\[LOCATION_UPDATE:\s*([^|]+)\|\s*(true|false)\s*\]\]/g, type: 'location_update' },
+    { regex: /\[\[COMBAT_START:\s*(\[[\s\S]*?\])\s*\]\]/g, type: 'combat_start' },
     { regex: /\[\[COMBAT_END\]\]/g, type: 'combat_end' },
     { regex: /\[\[LEVEL_UP\]\]/g, type: 'level_up' },
     { regex: /\[\[CONDITION_ADD:\s*([^|]+?)\]\]/g, type: 'condition_add' },
@@ -73,14 +73,19 @@ export function parseDMReply(raw) {
     { regex: /\[\[WORLD_EVENT:\s*([^|]+?)\]\]/g, type: 'world_event' }
   ];
 
+  // Collect all matches first (matchAll iterates without mutating the string),
+  // then strip the tags. Mutating `text` inside an exec() loop corrupts
+  // lastIndex and silently drops duplicate same-type tags.
   for (const p of patterns) {
-    let m;
-    while ((m = p.regex.exec(text)) !== null) {
+    const matches = [...text.matchAll(p.regex)];
+    for (const m of matches) {
       const update = { type: p.type, raw: m[0] };
       for (let i = 1; i < m.length; i++) update[`arg${i}`] = m[i] ? m[i].trim() : '';
       result.stateUpdates.push(update);
-      text = text.replace(m[0], '');
     }
+  }
+  for (const p of patterns) {
+    text = text.replace(p.regex, '');
   }
 
   result.narration = text.trim();
