@@ -1,6 +1,6 @@
 {
   "name": "NPC Roll Reaction",
-  "description": "When a player rolls against an NPC, evaluates the result \u2014 on success improves NPC disposition and posts a congratulatory message; on a critical failure (natural 1) invokes the DM engine to generate a negative consequence.",
+  "description": "When a player rolls against an NPC, evaluates the result \u2014 on success improves NPC disposition and posts a congratulatory message; on a critical failure (natural 1) invokes the DM engine to generate and persist a negative consequence.",
   "trigger": {
     "config": {
       "trigger_type": "entity",
@@ -59,33 +59,13 @@
             "function_name": "dm_engine",
             "args": {
               "mode": "npc_consequence",
-              "campaign_id": "${ .evaluate.campaign_id }",
-              "npc_id": "${ .evaluate.npc_id }",
               "roll_id": "${ .evaluate.roll_id }"
-            }
-          },
-          "then": "persist_consequence",
-          "x-base44": {
-            "title": "Generate negative consequence",
-            "description": "DM engine narrates the failure"
-          }
-        }
-      },
-      {
-        "persist_consequence": {
-          "call": "invoke_backend_function",
-          "with": {
-            "function_name": "persist_consequence",
-            "args": {
-              "campaign_id": "${ .evaluate.campaign_id }",
-              "session_id": "${ .evaluate.session_id }",
-              "content": "${ .generate_consequence.reply }"
             }
           },
           "then": "end",
           "x-base44": {
-            "title": "Post consequence message",
-            "description": "Save the DM narration"
+            "title": "Generate and post consequence",
+            "description": "DM engine narrates the failure and posts it to the campaign"
           }
         }
       }

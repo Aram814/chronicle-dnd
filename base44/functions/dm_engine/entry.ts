@@ -314,11 +314,37 @@ async function handleGeneratePortrait(base44, body) {
   return Response.json({ url: res.url });
 }
 
-// Workflow-triggered mode: narrate a negative consequence for a critical failure
-// against an NPC. Fetches its own context via the service role (no user session).
+// Workflow-triggered mode: narrate a negative consequence for a critical
+// failure against an NPC, then persist it as a DM message directly.
+//
+// Security: this mode is reached only after the isWorkflowCall(req) header
+// gate in the dispatcher. It does NOT trust caller-supplied campaign/npc
+// ids — everything is derived from the triggering roll record (fetched
+// server-side via asServiceRole), so a consequence can only ever affect the
+// campaign the roll actually belongs to (no IDOR). It re-verifies server-side
+// that the roll is a genuine natural-1 NPC roll before spending an LLM call
+// (no arbitrary-roll credit abuse), and persists the narration itself
+// (returning only {ok}), so the private campaign content baked into the
+// narration is never returned to a caller that might not be a member.
 async function handleNpcConsequence(base44, body) {
-  const { campaign_id, npc_id, roll_id } = body;
-  const roll = await base44.asServiceRole.entities.DiceRoll.get(roll_id);
+  const { roll_id } = body;
+  if (!roll_id) return Response.json({ error: 'roll_id required' }, { status: 400 });
+
+  const roll = await base44.asServiceRole.entities.DiceRoll.get(roll_id).catch(() => null);
+  if (!roll) return Response.json({ error: 'Roll not found' }, { status: 404 });
+
+  // Re-verify this is a genuine critical-failure NPC roll. The workflow only
+  // calls us on crit fails, but a direct caller must not trigger an LLM call
+  // (and credit spend) for an arbitrary roll.
+  if (roll.result !== 1 || !roll.npc_id) {
+    return Response.json({ error: 'Not a critical-failure NPC roll' }, { status: 403 });
+  }
+
+  // Derive all ids from the roll — ignore any caller-supplied campaign/npc id.
+  const campaign_id = roll.campaign_id;
+  const npc_id = roll.npc_id;
+  const session_id = roll.session_id || campaign_id;
+
   const npc = await base44.asServiceRole.entities.NPC.get(npc_id).catch(() => null);
   const campaign = await base44.asServiceRole.entities.Campaign.get(campaign_id).catch(() => null);
   let character = null;
@@ -335,5 +361,15 @@ async function handleNpcConsequence(base44, body) {
 
   const prompt = `The player just rolled a CRITICAL FAILURE (natural 1) on a ${roll.dice_type} for "${roll.reason || 'an interaction'}" involving the NPC ${npc ? npc.name : 'an NPC'}.\n\nRecent conversation:\n${recent}\n\nNarrate a meaningful, in-fiction NEGATIVE CONSEQUENCE for the player as a result of this critical failure. Tie it to the NPC's disposition and the current situation. Keep it vivid but concise (2-4 sentences). Do not invent dice results. End with an open prompt for the player.`;
   const res = await base44.asServiceRole.integrations.Core.InvokeLLM({ prompt, model: 'automatic' });
-  return Response.json({ reply: res });
+
+  // Persist the narration directly to the roll's own campaign. Returning the
+  // narration to the caller would expose private campaign content to a caller
+  // that is not a member; writing it here keeps it inside the trust boundary.
+  await base44.asServiceRole.entities.Message.create({
+    session_id,
+    campaign_id,
+    sender: 'dm',
+    content: res
+  });
+  return Response.json({ ok: true });
 }
