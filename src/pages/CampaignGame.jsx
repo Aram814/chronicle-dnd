@@ -40,6 +40,8 @@ export default function CampaignGame() {
   const [me, setMe] = useState(null);
   const messagesEndRef = useRef(null);
   const openingRef = useRef(false);
+  // Single-flight guard: one roll request may only produce one official result.
+  const rollInFlightRef = useRef(false);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [editingMessage, setEditingMessage] = useState(null);
 
@@ -444,44 +446,58 @@ export default function CampaignGame() {
 
   const executeRoll = (rollRequest) => {
     if (!character) return;
+    // Isolate each roll: ignore any click while a roll is already in flight
+    // (animation playing or result being processed) so one request = one result.
+    if (rollInFlightRef.current || rollAnim) return;
     const rollData = rollForRequest(character, rollRequest);
     sound.playDiceRoll();
+    rollInFlightRef.current = true;
+    // Clear the prompt immediately so the button can't be clicked again.
+    setPendingRoll(null);
     // Show the tumbling die; persist + forward to DM once it settles.
     setRollAnim({ rollData });
   };
 
   const finishRequestedRoll = async () => {
+    // Guard: RollingDie's completedRef prevents double callbacks, but this
+    // ensures one official result even if the overlay re-mounts or a second
+    // click slipped through. Only the in-flight roll may process here.
+    if (!rollInFlightRef.current) return;
     const rollData = rollAnim?.rollData;
     setRollAnim(null);
-    if (!rollData) return;
-    await base44.entities.DiceRoll.create({
-      campaign_id: id,
-      character_id: character.id,
-      dice_type: rollData.dice_type,
-      modifier: rollData.modifier,
-      result: rollData.result,
-      total: rollData.total,
-      reason: rollData.reason,
-      dc: rollData.dc ?? null,
-      npc_id: findNpcInReason(rollData.reason, npcs),
-      members: allMemberIds
-    });
-    const rollMsg = {
-      session_id: id,
-      campaign_id: id,
-      sender: 'player',
-      content: `I roll for ${rollData.label || rollData.reason}.`,
-      sender_name: character?.name || me?.full_name || 'Player',
-      dice_roll: rollData,
-      members: allMemberIds
-    };
-    const createdRollMsg = await base44.entities.Message.create(rollMsg);
-    setMessages(prev => {
-      if (prev.find(m => m.id === createdRollMsg.id || (m.content === createdRollMsg.content && m.sender === 'player' && (m.sender_name || '') === (createdRollMsg.sender_name || '')))) return prev;
-      return [...prev, createdRollMsg];
-    });
-    setPendingRoll(null);
-    await getDMResponse([...messages, createdRollMsg], rollData);
+    if (!rollData) { rollInFlightRef.current = false; return; }
+    try {
+      await base44.entities.DiceRoll.create({
+        campaign_id: id,
+        character_id: character.id,
+        dice_type: rollData.dice_type,
+        modifier: rollData.modifier,
+        result: rollData.result,
+        total: rollData.total,
+        reason: rollData.reason,
+        dc: rollData.dc ?? null,
+        npc_id: findNpcInReason(rollData.reason, npcs),
+        members: allMemberIds
+      });
+      const rollMsg = {
+        session_id: id,
+        campaign_id: id,
+        sender: 'player',
+        content: `I roll for ${rollData.label || rollData.reason}.`,
+        sender_name: character?.name || me?.full_name || 'Player',
+        dice_roll: rollData,
+        members: allMemberIds
+      };
+      const createdRollMsg = await base44.entities.Message.create(rollMsg);
+      setMessages(prev => {
+        if (prev.find(m => m.id === createdRollMsg.id || (m.content === createdRollMsg.content && m.sender === 'player' && (m.sender_name || '') === (createdRollMsg.sender_name || '')))) return prev;
+        return [...prev, createdRollMsg];
+      });
+      setPendingRoll(null);
+      await getDMResponse([...messages, createdRollMsg], rollData);
+    } finally {
+      rollInFlightRef.current = false;
+    }
   };
 
   const handleManualRoll = async (rollData) => {
