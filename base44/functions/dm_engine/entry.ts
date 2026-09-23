@@ -153,7 +153,7 @@ Keep it immersive and unhurried (${isMultiplayer ? '5-7' : '4-6'} paragraphs). D
       const roller = active_player || diceResult.character_name || 'The player';
       prompt += `${roller} just rolled: ${diceResult.dice_type} => ${diceResult.result} + ${diceResult.modifier} = ${diceResult.total} for ${diceResult.reason}.\nNarrate the outcome of this roll honestly and impartially. If it is a failure (total below the DC, or a natural 1), the action fails — narrate the real, in-fiction consequence without softening it or rescuing the character. Do not tilt the outcome toward success.\n\n`;
     }
-    prompt += `Continue as the DM. Narrate the outcome and end with an open prompt or a roll request if needed.`;
+    prompt += `Continue as the DM. Narrate the outcome of the player's declared action. If their action requires a check and they haven't rolled yet, request a roll. Otherwise, present the scene and end with an open-ended "What do you do?" — do NOT request a roll unless the player just declared an action that needs one.`;
   }
 
   const res = await base44.asServiceRole.integrations.Core.InvokeLLM({ prompt: system + '\n\n' + prompt, model: 'automatic' });
