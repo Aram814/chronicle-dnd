@@ -164,8 +164,10 @@ export default function CampaignGame() {
       setMessages(prev => {
         if (event.type === 'create') {
           if (prev.find(m => m.id === event.data.id)) return prev;
-          // Skip optimistic duplicates (same content + sender + name already in state)
-          if (prev.find(m => m.content === event.data.content && m.sender === event.data.sender && (m.sender_name || '') === (event.data.sender_name || ''))) return prev;
+          // Skip optimistic duplicates (same content + sender + name already in state).
+          // Roll messages (with dice_roll) are exempt — repeated rolls share content
+          // like "I roll for STR." and must not be dropped as duplicates.
+          if (!event.data.dice_roll && prev.find(m => m.content === event.data.content && m.sender === event.data.sender && (m.sender_name || '') === (event.data.sender_name || ''))) return prev;
           return [...prev, event.data];
         }
         if (event.type === 'update') return prev.map(m => m.id === event.data.id ? event.data : m);
@@ -528,7 +530,10 @@ export default function CampaignGame() {
       };
       const createdRollMsg = await base44.entities.Message.create(rollMsg);
       setMessages(prev => {
-        if (prev.find(m => m.id === createdRollMsg.id || (m.content === createdRollMsg.content && m.sender === 'player' && (m.sender_name || '') === (createdRollMsg.sender_name || '')))) return prev;
+        if (prev.find(m => m.id === createdRollMsg.id)) return prev;
+        // Roll messages share content like "I roll for STR." — only content-dedup
+        // plain text, never roll messages, or repeated rolls get dropped.
+        if (!createdRollMsg.dice_roll && prev.find(m => m.content === createdRollMsg.content && m.sender === 'player' && (m.sender_name || '') === (createdRollMsg.sender_name || ''))) return prev;
         return [...prev, createdRollMsg];
       });
       setPendingRoll(null);
@@ -562,7 +567,8 @@ export default function CampaignGame() {
     };
     const createdRollMsg = await base44.entities.Message.create(rollMsg);
     setMessages(prev => {
-      if (prev.find(m => m.id === createdRollMsg.id || (m.content === createdRollMsg.content && m.sender === 'player' && (m.sender_name || '') === (createdRollMsg.sender_name || '')))) return prev;
+      if (prev.find(m => m.id === createdRollMsg.id)) return prev;
+      if (!createdRollMsg.dice_roll && prev.find(m => m.content === createdRollMsg.content && m.sender === 'player' && (m.sender_name || '') === (createdRollMsg.sender_name || ''))) return prev;
       return [...prev, createdRollMsg];
     });
   };
