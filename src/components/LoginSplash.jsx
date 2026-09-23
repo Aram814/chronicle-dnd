@@ -22,9 +22,8 @@ export default function LoginSplash({ children, footer }) {
         alt=""
         aria-hidden="true"
       />
-      {/* Darkening overlays for readability */}
-      <div className="absolute inset-0 bg-gradient-to-b from-stone-950/85 via-stone-950/75 to-stone-950/90" />
-      <div className="absolute inset-0 bg-stone-950/30" />
+      {/* Subtle darkening for readability */}
+      <div className="absolute inset-0 bg-gradient-to-b from-stone-950/40 via-stone-950/20 to-stone-950/55" />
 
       {/* Content */}
       <div className="relative z-10 w-full max-w-md px-4 py-10">
@@ -47,7 +46,7 @@ export default function LoginSplash({ children, footer }) {
 
         {/* Login card — fades in after the splash delay */}
         <div
-          className={`bg-stone-950/80 backdrop-blur-md rounded-2xl border border-amber-900/40 shadow-2xl shadow-amber-950/30 p-8 transition-all duration-1000 ease-out ${
+          className={`bg-stone-950/40 backdrop-blur-sm rounded-2xl border border-amber-900/30 shadow-2xl shadow-amber-950/20 p-8 transition-all duration-1000 ease-out ${
             ready ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
           }`}
         >
