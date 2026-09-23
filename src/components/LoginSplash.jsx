@@ -1,9 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Image } from '@/components/ui/image';
 
 const SPLASH_ART = 'https://media.base44.com/images/public/6ab1f1781754d99d63c58e01/1a1d7d32c_ChronicleDD.jpeg';
 
 export default function LoginSplash({ children, footer }) {
+  // True splash: the branding/art shows immediately, then the login card
+  // fades in after a short delay so the title screen gets its moment.
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setReady(true), 2200);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-stone-950">
       {/* Background artwork */}
@@ -37,13 +45,23 @@ export default function LoginSplash({ children, footer }) {
           </div>
         </div>
 
-        {/* Login card */}
-        <div className="bg-stone-950/80 backdrop-blur-md rounded-2xl border border-amber-900/40 shadow-2xl shadow-amber-950/30 p-8">
+        {/* Login card — fades in after the splash delay */}
+        <div
+          className={`bg-stone-950/80 backdrop-blur-md rounded-2xl border border-amber-900/40 shadow-2xl shadow-amber-950/30 p-8 transition-all duration-1000 ease-out ${
+            ready ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
+          }`}
+        >
           {children}
         </div>
 
         {footer && (
-          <p className="text-center text-sm text-amber-200/70 mt-6">{footer}</p>
+          <p
+            className={`text-center text-sm text-amber-200/70 mt-6 transition-all duration-1000 ease-out ${
+              ready ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            {footer}
+          </p>
         )}
       </div>
     </div>
