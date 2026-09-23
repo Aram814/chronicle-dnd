@@ -25,8 +25,7 @@
           "with": {
             "function_name": "track_quest_progress",
             "args": {
-              "roll_id": "${ .trigger.entity_id }",
-              "secret": "wf_7c9f3a2e8b1d4e6a90f2c4b8d1e3a7f9c5"
+              "roll_id": "${ .trigger.entity_id }"
             }
           },
           "then": "end",

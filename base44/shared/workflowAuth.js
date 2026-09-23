@@ -1,17 +1,20 @@
-// Internal shared secret used to authenticate workflow-to-function calls.
+// Native workflow-call authentication.
 //
-// Workflow steps (invoke_backend_function) run as the service role with no
-// user session, so user auth (base44.auth.me()) cannot gate them — yet the raw
-// HTTP endpoint is reachable by anyone on a public app. To keep these
-// internal-only functions from being driven by anonymous external callers,
-// the workflow passes this secret in the request body and the function
-// verifies it here.
+// The Base44 platform injects an `x-workflow-run` header on every backend
+// function call that originates from a workflow run. Direct calls (frontend
+// SDK, the test tool, or raw external HTTP) do not carry it. Checking for
+// that header lets internal-only functions verify the call came from a
+// workflow — without a shared secret hardcoded into the workflow definition
+// (which the security scanner flags as a hardcoded credential).
 //
-// This module and the workflow definitions all live under base44/ (server-side
-// only, never shipped to the client bundle), so the value is not exposed to
-// external callers.
-export const WORKFLOW_SECRET = 'wf_7c9f3a2e8b1d4e6a90f2c4b8d1e3a7f9c5';
-
-export function isWorkflowCall(body) {
-  return !!body && body.secret === WORKFLOW_SECRET;
+// This module lives under base44/ (server-side only, never shipped to the
+// client bundle), and the header is platform-controlled (not client-settable),
+// so an external caller cannot forge it.
+export function isWorkflowCall(req) {
+  if (!req || !req.headers || typeof req.headers.forEach !== 'function') return false;
+  let present = false;
+  req.headers.forEach((_value, key) => {
+    if (key.toLowerCase() === 'x-workflow-run') present = true;
+  });
+  return present;
 }

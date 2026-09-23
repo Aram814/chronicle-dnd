@@ -6,12 +6,12 @@ import { isWorkflowCall } from '../../shared/workflowAuth.js';
 // uses the LLM to evaluate quest progress and generate a narrative summary,
 // updates quest statuses, and posts the narration as a system message that
 // the DM bot can reference for story continuity.
-// Internal-only: gated by the workflow shared secret (no user session available).
+// Internal-only: gated by the native x-workflow-run header check.
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
-    if (!isWorkflowCall(body)) return Response.json({ error: 'Forbidden' }, { status: 403 });
+    if (!isWorkflowCall(req)) return Response.json({ error: 'Forbidden' }, { status: 403 });
     const { roll_id } = body;
     if (!roll_id) return Response.json({ error: 'roll_id required' }, { status: 400 });
 

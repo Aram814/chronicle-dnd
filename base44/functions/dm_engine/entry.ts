@@ -8,12 +8,12 @@ export default async function(req) {
     const body = await req.json();
     const { mode } = body;
 
-    // npc_consequence is invoked by the NPC Roll Reaction workflow (service role,
-    // no user session). Gate it with the internal workflow secret instead of
-    // user auth; it fetches campaign data via asServiceRole using caller-supplied
-    // ids, so it must not be reachable by anonymous external callers.
+    // npc_consequence is invoked by the NPC Roll Reaction workflow (service role).
+    // Gate it with the native x-workflow-run header check instead of user auth;
+    // it fetches campaign data via asServiceRole using caller-supplied ids, so
+    // it must not be reachable by anonymous external callers.
     if (mode === 'npc_consequence') {
-      if (!isWorkflowCall(body)) return Response.json({ error: 'Forbidden' }, { status: 403 });
+      if (!isWorkflowCall(req)) return Response.json({ error: 'Forbidden' }, { status: 403 });
       return await handleNpcConsequence(base44, body);
     }
 
