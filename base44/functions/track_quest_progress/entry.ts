@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.49';
-import { isWorkflowCall } from '../../shared/workflowAuth.js';
+import { isWorkflowCall, authorizeWorkflowRoll } from '../../shared/workflowAuth.js';
 
 // Workflow step: Quest Tracker agent logic.
 // Triggered on every DiceRoll creation. Reads the roll + recent story context,
@@ -12,17 +12,15 @@ export default async function(req) {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
     if (!isWorkflowCall(req)) return Response.json({ error: 'Forbidden' }, { status: 403 });
-    const { roll_id } = body;
-    if (!roll_id) return Response.json({ error: 'roll_id required' }, { status: 400 });
-
-    const roll = await base44.asServiceRole.entities.DiceRoll.get(roll_id);
+    const { roll_id, user_id } = body;
+    const auth = await authorizeWorkflowRoll(base44, roll_id, user_id);
+    if (auth.error) return Response.json(auth.error.body, { status: auth.error.status });
+    const { roll, campaign } = auth;
     const campaign_id = roll.campaign_id;
-    if (!campaign_id) return Response.json({ outcome: 'no_campaign' });
 
-    const [messages, quests, campaign] = await Promise.all([
+    const [messages, quests] = await Promise.all([
       base44.asServiceRole.entities.Message.filter({ campaign_id }),
-      base44.asServiceRole.entities.Quest.filter({ campaign_id }),
-      base44.asServiceRole.entities.Campaign.get(campaign_id).catch(() => null)
+      base44.asServiceRole.entities.Quest.filter({ campaign_id })
     ]);
 
     const activeQuests = (quests || []).filter(q => q.status === 'active');

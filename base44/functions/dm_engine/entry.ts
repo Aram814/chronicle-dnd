@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { buildCharacterContext, buildPartyContext, buildWorldContext, buildNPCContext, buildQuestContext, buildLocationContext, DM_SYSTEM_BASE } from '../../shared/dmPrompts.js';
-import { isWorkflowCall } from '../../shared/workflowAuth.js';
+import { isWorkflowCall, authorizeWorkflowRoll } from '../../shared/workflowAuth.js';
 
 export default async function(req) {
   try {
@@ -9,9 +9,10 @@ export default async function(req) {
     const { mode } = body;
 
     // npc_consequence is invoked by the NPC Roll Reaction workflow (service role).
-    // Gate it with the native x-workflow-run header check instead of user auth;
-    // it fetches campaign data via asServiceRole using caller-supplied ids, so
-    // it must not be reachable by anonymous external callers.
+    // Gated by the native x-workflow-run header AND a server-side membership
+    // check (authorizeWorkflowRoll): the roll's creator must be a member of the
+    // roll's campaign, so an external caller cannot target another user's
+    // campaign even if the header were forgeable.
     if (mode === 'npc_consequence') {
       if (!isWorkflowCall(req)) return Response.json({ error: 'Forbidden' }, { status: 403 });
       return await handleNpcConsequence(base44, body);
@@ -327,11 +328,10 @@ async function handleGeneratePortrait(base44, body) {
 // (returning only {ok}), so the private campaign content baked into the
 // narration is never returned to a caller that might not be a member.
 async function handleNpcConsequence(base44, body) {
-  const { roll_id } = body;
-  if (!roll_id) return Response.json({ error: 'roll_id required' }, { status: 400 });
-
-  const roll = await base44.asServiceRole.entities.DiceRoll.get(roll_id).catch(() => null);
-  if (!roll) return Response.json({ error: 'Roll not found' }, { status: 404 });
+  const { roll_id, user_id } = body;
+  const auth = await authorizeWorkflowRoll(base44, roll_id, user_id);
+  if (auth.error) return Response.json(auth.error.body, { status: auth.error.status });
+  const { roll, campaign } = auth;
 
   // Re-verify this is a genuine critical-failure NPC roll. The workflow only
   // calls us on crit fails, but a direct caller must not trigger an LLM call
@@ -346,7 +346,7 @@ async function handleNpcConsequence(base44, body) {
   const session_id = roll.session_id || campaign_id;
 
   const npc = await base44.asServiceRole.entities.NPC.get(npc_id).catch(() => null);
-  const campaign = await base44.asServiceRole.entities.Campaign.get(campaign_id).catch(() => null);
+  // campaign already fetched & membership-verified by authorizeWorkflowRoll
   let character = null;
   if (campaign && campaign.character_id) {
     try { character = await base44.asServiceRole.entities.Character.get(campaign.character_id); } catch (e) { /* ignore */ }

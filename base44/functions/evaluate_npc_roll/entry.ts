@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.49';
-import { isWorkflowCall } from '../../shared/workflowAuth.js';
+import { isWorkflowCall, authorizeWorkflowRoll } from '../../shared/workflowAuth.js';
 
 // Workflow step: evaluate a DiceRoll made against an NPC.
 // - success -> improve NPC disposition + post a congratulatory message
@@ -11,10 +11,10 @@ export default async function(req) {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
     if (!isWorkflowCall(req)) return Response.json({ error: 'Forbidden' }, { status: 403 });
-    const { roll_id } = body;
-    if (!roll_id) return Response.json({ error: 'roll_id required' }, { status: 400 });
-
-    const roll = await base44.asServiceRole.entities.DiceRoll.get(roll_id);
+    const { roll_id, user_id } = body;
+    const auth = await authorizeWorkflowRoll(base44, roll_id, user_id);
+    if (auth.error) return Response.json(auth.error.body, { status: auth.error.status });
+    const { roll } = auth;
     const npc_id = roll.npc_id;
     if (!npc_id) return Response.json({ outcome: 'neutral' });
 

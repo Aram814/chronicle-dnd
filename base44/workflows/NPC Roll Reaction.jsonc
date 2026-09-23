@@ -25,7 +25,8 @@
           "with": {
             "function_name": "evaluate_npc_roll",
             "args": {
-              "roll_id": "${ .trigger.entity_id }"
+              "roll_id": "${ .trigger.entity_id }",
+              "user_id": "${ .trigger.data.created_by_id }"
             }
           },
           "then": "branch",
@@ -59,7 +60,8 @@
             "function_name": "dm_engine",
             "args": {
               "mode": "npc_consequence",
-              "roll_id": "${ .evaluate.roll_id }"
+              "roll_id": "${ .evaluate.roll_id }",
+              "user_id": "${ .trigger.data.created_by_id }"
             }
           },
           "then": "end",

@@ -18,3 +18,29 @@ export function isWorkflowCall(req) {
   });
   return present;
 }
+
+// Authorize a workflow-triggered operation anchored to a DiceRoll.
+//
+// Workflow calls carry no user session, so base44.auth.me() is unavailable.
+// The trustworthy identity is the roll's created_by_id — the user who made
+// the roll. The workflow engine passes it from the trigger entity
+// (.trigger.data.created_by_id); an external caller cannot discover it (it
+// is not exposed in app URLs). We require the claimed user to match the
+// roll's creator AND to be a member of the roll's campaign, so:
+//   - an external caller without the creator id is rejected (403)
+//   - a roll fraudulently pointed at a campaign the roller isn't in is rejected
+// Returns { roll, campaign } on success or { error: { status, body } }.
+export async function authorizeWorkflowRoll(base44, roll_id, claimedUserId) {
+  if (!roll_id) return { error: { status: 400, body: { error: 'roll_id required' } } };
+  const roll = await base44.asServiceRole.entities.DiceRoll.get(roll_id).catch(() => null);
+  if (!roll) return { error: { status: 404, body: { error: 'Roll not found' } } };
+  if (!claimedUserId || claimedUserId !== roll.created_by_id) {
+    return { error: { status: 403, body: { error: 'Forbidden' } } };
+  }
+  const campaign = await base44.asServiceRole.entities.Campaign.get(roll.campaign_id).catch(() => null);
+  if (!campaign) return { error: { status: 404, body: { error: 'Campaign not found' } } };
+  const isMember = campaign.created_by_id === claimedUserId ||
+    (Array.isArray(campaign.members) && campaign.members.includes(claimedUserId));
+  if (!isMember) return { error: { status: 403, body: { error: 'Forbidden' } } };
+  return { roll, campaign };
+}
