@@ -20,6 +20,7 @@ import SoundToggle from '@/components/SoundToggle';
 import RelationshipTracker from '@/components/RelationshipTracker';
 import Bestiary from '@/components/Bestiary';
 import MapPanel from '@/components/MapPanel';
+import CharacterAvatar from '@/components/CharacterAvatar';
 
 export default function CampaignGame() {
   const { id } = useParams();
@@ -879,8 +880,8 @@ function LeftSidebar({ character, campaign, panel, setPanel, npcs, monsters, que
       <div className="p-4 border-b border-border">
         {character ? (
           <div className="text-center">
-            <div className="w-16 h-16 mx-auto rounded-lg bg-gradient-to-br from-amber-900/50 to-muted border border-amber-700/40 flex items-center justify-center text-2xl font-bold text-amber-400 font-serif mb-2">
-              {character.name?.[0]?.toUpperCase()}
+            <div className="mx-auto mb-2">
+              <CharacterAvatar character={character} size="md" />
             </div>
             <h3 className="font-serif text-amber-200">{character.name}</h3>
             <p className="text-xs text-muted-foreground">{character.species} {character.class}</p>
@@ -902,9 +903,7 @@ function LeftSidebar({ character, campaign, panel, setPanel, npcs, monsters, que
             <div className="space-y-1.5">
               {partyMembers.map(p => (
                 <div key={p.id} className="flex items-center gap-2 text-xs">
-                  <div className="w-7 h-7 rounded bg-muted border border-border flex items-center justify-center text-sm font-bold text-muted-foreground font-serif">
-                    {p.name?.[0]?.toUpperCase()}
-                  </div>
+                  <CharacterAvatar character={p} size="sm" />
                   <div className="flex-1 min-w-0">
                     <p className="text-foreground truncate">{p.name}</p>
                     <p className="text-muted-foreground">{p.species} {p.class}</p>
@@ -939,6 +938,7 @@ function LeftSidebarContent({ character, campaign, panel, npcs, monsters, quests
     const scores = character.ability_scores || {};
     return (
       <div className="space-y-3">
+        <CharacterAvatar character={character} full />
         <h4 className="font-serif text-amber-200 text-sm">Ability Scores</h4>
         <div className="grid grid-cols-3 gap-2">
           {Object.entries(ABILITY_LABELS).map(([key, label]) => {
