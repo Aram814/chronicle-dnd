@@ -30,8 +30,8 @@ export default function LoginSplash({ children, footer }) {
         {/* Branding */}
         <div className="text-center mb-8 select-none">
           <h1
-            className="font-display text-4xl md:text-5xl font-extrabold tracking-wider text-amber-50"
-            style={{ textShadow: '0 2px 6px rgba(0,0,0,0.95), 0 0 18px rgba(0,0,0,0.8), 0 0 36px rgba(180,120,40,0.35)' }}
+            className="text-4xl md:text-6xl tracking-wide text-amber-50"
+            style={{ fontFamily: "'Pirata One', cursive", textShadow: '0 2px 6px rgba(0,0,0,0.95), 0 0 18px rgba(0,0,0,0.85), 0 0 40px rgba(180,120,40,0.4)' }}
           >
             CRITICAL CHRONICLES
           </h1>
