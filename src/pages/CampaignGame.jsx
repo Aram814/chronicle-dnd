@@ -363,7 +363,12 @@ export default function CampaignGame() {
           break;
         }
         case 'npc_add':
-          npcAdds.push({ campaign_id: id, name: u.arg1, description: u.arg2, personality: u.arg3, relationship: u.arg4, location: u.arg5, members: allMemberIds });
+          // Skip if this NPC is already tracked or already queued this turn —
+          // the DM often re-emits NPC_ADD for known NPCs, which would duplicate.
+          if (!npcs.some(n => (n.name || '').toLowerCase() === String(u.arg1).toLowerCase()) &&
+              !npcAdds.some(n => n.name.toLowerCase() === String(u.arg1).toLowerCase())) {
+            npcAdds.push({ campaign_id: id, name: u.arg1, description: u.arg2, personality: u.arg3, relationship: u.arg4, location: u.arg5, members: allMemberIds });
+          }
           break;
         case 'npc_status':
           npcStatuses.push({ name: u.arg1, status: u.arg2 });
