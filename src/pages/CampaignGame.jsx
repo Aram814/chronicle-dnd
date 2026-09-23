@@ -70,16 +70,27 @@ export default function CampaignGame() {
   }, [dataLoaded, campaign, loading]);
 
   const generateOpening = async () => {
+    // Claim the opening BEFORE the (slow) LLM call. The opening flag used to be
+    // written only after the narration came back, so a remount during that
+    // multi-second window saw opening_set still false and generated a second,
+    // conflicting opening. Claiming up front makes a remount see it's already
+    // in progress; the openingRef guard still handles same-mount re-runs.
+    try {
+      const fresh = await base44.entities.Campaign.get(id);
+      if (fresh?.story_state?.opening_set) {
+        setCampaign(prev => ({ ...prev, story_state: fresh.story_state }));
+        return;
+      }
+      const claimed = { ...(fresh?.story_state || {}), opening_set: true };
+      await base44.entities.Campaign.update(id, { story_state: claimed });
+      setCampaign(prev => ({ ...prev, story_state: claimed }));
+    } catch (e) {
+      // Claim failed — fall through; ref guard still prevents same-mount dupes.
+    }
     try {
       await getDMResponse([], null, true);
-      const nextStoryState = { ...(campaign?.story_state || {}), opening_set: true };
-      await base44.entities.Campaign.update(id, { story_state: nextStoryState });
-      setCampaign(prev => ({ ...prev, story_state: nextStoryState }));
     } catch (e) {
-      // Still mark opening as set so we don't retry on every load.
-      const nextStoryState = { ...(campaign?.story_state || {}), opening_set: true };
-      await base44.entities.Campaign.update(id, { story_state: nextStoryState }).catch(() => {});
-      setCampaign(prev => ({ ...prev, story_state: nextStoryState }));
+      // Opening already claimed above — no retry, to avoid duplicate openings.
     }
   };
 
