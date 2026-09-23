@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Image } from '@/components/ui/image';
 
-const SPLASH_ART = 'https://media.base44.com/images/public/6ab1f1781754d99d63c58e01/1a1d7d32c_ChronicleDD.jpeg';
+const SPLASH_ART = 'https://media.base44.com/images/public/6ab1f1781754d99d63c58e01/5ed53390b_image.png';
 
 export default function LoginSplash({ children, footer }) {
   // True splash: the branding/art shows immediately, then the login card
