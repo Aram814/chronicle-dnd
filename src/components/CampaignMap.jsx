@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { MapPin, X, Users, ScrollText, Compass } from 'lucide-react';
+import { normalizeLocations } from '@/lib/mapLayout';
 
 const TYPE_ICONS = {
   city: '🏰', town: '🏘️', village: '🏚️', dungeon: '🕳️', forest: '🌲',
@@ -11,28 +12,7 @@ const TYPE_ICONS = {
 export default function CampaignMap({ campaign, locations, npcs, quests }) {
   const [selectedId, setSelectedId] = useState(null);
 
-  const positioned = useMemo(() => {
-    if (!locations.length) return [];
-    const withCoords = locations.filter(l => l.map_x != null && l.map_y != null);
-    const withoutCoords = locations.filter(l => l.map_x == null || l.map_y == null);
-    const assigned = withoutCoords.map((l, i) => {
-      const angle = (i * 137.5) * (Math.PI / 180);
-      const radius = 25 + Math.floor(i / 8) * 20;
-      return { ...l, map_x: 200 + Math.cos(angle) * radius, map_y: 200 + Math.sin(angle) * radius };
-    });
-    const all = [...withCoords, ...assigned];
-    const xs = all.map(l => l.map_x);
-    const ys = all.map(l => l.map_y);
-    const minX = Math.min(...xs), maxX = Math.max(...xs);
-    const minY = Math.min(...ys), maxY = Math.max(...ys);
-    const rangeX = (maxX - minX) || 1;
-    const rangeY = (maxY - minY) || 1;
-    return all.map(l => ({
-      ...l,
-      normX: ((l.map_x - minX) / rangeX) * 75 + 12.5,
-      normY: ((l.map_y - minY) / rangeY) * 75 + 12.5,
-    }));
-  }, [locations]);
+  const positioned = useMemo(() => normalizeLocations(locations), [locations]);
 
   const selected = selectedId ? positioned.find(l => l.id === selectedId) : null;
   const currentName = campaign?.current_location?.toLowerCase();

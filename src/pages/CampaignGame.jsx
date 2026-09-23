@@ -18,6 +18,7 @@ import { rollForRequest } from '@/lib/dice';
 import { sound } from '@/lib/soundManager';
 import SoundToggle from '@/components/SoundToggle';
 import RelationshipTracker from '@/components/RelationshipTracker';
+import MapPanel from '@/components/MapPanel';
 
 export default function CampaignGame() {
   const { id } = useParams();
@@ -941,22 +942,7 @@ function LeftSidebarContent({ character, campaign, panel, npcs, quests, location
     return <RelationshipTracker npcs={npcs} />;
   }
   if (panel === 'map') {
-    return (
-      <div className="space-y-2">
-        <h4 className="font-serif text-amber-200 text-sm">World Map</h4>
-        {locations.length === 0 ? <p className="text-xs text-muted-foreground">No locations discovered yet</p> : (
-          <ul className="space-y-1">
-            {locations.map(l => (
-              <li key={l.id} className="text-sm text-foreground bg-background/50 border border-border rounded px-2 py-1">
-                <span className="text-amber-300">{l.name}</span>
-                <span className="text-xs text-muted-foreground"> · {l.type}</span>
-                {l.description && <p className="text-xs text-muted-foreground">{l.description}</p>}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    );
+    return <MapPanel campaign={campaign} locations={locations} />;
   }
   return null;
 }
