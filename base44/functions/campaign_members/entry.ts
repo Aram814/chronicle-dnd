@@ -253,7 +253,10 @@ async function setCharacter(base44, user, body) {
   let characterName = '';
   if (character_id) {
     const char = await base44.asServiceRole.entities.Character.get(character_id).catch(() => null);
-    if (char) characterName = char.name;
+    // asServiceRole bypasses Character read RLS — only let the caller use a
+    // character they actually own, otherwise this leaks any character's name
+    // to any campaign member who supplies its id.
+    if (char && char.created_by_id === user.id) characterName = char.name;
   }
   await base44.asServiceRole.entities.CampaignMember.update(member.id, {
     character_id, character_name: characterName
