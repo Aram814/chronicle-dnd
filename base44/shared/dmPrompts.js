@@ -57,11 +57,22 @@ export function buildPartyContext(players) {
 
 export function buildNPCContext(npcs) {
   if (!npcs || !npcs.length) return "";
-  let text = "KNOWN NPCs:\n";
-  for (const npc of npcs) {
-    text += `- ${npc.name}: ${npc.description || ""} | Relationship: ${npc.relationship || "neutral"} | Status: ${npc.status || "alive"} | Location: ${npc.location || "unknown"}\n`;
-    if (npc.personality) text += `  Personality: ${npc.personality}\n`;
-    if (npc.known_info) text += `  Known Info: ${npc.known_info}\n`;
+  const people = npcs.filter(n => (n.category || "npc") !== "monster");
+  const monsters = npcs.filter(n => n.category === "monster");
+  let text = "";
+  if (people.length) {
+    text += "KNOWN NPCs:\n";
+    for (const npc of people) {
+      text += `- ${npc.name}: ${npc.description || ""} | Relationship: ${npc.relationship || "neutral"} | Status: ${npc.status || "alive"} | Location: ${npc.location || "unknown"}\n`;
+      if (npc.personality) text += `  Personality: ${npc.personality}\n`;
+      if (npc.known_info) text += `  Known Info: ${npc.known_info}\n`;
+    }
+  }
+  if (monsters.length) {
+    text += "KNOWN MONSTERS:\n";
+    for (const m of monsters) {
+      text += `- ${m.name}${m.monster_type ? ` (${m.monster_type})` : ""}: ${m.description || ""} | Status: ${m.status || "alive"} | Location: ${m.location || "unknown"}\n`;
+    }
   }
   return text;
 }

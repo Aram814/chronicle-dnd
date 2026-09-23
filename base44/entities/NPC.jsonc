@@ -44,6 +44,17 @@
     "portrait": {
       "type": "string"
     },
+    "category": {
+      "type": "string",
+      "enum": [
+        "npc",
+        "monster"
+      ],
+      "default": "npc"
+    },
+    "monster_type": {
+      "type": "string"
+    },
     "interactions": {
       "type": "array",
       "items": {

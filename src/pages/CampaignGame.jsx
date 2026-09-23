@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import {
   Send, Heart, Shield, Swords, MapPin, Scroll, Users, BookOpen,
-  Dices, Bookmark, X, Menu, Star, Crosshair, Pencil
+  Dices, Bookmark, X, Menu, Star, Crosshair, Pencil, Skull
 } from 'lucide-react';
 import ChatMessage from '@/components/ChatMessage';
 import DiceRoller from '@/components/DiceRoller';
@@ -18,6 +18,7 @@ import { rollForRequest } from '@/lib/dice';
 import { sound } from '@/lib/soundManager';
 import SoundToggle from '@/components/SoundToggle';
 import RelationshipTracker from '@/components/RelationshipTracker';
+import Bestiary from '@/components/Bestiary';
 import MapPanel from '@/components/MapPanel';
 
 export default function CampaignGame() {
@@ -377,7 +378,15 @@ export default function CampaignGame() {
           // the DM often re-emits NPC_ADD for known NPCs, which would duplicate.
           if (!npcs.some(n => (n.name || '').toLowerCase() === String(u.arg1).toLowerCase()) &&
               !npcAdds.some(n => n.name.toLowerCase() === String(u.arg1).toLowerCase())) {
-            npcAdds.push({ campaign_id: id, name: u.arg1, description: u.arg2, personality: u.arg3, relationship: u.arg4, location: u.arg5, members: allMemberIds });
+            npcAdds.push({ campaign_id: id, name: u.arg1, description: u.arg2, personality: u.arg3, relationship: u.arg4, location: u.arg5, category: 'npc', members: allMemberIds });
+          }
+          break;
+        case 'monster_add':
+          // Monsters are stored in the NPC entity with category 'monster' so
+          // they can be shown in a separate Bestiary. Same dedup-by-name guard.
+          if (!npcs.some(n => (n.name || '').toLowerCase() === String(u.arg1).toLowerCase()) &&
+              !npcAdds.some(n => n.name.toLowerCase() === String(u.arg1).toLowerCase())) {
+            npcAdds.push({ campaign_id: id, name: u.arg1, description: u.arg2, monster_type: u.arg3, location: u.arg4, category: 'monster', is_hostile: true, members: allMemberIds });
           }
           break;
         case 'npc_status':
@@ -440,8 +449,10 @@ export default function CampaignGame() {
         toast({ title: 'Failed to update campaign', description: 'Your changes were reverted.', variant: 'destructive' });
       }
     }
+    let createdNpcs = [];
     if (npcAdds.length) {
-      await base44.entities.NPC.bulkCreate(npcAdds);
+      createdNpcs = await base44.entities.NPC.bulkCreate(npcAdds);
+      if (!Array.isArray(createdNpcs)) createdNpcs = createdNpcs?.data || [];
     }
     if (npcStatuses.length) {
       for (const ns of npcStatuses) {
@@ -478,6 +489,29 @@ export default function CampaignGame() {
       setNpcs(npcList || []);
       setQuests(questList || []);
       setLocations(locList || []);
+    }
+
+    // Auto-generate portraits for newly created NPCs/monsters. Fire-and-forget
+    // so it never blocks the turn; each portrait is persisted and patched into
+    // state as soon as its image is painted.
+    if (createdNpcs.length) {
+      autoGeneratePortraits(createdNpcs);
+    }
+  };
+
+  // Generate and persist a portrait for each newly created NPC/monster in the
+  // background. Monsters (category 'monster') render as creature concept art.
+  const autoGeneratePortraits = async (created) => {
+    for (const npc of created) {
+      if (npc.portrait) continue;
+      try {
+        const res = await base44.functions.invoke('dm_engine', { mode: 'generate_npc_portrait', npc });
+        const url = res.data?.url;
+        if (url) {
+          await base44.entities.NPC.update(npc.id, { portrait: url });
+          setNpcs(prev => prev.map(n => (n.id === npc.id ? { ...n, portrait: url } : n)));
+        }
+      } catch (e) { /* leave the manual generate fallback available */ }
     }
   };
 
@@ -641,6 +675,7 @@ export default function CampaignGame() {
         <MobileNavButton active={leftPanel === 'spells'} onClick={() => setLeftPanel(leftPanel === 'spells' ? null : 'spells')} icon={<Star className="w-4 h-4" />} label="Spells" />
         <MobileNavButton active={leftPanel === 'quests'} onClick={() => setLeftPanel(leftPanel === 'quests' ? null : 'quests')} icon={<Scroll className="w-4 h-4" />} label="Quests" />
         <MobileNavButton active={leftPanel === 'npcs'} onClick={() => setLeftPanel(leftPanel === 'npcs' ? null : 'npcs')} icon={<Users className="w-4 h-4" />} label="NPCs" />
+        <MobileNavButton active={leftPanel === 'monsters'} onClick={() => setLeftPanel(leftPanel === 'monsters' ? null : 'monsters')} icon={<Skull className="w-4 h-4" />} label="Monsters" />
         <MobileNavButton active={leftPanel === 'map'} onClick={() => setLeftPanel(leftPanel === 'map' ? null : 'map')} icon={<MapPin className="w-4 h-4" />} label="Map" />
       </div>
 
@@ -835,6 +870,7 @@ function LeftSidebar({ character, campaign, panel, setPanel, npcs, quests, locat
         <NavButton active={panel === 'spells'} onClick={() => setPanel(panel === 'spells' ? null : 'spells')} icon={<Star className="w-4 h-4" />} label="Spells" />
         <NavButton active={panel === 'quests'} onClick={() => setPanel(panel === 'quests' ? null : 'quests')} icon={<Scroll className="w-4 h-4" />} label="Quest Journal" />
         <NavButton active={panel === 'npcs'} onClick={() => setPanel(panel === 'npcs' ? null : 'npcs')} icon={<Users className="w-4 h-4" />} label="NPCs" />
+        <NavButton active={panel === 'monsters'} onClick={() => setPanel(panel === 'monsters' ? null : 'monsters')} icon={<Skull className="w-4 h-4" />} label="Bestiary" />
         <NavButton active={panel === 'map'} onClick={() => setPanel(panel === 'map' ? null : 'map')} icon={<MapPin className="w-4 h-4" />} label="World Map" />
       </div>
       {panel && (
@@ -939,7 +975,10 @@ function LeftSidebarContent({ character, campaign, panel, npcs, quests, location
     );
   }
   if (panel === 'npcs') {
-    return <RelationshipTracker npcs={npcs} />;
+    return <RelationshipTracker npcs={(npcs || []).filter(n => (n.category || 'npc') !== 'monster')} />;
+  }
+  if (panel === 'monsters') {
+    return <Bestiary npcs={npcs} />;
   }
   if (panel === 'map') {
     return <MapPanel campaign={campaign} locations={locations} />;

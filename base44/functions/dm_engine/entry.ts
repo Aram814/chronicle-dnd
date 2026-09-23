@@ -120,6 +120,7 @@ After your narration, if the game state changed, include one or more update comm
 [[ITEM_REMOVE: <item name> ]]
 [[GOLD_CHANGE: <amount> ]]
 [[NPC_ADD: <name> | <description> | <personality> | <relationship as a word: ally/friendly/neutral/wary/hostile/rival> | <location> ]]
+[[MONSTER_ADD: <name> | <description> | <monster_type e.g. Undead/Beast/Humanoid/Dragon/Fiend/Aberration> | <location> ]]
 [[NPC_UPDATE: <name> | <field> | <value> ]]
 [[NPC_STATUS: <name> | <status e.g. dead/alive/friendly/hostile> ]]
 [[NPC_DISPOSITION: <name> | <signed change amount e.g. +5 or -10> | <short reason for the shift> ]]
@@ -136,12 +137,14 @@ After your narration, if the game state changed, include one or more update comm
 [[WORLD_EVENT: <event description> ]]
 
 TRACKING THE WORLD — CRITICAL:
-- When the player MEETS or INTERACTS WITH a new NPC for the first time, you MUST emit [[NPC_ADD: <name> | <description> | <personality> | <relationship> | <location> ]]. This includes hostile NPCs, enemies, guards, and named monsters — add them all so the player has a record. Even if the NPC is minor, add them. You may omit later fields if unknown, but always include at least the name and a short description.
+- When the player MEETS or INTERACTS WITH a new PERSON for the first time, you MUST emit [[NPC_ADD: <name> | <description> | <personality> | <relationship> | <location> ]]. A "person" is a named humanoid the party can talk to — shopkeepers, guards, nobles, quest-givers, companions, speaking villains, innkeepers, servants. Even minor characters MUST be added. You may omit later fields if unknown, but always include at least the name and a short description.
+- When the player ENCOUNTERS a MONSTER or CREATURE for the first time, you MUST emit [[MONSTER_ADD: <name> | <description> | <monster_type> | <location> ]] instead of NPC_ADD. Monsters are things you would stat as a monster rather than play as a person — enemies, beasts, undead, dragons, wild animals, vermin, fiends, aberrations, constructs. Every distinct monster or creature the party faces or sees gets its own MONSTER_ADD entry, even unnamed packs (e.g. "Goblin Raider", "Dire Wolf"). Do NOT use NPC_ADD for these.
+- DO NOT skip anyone or anything. If a person is named or speaks, ADD them. If a creature is named, fought, or clearly present, ADD it. The player's journal must contain every person they've met and every monster they've faced. When in doubt, ADD the entry. A missing entry is a failure.
 - When the player's dialogue or actions shift an NPC's attitude toward them, emit [[NPC_DISPOSITION: <name> | <signed change> | <reason> ]]. Track this honestly — a caught lie, insult, or broken promise lowers disposition; help, honesty, and respect raise it.
 - When the player ARRIVES AT or DISCOVERS a new location, you MUST emit [[LOCATION_ADD: <name> | <type> | <description> ]]. You may omit type/description if minimal, but always include the name.
 - When a new quest or objective is introduced, emit [[QUEST_ADD: <name> | <type main/side> | <description> ]].
 - When the player travels to a different place, emit [[CURRENT_LOCATION: <location name> ]].
-These records are the player's journal. If you forget to emit them, the player's NPC list and world map will be empty even though they have met people and visited places. ALWAYS emit them when the situation calls for it.
+These records are the player's journal. If you forget to emit them, the player's NPC list, bestiary, and world map will be empty even though they have met people and visited places. ALWAYS emit them when the situation calls for it.
 
 Only include updates that actually happened in this turn. If nothing changed, include no update lines.`;
 
@@ -159,7 +162,8 @@ Follow this structure:
 5. TRACK THE WORLD — REQUIRED: After your narration, emit the state-update tags (formats listed above in STATE UPDATES) so the player's journal starts populated:
    - [[CURRENT_LOCATION: <starting location name> ]]
    - [[LOCATION_ADD: <starting location name> | <type e.g. tavern/village/city/wilderness> | <1-sentence description> ]]
-   - [[NPC_ADD: <name> | <description> | <personality> | <relationship word> | <location> ]] for every NPC you introduce in the opening (at minimum, whoever brings the hook).
+   - [[NPC_ADD: <name> | <description> | <personality> | <relationship word> | <location> ]] for every PERSON you introduce in the opening (at minimum, whoever brings the hook).
+   - [[MONSTER_ADD: <name> | <description> | <monster_type> | <location> ]] for every MONSTER or CREATURE that appears in the opening.
    Without these, the player's World Map and NPC list will be empty.
 
 Keep it immersive and unhurried (${isMultiplayer ? '5-7' : '4-6'} paragraphs). Do not force urgency or threaten the ${isMultiplayer ? 'party' : 'character'} in the opening. End with an open-ended prompt that invites the ${isMultiplayer ? 'players' : 'player'} to act — "${isMultiplayer ? 'What do you do?' : 'What do you do?'}" — or a gentle question, NOT a roll request. The first roll should come only after a ${isMultiplayer ? 'player' : 'player'} has chosen to engage.`;
@@ -336,7 +340,7 @@ async function handleGenerateMap(base44, body) {
 async function handleGenerateNpcPortrait(base44, body) {
   const { npc } = body;
   const n = npc || {};
-  const hostile = n.is_hostile || n.status === 'hostile' || n.status === 'dead';
+  const hostile = n.is_hostile || n.status === 'hostile' || n.status === 'dead' || n.category === 'monster';
   const traits = [
     n.name ? 'Named ' + n.name : '',
     n.description || '',

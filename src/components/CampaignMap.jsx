@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { MapPin, X, Users, ScrollText, Compass, Sparkles, Loader2, RefreshCw } from 'lucide-react';
+import { MapPin, X, Users, ScrollText, Compass, Sparkles, Loader2, RefreshCw, Skull } from 'lucide-react';
 import { normalizeLocations } from '@/lib/mapLayout';
 import { base44 } from '@/api/base44Client';
 import { Image } from '@/components/ui/image';
@@ -28,7 +28,10 @@ export default function CampaignMap({ campaign, locations, npcs, quests }) {
     .map(l => ({ id: l.id, x: l.normX, y: l.normY }));
 
   const relatedNpcs = selected ? npcs.filter(n =>
-    n.location && n.location.toLowerCase() === selected.name.toLowerCase()
+    n.location && n.location.toLowerCase() === selected.name.toLowerCase() && (n.category || 'npc') !== 'monster'
+  ) : [];
+  const relatedMonsters = selected ? npcs.filter(n =>
+    n.location && n.location.toLowerCase() === selected.name.toLowerCase() && n.category === 'monster'
   ) : [];
   const relatedQuests = selected ? quests.filter(q => {
     if (q.status !== 'active') return false;
@@ -234,6 +237,38 @@ export default function CampaignMap({ campaign, locations, npcs, quests }) {
                 </ul>
               </div>
             )}
+            {relatedMonsters.length > 0 && (
+              <div>
+                <h4 className="text-xs uppercase text-red-500 font-semibold mb-2 flex items-center gap-1"><Skull className="w-3 h-3" /> Creatures Here</h4>
+                <ul className="space-y-2">
+                  {relatedMonsters.map(n => {
+                    const portrait = npcPortraits[n.id] || n.portrait;
+                    const loadingNpc = generatingLoc === 'npc-' + n.id;
+                    return (
+                      <li key={n.id} className="flex items-start gap-2">
+                        <button
+                          onClick={() => !portrait && generateNpcPortrait(n)}
+                          disabled={loadingNpc}
+                          className="relative w-11 h-11 rounded-md overflow-hidden border border-red-900/40 bg-stone-800 flex-shrink-0 flex items-center justify-center hover:border-red-600/60 transition-colors"
+                          aria-label={portrait ? n.name : `Generate illustration for ${n.name}`}
+                        >
+                          {portrait
+                            ? <Image src={portrait} alt={n.name} fittingType="fill" className="w-full h-full" />
+                            : loadingNpc
+                              ? <Loader2 className="w-4 h-4 animate-spin text-red-400" />
+                              : <Sparkles className="w-4 h-4 text-red-400/70" />}
+                        </button>
+                        <div className="min-w-0">
+                          <span className="text-sm text-red-200">{n.name}</span>
+                          {n.monster_type && <span className="text-[10px] text-red-400/80 capitalize block">{n.monster_type}</span>}
+                          {n.description && <p className="text-xs text-muted-foreground line-clamp-2">{n.description.slice(0, 80)}</p>}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
             {relatedQuests.length > 0 && (
               <div>
                 <h4 className="text-xs uppercase text-amber-600 font-semibold mb-2 flex items-center gap-1"><ScrollText className="w-3 h-3" /> Active Quests</h4>
@@ -247,7 +282,7 @@ export default function CampaignMap({ campaign, locations, npcs, quests }) {
                 </ul>
               </div>
             )}
-            {relatedNpcs.length === 0 && relatedQuests.length === 0 && (
+            {relatedNpcs.length === 0 && relatedMonsters.length === 0 && relatedQuests.length === 0 && (
               <p className="text-xs text-muted-foreground">No known NPCs or quests at this location</p>
             )}
           </div>
