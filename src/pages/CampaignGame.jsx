@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import {
   Send, Heart, Shield, Swords, MapPin, Scroll, Users, BookOpen,
-  Dices, Bookmark, X, Menu, Star, Crosshair, Pencil, Skull
+  Dices, Bookmark, X, Menu, Star, Crosshair, Pencil, Skull, Wand2
 } from 'lucide-react';
 import ChatMessage from '@/components/ChatMessage';
 import DiceRoller from '@/components/DiceRoller';
@@ -47,6 +47,7 @@ export default function CampaignGame() {
   const rollInFlightRef = useRef(false);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [editingMessage, setEditingMessage] = useState(null);
+  const [reconciling, setReconciling] = useState(false);
 
   // All user IDs that can access this campaign's shared data (host + joined players).
   const allMemberIds = campaign ? [...new Set([campaign.created_by_id, ...(campaign.members || [])])] : [];
@@ -608,6 +609,30 @@ export default function CampaignGame() {
     });
   };
 
+  // Reconcile the journal against the full chat history: the AI re-reads every
+  // message, merges duplicate NPC records, recategorizes creatures filed as
+  // NPCs, and creates any NPCs/monsters the DM forgot to track. Fixes drift in
+  // existing campaigns (duplicate "Elara the Elder", "Shroud-Stalker" as NPC,
+  // missing encounters).
+  const reconcileJournal = async () => {
+    if (reconciling) return;
+    setReconciling(true);
+    try {
+      const res = await base44.functions.invoke('reconcile_journal', { campaign_id: id });
+      const d = res.data || {};
+      const npcList = await base44.entities.NPC.filter({ campaign_id: id });
+      setNpcs(npcList || []);
+      setInfo({
+        title: 'Journal Reconciled',
+        description: `Merged ${d.merged || 0} duplicate${d.merged === 1 ? '' : 's'}, recategorized ${d.recategorized || 0}, added ${d.created || 0} new, updated ${d.updated || 0}.`
+      });
+    } catch (e) {
+      setInfo({ title: 'Reconcile Failed', description: 'Please try again in a moment.' });
+    } finally {
+      setReconciling(false);
+    }
+  };
+
   const saveStory = () => setConfirmSaveStory(true);
 
   const doSaveStory = async () => {
@@ -657,6 +682,9 @@ export default function CampaignGame() {
             </Link>
             <button onClick={() => setDiceOpen(true)} aria-label="Open dice roller" className="p-3 text-muted-foreground hover:text-amber-300 hover:bg-accent rounded-lg transition-all" title="Dice Roller">
               <Dices className="w-5 h-5" />
+            </button>
+            <button onClick={reconcileJournal} disabled={reconciling} aria-label="Reconcile journal" className="p-3 text-muted-foreground hover:text-amber-300 hover:bg-accent rounded-lg transition-all disabled:opacity-50" title="Reconcile Journal">
+              <Wand2 className={`w-5 h-5 ${reconciling ? 'animate-pulse' : ''}`} />
             </button>
             <button onClick={saveStory} aria-label="Save story" className="p-3 text-muted-foreground hover:text-amber-300 hover:bg-accent rounded-lg transition-all" title="Save Story">
               <Bookmark className="w-5 h-5" />
