@@ -32,6 +32,8 @@ const CampaignMapPage = lazy(() => import('@/pages/CampaignMapPage'));
 const Characters = lazy(() => import('@/pages/Characters'));
 const Stories = lazy(() => import('@/pages/Stories'));
 const Settings = lazy(() => import('@/pages/Settings'));
+const About = lazy(() => import('@/pages/About'));
+const Contact = lazy(() => import('@/pages/Contact'));
 const LazyPageNotFound = lazy(() => import('./lib/PageNotFound'));
 
 const PageFallback = () => (
@@ -86,6 +88,8 @@ const AuthenticatedApp = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
         <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
           {/* Tab root screens share the app chrome (NavBar + BottomTabBar) */}
           <Route element={<AppLayout />}>

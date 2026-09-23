@@ -47,6 +47,11 @@ export default function Login() {
           >
             Create one
           </Link>
+          <span className="block mt-3 text-xs text-amber-200/50">
+            <Link to="/about" className="hover:text-amber-300 hover:underline">About</Link>
+            {" · "}
+            <Link to="/contact" className="hover:text-amber-300 hover:underline">Contact</Link>
+          </span>
         </>
       }
     >
