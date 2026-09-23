@@ -138,7 +138,15 @@ export default function CampaignGame() {
         base44.entities.Quest.filter({ campaign_id: id }),
         base44.entities.Location.filter({ campaign_id: id })
       ]);
-      setMessages(msgs || []);
+      // Sort client-side by created_date, using id as a tiebreak for messages
+      // that share the same second — otherwise same-second player/DM pairs can
+      // land out of order after a reload.
+      const sortedMsgs = [...(msgs || [])].sort((a, b) => {
+        const t = new Date(a.created_date) - new Date(b.created_date);
+        if (t !== 0) return t;
+        return String(a.id) < String(b.id) ? -1 : String(a.id) > String(b.id) ? 1 : 0;
+      });
+      setMessages(sortedMsgs);
       setNpcs(npcList || []);
       setQuests(questList || []);
       setLocations(locList || []);
