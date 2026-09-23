@@ -1,14 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.49';
+import { isWorkflowCall } from '../../shared/workflowAuth.js';
 
 // Workflow step: Quest Tracker agent logic.
 // Triggered on every DiceRoll creation. Reads the roll + recent story context,
 // uses the LLM to evaluate quest progress and generate a narrative summary,
 // updates quest statuses, and posts the narration as a system message that
 // the DM bot can reference for story continuity.
+// Internal-only: gated by the workflow shared secret (no user session available).
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
+    if (!isWorkflowCall(body)) return Response.json({ error: 'Forbidden' }, { status: 403 });
     const { roll_id } = body;
     if (!roll_id) return Response.json({ error: 'roll_id required' }, { status: 400 });
 

@@ -25,7 +25,8 @@
           "with": {
             "function_name": "evaluate_npc_roll",
             "args": {
-              "roll_id": "${ .trigger.entity_id }"
+              "roll_id": "${ .trigger.entity_id }",
+              "secret": "wf_7c9f3a2e8b1d4e6a90f2c4b8d1e3a7f9c5"
             }
           },
           "then": "branch",
@@ -61,7 +62,8 @@
               "mode": "npc_consequence",
               "campaign_id": "${ .evaluate.campaign_id }",
               "npc_id": "${ .evaluate.npc_id }",
-              "roll_id": "${ .evaluate.roll_id }"
+              "roll_id": "${ .evaluate.roll_id }",
+              "secret": "wf_7c9f3a2e8b1d4e6a90f2c4b8d1e3a7f9c5"
             }
           },
           "then": "persist_consequence",
@@ -79,7 +81,8 @@
             "args": {
               "campaign_id": "${ .evaluate.campaign_id }",
               "session_id": "${ .evaluate.session_id }",
-              "content": "${ .generate_consequence.reply }"
+              "content": "${ .generate_consequence.reply }",
+              "secret": "wf_7c9f3a2e8b1d4e6a90f2c4b8d1e3a7f9c5"
             }
           },
           "then": "end",

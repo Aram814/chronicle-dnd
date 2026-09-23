@@ -1,14 +1,26 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { buildCharacterContext, buildPartyContext, buildWorldContext, buildNPCContext, buildQuestContext, buildLocationContext, DM_SYSTEM_BASE } from '../../shared/dmPrompts.js';
+import { isWorkflowCall } from '../../shared/workflowAuth.js';
 
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
-    // dm_engine is invoked both by authenticated players (frontend) and by workflows
-    // (service role). It only calls InvokeLLM via the service role and touches no
-    // user-scoped data, so no auth gate is required.
     const body = await req.json();
     const { mode } = body;
+
+    // npc_consequence is invoked by the NPC Roll Reaction workflow (service role,
+    // no user session). Gate it with the internal workflow secret instead of
+    // user auth; it fetches campaign data via asServiceRole using caller-supplied
+    // ids, so it must not be reachable by anonymous external callers.
+    if (mode === 'npc_consequence') {
+      if (!isWorkflowCall(body)) return Response.json({ error: 'Forbidden' }, { status: 403 });
+      return await handleNpcConsequence(base44, body);
+    }
+
+    // All other modes are user-facing (frontend). Require an authenticated user
+    // to prevent anonymous LLM/image credit abuse.
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     if (mode === 'setup') return await handleSetup(base44, body);
     if (mode === 'play') return await handlePlay(base44, body);
@@ -16,12 +28,11 @@ export default async function(req) {
     if (mode === 'generate_world') return await handleGenerateWorld(base44, body);
     if (mode === 'generate_character') return await handleGenerateCharacter(base44, body);
     if (mode === 'save_story') return await handleSaveStory(base44, body);
-    if (mode === 'npc_consequence') return await handleNpcConsequence(base44, body);
     if (mode === 'generate_portrait') return await handleGeneratePortrait(base44, body);
 
     return Response.json({ error: 'Unknown mode' }, { status: 400 });
   } catch (error) {
-    return Response.json({ error: error.message, stack: error.stack }, { status: 500 });
+    return Response.json({ error: error.message }, { status: 500 });
   }
 }
 

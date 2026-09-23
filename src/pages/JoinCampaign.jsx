@@ -44,7 +44,7 @@ export default function JoinCampaign() {
     setBusy(true);
     try {
       const res = await base44.functions.invoke('campaign_members', {
-        action: 'join', campaign_id: campaign.id
+        action: 'join', campaign_id: campaign.id, code: code.trim()
       });
       if (res.data.already_member) {
         // Already a member — go straight to character pick or game

@@ -39,6 +39,22 @@ function fullMemberList(campaign) {
   return Array.from(set);
 }
 
+// Validate a caller-supplied app_url against the app's own origin before
+// interpolating it into an email body, to prevent phishing-link injection.
+// Only https URLs on a base44.app host are trusted; anything else is rejected
+// (the caller falls back to a code-only invitation with no clickable link).
+function sanitizeAppUrl(app_url) {
+  if (!app_url) return null;
+  try {
+    const u = new URL(String(app_url));
+    if (u.protocol !== 'https:') return null;
+    if (!u.hostname.endsWith('.base44.app')) return null;
+    return `${u.protocol}//${u.host}`;
+  } catch (e) {
+    return null;
+  }
+}
+
 async function generateCode(base44, user, body) {
   const { campaign_id } = body;
   const campaign = await base44.asServiceRole.entities.Campaign.get(campaign_id);
@@ -67,7 +83,8 @@ async function inviteEmail(base44, user, body) {
   }
 
   const emailList = Array.isArray(emails) ? emails : [emails];
-  const joinUrl = app_url ? `${app_url}/join?code=${code}` : `Use code: ${code}`;
+  const safeUrl = sanitizeAppUrl(app_url);
+  const joinUrl = safeUrl ? `${safeUrl}/join?code=${code}` : `Use code: ${code}`;
   let sent = 0;
 
   for (const raw of emailList) {
@@ -119,13 +136,22 @@ async function lookupByCode(base44, user, body) {
 }
 
 async function joinCampaign(base44, user, body) {
-  const { campaign_id } = body;
+  const { campaign_id, code } = body;
   const campaign = await base44.asServiceRole.entities.Campaign.get(campaign_id);
   if (!campaign) return Response.json({ error: 'Campaign not found' }, { status: 404 });
 
   const members = campaign.members || [];
   if (campaign.created_by_id === user.id || members.includes(user.id)) {
     return Response.json({ campaign, already_member: true });
+  }
+
+  // Membership is granted solely through a valid join code the host generated.
+  // Do not trust the client-supplied campaign_id alone as authorization —
+  // campaign ids are exposed in app URLs and shared links.
+  if (!code) return Response.json({ error: 'Join code required' }, { status: 400 });
+  const expected = String(code).toUpperCase().trim();
+  if (!campaign.join_code || String(campaign.join_code).toUpperCase() !== expected) {
+    return Response.json({ error: 'Invalid join code' }, { status: 403 });
   }
 
   // Add the user to the campaign's member list.
