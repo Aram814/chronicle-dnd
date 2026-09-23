@@ -17,6 +17,7 @@ import { parseDMReply, abilityModifier, SKILL_LABELS, ABILITY_LABELS, proficienc
 import { rollForRequest } from '@/lib/dice';
 import { sound } from '@/lib/soundManager';
 import SoundToggle from '@/components/SoundToggle';
+import RelationshipTracker from '@/components/RelationshipTracker';
 
 export default function CampaignGame() {
   const { id } = useParams();
@@ -290,6 +291,7 @@ export default function CampaignGame() {
     let campChanged = false;
     const npcAdds = [];
     const npcStatuses = [];
+    const npcDispositions = [];
     const questAdds = [];
     const questUpdates = [];
     const locAdds = [];
@@ -355,6 +357,9 @@ export default function CampaignGame() {
         case 'npc_status':
           npcStatuses.push({ name: u.arg1, status: u.arg2 });
           break;
+        case 'npc_disposition':
+          npcDispositions.push({ name: u.arg1, change: parseInt(u.arg2, 10) || 0, reason: u.arg3 });
+          break;
         case 'quest_add':
           questAdds.push({ campaign_id: id, name: u.arg1, type: u.arg2 || 'side', description: u.arg3, status: 'active', members: allMemberIds });
           break;
@@ -418,6 +423,16 @@ export default function CampaignGame() {
         if (npc) await base44.entities.NPC.update(npc.id, { status: ns.status });
       }
     }
+    if (npcDispositions.length) {
+      for (const nd of npcDispositions) {
+        const npc = npcs.find(n => n.name.toLowerCase() === nd.name.toLowerCase());
+        if (npc) {
+          const newDisp = Math.max(-100, Math.min(100, (npc.disposition || 0) + nd.change));
+          const interactions = [...(npc.interactions || []), { summary: nd.reason, change: nd.change, timestamp: new Date().toISOString() }];
+          await base44.entities.NPC.update(npc.id, { disposition: newDisp, interactions });
+        }
+      }
+    }
     if (questAdds.length) await base44.entities.Quest.bulkCreate(questAdds);
     if (questUpdates.length) {
       for (const qu of questUpdates) {
@@ -428,7 +443,7 @@ export default function CampaignGame() {
     if (locAdds.length) await base44.entities.Location.bulkCreate(locAdds);
 
     // Reload related data
-    if (npcAdds.length || npcStatuses.length || questAdds.length || questUpdates.length || locAdds.length) {
+    if (npcAdds.length || npcStatuses.length || npcDispositions.length || questAdds.length || questUpdates.length || locAdds.length) {
       const [npcList, questList, locList] = await Promise.all([
         base44.entities.NPC.filter({ campaign_id: id }),
         base44.entities.Quest.filter({ campaign_id: id }),
@@ -894,23 +909,7 @@ function LeftSidebarContent({ character, campaign, panel, npcs, quests, location
     );
   }
   if (panel === 'npcs') {
-    return (
-      <div className="space-y-2">
-        <h4 className="font-serif text-amber-200 text-sm">Known NPCs</h4>
-        {npcs.length === 0 ? <p className="text-xs text-muted-foreground">No NPCs discovered</p> : (
-          npcs.map(n => (
-            <div key={n.id} className="bg-background/50 border border-border rounded p-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-foreground">{n.name}</span>
-                <span className={`text-xs ${n.status === 'dead' ? 'text-red-400' : 'text-muted-foreground'}`}>{n.status}</span>
-              </div>
-              {n.relationship && <p className="text-xs text-amber-600">Relationship: {n.relationship}</p>}
-              {n.description && <p className="text-xs text-muted-foreground mt-1">{n.description}</p>}
-            </div>
-          ))
-        )}
-      </div>
-    );
+    return <RelationshipTracker npcs={npcs} />;
   }
   if (panel === 'map') {
     return (

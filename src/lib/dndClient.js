@@ -59,6 +59,7 @@ export function parseDMReply(raw) {
     { regex: /\[\[NPC_ADD:\s*([^|]+?)(?:\s*\|\s*([^|]*))?(?:\s*\|\s*([^|]*))?(?:\s*\|\s*([^|]*))?(?:\s*\|\s*([^|]*?))?\s*\]\]/g, type: 'npc_add' },
     { regex: /\[\[NPC_UPDATE:\s*([^|]+)\|\s*([^|]+)\|\s*([^|]+?)\]\]/g, type: 'npc_update' },
     { regex: /\[\[NPC_STATUS:\s*([^|]+)\|\s*([^|]+?)\]\]/g, type: 'npc_status' },
+    { regex: /\[\[NPC_DISPOSITION:\s*([^|]+)\|\s*(-?\d+)\|\s*([^|]+?)\]\]/g, type: 'npc_disposition' },
     { regex: /\[\[QUEST_ADD:\s*([^|]+?)(?:\s*\|\s*([^|]*))?(?:\s*\|\s*([^|]*?))?\s*\]\]/g, type: 'quest_add' },
     { regex: /\[\[QUEST_UPDATE:\s*([^|]+)\|\s*([^|]+?)\]\]/g, type: 'quest_update' },
     { regex: /\[\[LOCATION_ADD:\s*([^|]+?)(?:\s*\|\s*([^|]*))?(?:\s*\|\s*([^|]*?))?\s*\]\]/g, type: 'location_add' },

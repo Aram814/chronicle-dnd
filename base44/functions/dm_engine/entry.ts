@@ -107,6 +107,7 @@ After your narration, if the game state changed, include one or more update comm
 [[NPC_ADD: <name> | <description> | <personality> | <relationship> | <location> ]]
 [[NPC_UPDATE: <name> | <field> | <value> ]]
 [[NPC_STATUS: <name> | <status e.g. dead/alive/friendly/hostile> ]]
+[[NPC_DISPOSITION: <name> | <signed change amount e.g. +5 or -10> | <short reason for the shift> ]]
 [[QUEST_ADD: <name> | <type main/side> | <description> ]]
 [[QUEST_UPDATE: <name> | <status active/completed/failed> ]]
 [[LOCATION_ADD: <name> | <type> | <description> ]]
@@ -121,6 +122,7 @@ After your narration, if the game state changed, include one or more update comm
 
 TRACKING THE WORLD — CRITICAL:
 - When the player MEETS or INTERACTS WITH a new NPC for the first time, you MUST emit [[NPC_ADD: <name> | <description> | <personality> | <relationship> | <location> ]]. Even if the NPC is minor, add them so the player has a record. You may omit later fields if unknown, but always include at least the name and a short description.
+- When the player's dialogue or actions shift an NPC's attitude toward them, emit [[NPC_DISPOSITION: <name> | <signed change> | <reason> ]]. Track this honestly — a caught lie, insult, or broken promise lowers disposition; help, honesty, and respect raise it.
 - When the player ARRIVES AT or DISCOVERS a new location, you MUST emit [[LOCATION_ADD: <name> | <type> | <description> ]]. You may omit type/description if minimal, but always include the name.
 - When a new quest or objective is introduced, emit [[QUEST_ADD: <name> | <type main/side> | <description> ]].
 - When the player travels to a different place, emit [[CURRENT_LOCATION: <location name> ]].

@@ -37,6 +37,27 @@
       "type": "boolean",
       "default": false
     },
+    "disposition": {
+      "type": "number",
+      "default": 0
+    },
+    "interactions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "string"
+          },
+          "change": {
+            "type": "number"
+          },
+          "timestamp": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "members": {
       "type": "array",
       "items": {
