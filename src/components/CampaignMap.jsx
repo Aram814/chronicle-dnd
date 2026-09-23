@@ -3,6 +3,7 @@ import { MapPin, X, Users, ScrollText, Compass, Sparkles, Loader2, RefreshCw } f
 import { normalizeLocations } from '@/lib/mapLayout';
 import { base44 } from '@/api/base44Client';
 import { Image } from '@/components/ui/image';
+import FogOfWar from '@/components/FogOfWar';
 
 const TYPE_ICONS = {
   city: '🏰', town: '🏘️', village: '🏚️', dungeon: '🕳️', forest: '🌲',
@@ -22,6 +23,9 @@ export default function CampaignMap({ campaign, locations, npcs, quests }) {
   const positioned = useMemo(() => normalizeLocations(locations), [locations]);
   const selected = selectedId ? positioned.find(l => l.id === selectedId) : null;
   const currentName = campaign?.current_location?.toLowerCase();
+  const revealedPoints = positioned
+    .filter(l => l.discovered || l.name.toLowerCase() === currentName)
+    .map(l => ({ id: l.id, x: l.normX, y: l.normY }));
 
   const relatedNpcs = selected ? npcs.filter(n =>
     n.location && n.location.toLowerCase() === selected.name.toLowerCase()
@@ -89,6 +93,9 @@ export default function CampaignMap({ campaign, locations, npcs, quests }) {
       <div className="absolute inset-0 pointer-events-none" style={{
         background: 'radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.55) 100%)'
       }} />
+
+      {/* Fog of war: hide undiscovered regions of the painted map */}
+      {mapImage && <FogOfWar revealedPoints={revealedPoints} />}
 
       {/* Generate / regenerate map button */}
       <button

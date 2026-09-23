@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, Compass, Maximize2 } from 'lucide-react';
 import { normalizeLocations } from '@/lib/mapLayout';
 import { Image } from '@/components/ui/image';
+import FogOfWar from '@/components/FogOfWar';
 
 const TYPE_ICONS = {
   city: '🏰', town: '🏘️', village: '🏚️', dungeon: '🕳️', forest: '🌲',
@@ -20,6 +21,9 @@ export default function MapPanel({ campaign, locations }) {
   const selected = selectedId ? positioned.find(l => l.id === selectedId) : null;
   const currentName = campaign?.current_location?.toLowerCase();
   const campaignId = campaign?.id;
+  const revealedPoints = positioned
+    .filter(l => l.discovered || l.name.toLowerCase() === currentName)
+    .map(l => ({ id: l.id, x: l.normX, y: l.normY }));
 
   return (
     <div className="space-y-2">
@@ -63,6 +67,8 @@ export default function MapPanel({ campaign, locations }) {
             <div className="absolute inset-0 pointer-events-none" style={{
               background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%)'
             }} />
+
+            {campaign?.map_image && <FogOfWar revealedPoints={revealedPoints} />}
 
             {positioned.map(l => {
               const isCurrent = l.name.toLowerCase() === currentName;
