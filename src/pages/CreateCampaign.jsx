@@ -10,7 +10,7 @@ import MatureToggle from '@/components/MatureToggle';
 import CharacterSetup from '@/components/CharacterSetup';
 import CampaignSetup from '@/components/CampaignSetup';
 
-export default function NewCampaign() {
+export default function CreateCampaign() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const storyId = searchParams.get('story');

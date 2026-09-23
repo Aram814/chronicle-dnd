@@ -18,7 +18,7 @@ const Register = lazy(() => import('@/pages/Register'));
 const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
-const NewCampaign = lazy(() => import('@/pages/NewCampaign'));
+const CreateCampaign = lazy(() => import('@/pages/CreateCampaign'));
 const CampaignGame = lazy(() => import('@/pages/CampaignGame'));
 const CampaignDetails = lazy(() => import('@/pages/CampaignDetails'));
 const CharacterSheet = lazy(() => import('@/pages/CharacterSheet'));
@@ -95,7 +95,7 @@ const AuthenticatedApp = () => {
             <Route path="/settings" element={<Settings />} />
           </Route>
           {/* Child screens keep their own headers / full-screen layouts */}
-          <Route path="/new-campaign" element={<PageWrapper><NewCampaign /></PageWrapper>} />
+          <Route path="/new-campaign" element={<PageWrapper><CreateCampaign /></PageWrapper>} />
           <Route path="/campaign/:id" element={<PageWrapper><CampaignGame /></PageWrapper>} />
           <Route path="/campaign/:id/details" element={<PageWrapper><CampaignDetails /></PageWrapper>} />
           <Route path="/character/:id" element={<PageWrapper><CharacterSheet /></PageWrapper>} />
