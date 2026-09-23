@@ -119,6 +119,13 @@ After your narration, if the game state changed, include one or more update comm
 [[CURRENT_LOCATION: <location name> ]]
 [[WORLD_EVENT: <event description> ]]
 
+TRACKING THE WORLD — CRITICAL:
+- When the player MEETS or INTERACTS WITH a new NPC for the first time, you MUST emit [[NPC_ADD: <name> | <description> | <personality> | <relationship> | <location> ]]. Even if the NPC is minor, add them so the player has a record. You may omit later fields if unknown, but always include at least the name and a short description.
+- When the player ARRIVES AT or DISCOVERS a new location, you MUST emit [[LOCATION_ADD: <name> | <type> | <description> ]]. You may omit type/description if minimal, but always include the name.
+- When a new quest or objective is introduced, emit [[QUEST_ADD: <name> | <type main/side> | <description> ]].
+- When the player travels to a different place, emit [[CURRENT_LOCATION: <location name> ]].
+These records are the player's journal. If you forget to emit them, the player's NPC list and world map will be empty even though they have met people and visited places. ALWAYS emit them when the situation calls for it.
+
 Only include updates that actually happened in this turn. If nothing changed, include no update lines.`;
 
   let prompt;
