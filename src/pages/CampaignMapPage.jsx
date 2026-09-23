@@ -36,7 +36,7 @@ export default function CampaignMapPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <ScreenHeader title="World Map" backTo={`/campaign/${id}/details`} />
+      <ScreenHeader title="World Map" backTo={`/campaign/${id}`} />
       <div className="flex-1">
         <CampaignMap campaign={campaign} locations={locations} npcs={npcs} quests={quests} />
       </div>
