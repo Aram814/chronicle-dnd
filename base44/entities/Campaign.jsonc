@@ -89,6 +89,9 @@
     "cover_image": {
       "type": "string"
     },
+    "map_image": {
+      "type": "string"
+    },
     "members": {
       "type": "array",
       "items": {

@@ -30,6 +30,9 @@ export default async function(req) {
     if (mode === 'generate_character') return await handleGenerateCharacter(base44, body);
     if (mode === 'save_story') return await handleSaveStory(base44, body);
     if (mode === 'generate_portrait') return await handleGeneratePortrait(base44, body);
+    if (mode === 'generate_map') return await handleGenerateMap(base44, body);
+    if (mode === 'generate_npc_portrait') return await handleGenerateNpcPortrait(base44, body);
+    if (mode === 'generate_location_image') return await handleGenerateLocationImage(base44, body);
 
     return Response.json({ error: 'Unknown mode' }, { status: 400 });
   } catch (error) {
@@ -311,6 +314,49 @@ async function handleGeneratePortrait(base44, body) {
     c.name ? `Named ${c.name}` : ''
   ].filter(Boolean).join('. ');
   const prompt = `Fantasy RPG character portrait, head and shoulders, centered composition. ${traits}. Dark fantasy digital painting, dramatic cinematic lighting, highly detailed painterly style, plain dark background, no text.`;
+  const res = await base44.asServiceRole.integrations.Core.GenerateImage({ prompt });
+  return Response.json({ url: res.url });
+}
+
+// Generate an illustrated fantasy world map for a campaign. Used as the
+// background of the in-game map view behind the location pins.
+async function handleGenerateMap(base44, body) {
+  const { campaign } = body;
+  const c = campaign || {};
+  const worldName = (c.setup_data && c.setup_data.world && c.setup_data.world.world_name) || c.name || 'the realm';
+  const setting = c.setting || c.description || '';
+  const tone = Array.isArray(c.tone) && c.tone.length ? c.tone.join(', ') : '';
+  const prompt = `An illustrated fantasy roleplaying game world map of "${worldName}". ${setting ? 'Setting: ' + setting + '. ' : ''}${tone ? 'Mood: ' + tone + '. ' : ''}Hand-drawn antique parchment style, aged paper texture, ink and watercolor cartography, compass rose in a corner, scattered regions with forests, mountains, rivers, coastlines, castles and towns marked with tiny illustrated icons, decorative ornamental border, no modern text, no grid lines, top-down world map, highly detailed, atmospheric dark fantasy.`;
+  const res = await base44.asServiceRole.integrations.Core.GenerateImage({ prompt });
+  return Response.json({ url: res.url });
+}
+
+// Generate a portrait/illustration for an NPC. Hostile NPCs render as monster
+// concept art instead of a friendly portrait.
+async function handleGenerateNpcPortrait(base44, body) {
+  const { npc } = body;
+  const n = npc || {};
+  const hostile = n.is_hostile || n.status === 'hostile' || n.status === 'dead';
+  const traits = [
+    n.name ? 'Named ' + n.name : '',
+    n.description || '',
+    n.personality || '',
+    n.faction ? 'Affiliated with ' + n.faction : '',
+    n.location ? 'Found in ' + n.location : ''
+  ].filter(Boolean).join('. ');
+  const prompt = hostile
+    ? `Fantasy RPG monster illustration, ${n.name || 'a fearsome creature'}. ${n.description || ''}. Dark fantasy digital painting, dramatic threatening pose, eerie lighting, highly detailed creature concept art, plain dark background, no text, no watermark.`
+    : `Fantasy RPG character portrait, head and shoulders, centered composition. ${traits}. Dark fantasy digital painting, dramatic cinematic lighting, highly detailed painterly style, plain dark background, no text, no watermark.`;
+  const res = await base44.asServiceRole.integrations.Core.GenerateImage({ prompt });
+  return Response.json({ url: res.url });
+}
+
+// Generate an establishing-shot illustration of a discovered location.
+async function handleGenerateLocationImage(base44, body) {
+  const { location, campaign } = body;
+  const l = location || {};
+  const c = campaign || {};
+  const prompt = `Fantasy RPG location illustration of "${l.name}"${l.type ? ', a ' + l.type : ''}. ${l.description || ''}. ${c.setting ? 'World: ' + c.setting + '. ' : ''}Atmospheric digital painting, wide establishing shot, dark fantasy mood, dramatic lighting, highly detailed environment, no text, no watermark.`;
   const res = await base44.asServiceRole.integrations.Core.GenerateImage({ prompt });
   return Response.json({ url: res.url });
 }

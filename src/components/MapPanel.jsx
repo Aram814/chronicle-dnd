@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Compass, Maximize2 } from 'lucide-react';
 import { normalizeLocations } from '@/lib/mapLayout';
+import { Image } from '@/components/ui/image';
 
 const TYPE_ICONS = {
   city: '🏰', town: '🏘️', village: '🏚️', dungeon: '🕳️', forest: '🌲',
@@ -42,14 +43,23 @@ export default function MapPanel({ campaign, locations }) {
       ) : (
         <>
           <div className="relative w-full h-56 rounded-lg overflow-hidden border border-border bg-stone-950">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `
-                radial-gradient(circle at 50% 50%, rgba(120, 53, 15, 0.08) 0%, transparent 70%),
-                linear-gradient(rgba(120, 53, 15, 0.04) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(120, 53, 15, 0.04) 1px, transparent 1px)
-              `,
-              backgroundSize: '100% 100%, 40px 40px, 40px 40px',
-            }} />
+            {campaign?.map_image ? (
+              <>
+                <div className="absolute inset-0">
+                  <Image src={campaign.map_image} alt="World map" fittingType="fill" className="w-full h-full" />
+                </div>
+                <div className="absolute inset-0 pointer-events-none bg-stone-950/30" />
+              </>
+            ) : (
+              <div className="absolute inset-0" style={{
+                backgroundImage: `
+                  radial-gradient(circle at 50% 50%, rgba(120, 53, 15, 0.08) 0%, transparent 70%),
+                  linear-gradient(rgba(120, 53, 15, 0.04) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(120, 53, 15, 0.04) 1px, transparent 1px)
+                `,
+                backgroundSize: '100% 100%, 40px 40px, 40px 40px',
+              }} />
+            )}
             <div className="absolute inset-0 pointer-events-none" style={{
               background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%)'
             }} />

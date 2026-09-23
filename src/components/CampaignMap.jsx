@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
-import { MapPin, X, Users, ScrollText, Compass } from 'lucide-react';
+import { MapPin, X, Users, ScrollText, Compass, Sparkles, Loader2, RefreshCw } from 'lucide-react';
 import { normalizeLocations } from '@/lib/mapLayout';
+import { base44 } from '@/api/base44Client';
+import { Image } from '@/components/ui/image';
 
 const TYPE_ICONS = {
   city: '🏰', town: '🏘️', village: '🏚️', dungeon: '🕳️', forest: '🌲',
@@ -11,9 +13,13 @@ const TYPE_ICONS = {
 
 export default function CampaignMap({ campaign, locations, npcs, quests }) {
   const [selectedId, setSelectedId] = useState(null);
+  const [mapImage, setMapImage] = useState(campaign?.map_image || null);
+  const [generatingMap, setGeneratingMap] = useState(false);
+  const [locImages, setLocImages] = useState({});   // locationId -> image url override
+  const [generatingLoc, setGeneratingLoc] = useState(null);
+  const [npcPortraits, setNpcPortraits] = useState({}); // npcId -> portrait url override
 
   const positioned = useMemo(() => normalizeLocations(locations), [locations]);
-
   const selected = selectedId ? positioned.find(l => l.id === selectedId) : null;
   const currentName = campaign?.current_location?.toLowerCase();
 
@@ -25,20 +31,77 @@ export default function CampaignMap({ campaign, locations, npcs, quests }) {
     return relatedNpcs.some(n => n.name.toLowerCase() === (q.giver || '').toLowerCase());
   }) : [];
 
+  const generateMap = async () => {
+    setGeneratingMap(true);
+    try {
+      const res = await base44.functions.invoke('dm_engine', { mode: 'generate_map', campaign });
+      if (res.data?.url) {
+        await base44.entities.Campaign.update(campaign.id, { map_image: res.data.url });
+        setMapImage(res.data.url);
+      }
+    } catch (e) { /* ignore */ } finally { setGeneratingMap(false); }
+  };
+
+  const generateLocImage = async (loc) => {
+    setGeneratingLoc(loc.id);
+    try {
+      const res = await base44.functions.invoke('dm_engine', { mode: 'generate_location_image', location: loc, campaign });
+      if (res.data?.url) {
+        await base44.entities.Location.update(loc.id, { image: res.data.url });
+        setLocImages(prev => ({ ...prev, [loc.id]: res.data.url }));
+      }
+    } catch (e) { /* ignore */ } finally { setGeneratingLoc(null); }
+  };
+
+  const generateNpcPortrait = async (npc) => {
+    setGeneratingLoc('npc-' + npc.id);
+    try {
+      const res = await base44.functions.invoke('dm_engine', { mode: 'generate_npc_portrait', npc });
+      if (res.data?.url) {
+        await base44.entities.NPC.update(npc.id, { portrait: res.data.url });
+        setNpcPortraits(prev => ({ ...prev, [npc.id]: res.data.url }));
+      }
+    } catch (e) { /* ignore */ } finally { setGeneratingLoc(null); }
+  };
+
   return (
     <div className="relative w-full h-full bg-stone-950 overflow-hidden min-h-[60vh]">
-      {/* Background grid + glow */}
-      <div className="absolute inset-0" style={{
-        backgroundImage: `
-          radial-gradient(circle at 50% 50%, rgba(120, 53, 15, 0.08) 0%, transparent 70%),
-          linear-gradient(rgba(120, 53, 15, 0.04) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(120, 53, 15, 0.04) 1px, transparent 1px)
-        `,
-        backgroundSize: '100% 100%, 40px 40px, 40px 40px',
-      }} />
+      {/* Background: illustrated map image, or atmospheric grid fallback */}
+      {mapImage ? (
+        <>
+          <div className="absolute inset-0">
+            <Image src={mapImage} alt="World map" fittingType="fill" className="w-full h-full" />
+          </div>
+          <div className="absolute inset-0 pointer-events-none bg-stone-950/30" />
+        </>
+      ) : (
+        <>
+          <div className="absolute inset-0" style={{
+            backgroundImage: `
+              radial-gradient(circle at 50% 50%, rgba(120, 53, 15, 0.08) 0%, transparent 70%),
+              linear-gradient(rgba(120, 53, 15, 0.04) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(120, 53, 15, 0.04) 1px, transparent 1px)
+            `,
+            backgroundSize: '100% 100%, 40px 40px, 40px 40px',
+          }} />
+        </>
+      )}
       <div className="absolute inset-0 pointer-events-none" style={{
-        background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%)'
+        background: 'radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.55) 100%)'
       }} />
+
+      {/* Generate / regenerate map button */}
+      <button
+        onClick={generateMap}
+        disabled={generatingMap}
+        className="absolute top-3 right-3 z-20 touch-target flex items-center gap-1.5 px-3 py-2 text-xs bg-stone-900/85 backdrop-blur rounded-lg border border-amber-900/40 text-amber-200 hover:bg-stone-800/90 disabled:opacity-60"
+      >
+        {generatingMap
+          ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Painting map…</>
+          : mapImage
+            ? <><RefreshCw className="w-3.5 h-3.5" /> Regenerate map</>
+            : <><Sparkles className="w-3.5 h-3.5" /> Generate world map</>}
+      </button>
 
       {/* Markers */}
       {positioned.map(l => {
@@ -49,7 +112,7 @@ export default function CampaignMap({ campaign, locations, npcs, quests }) {
           <button
             key={l.id}
             onClick={() => setSelectedId(l.id)}
-            className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5 group touch-target"
+            className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5 group touch-target z-10"
             style={{ left: `${l.normX}%`, top: `${l.normY}%` }}
             aria-label={isDiscovered ? l.name : 'Unknown location'}
           >
@@ -80,7 +143,7 @@ export default function CampaignMap({ campaign, locations, npcs, quests }) {
 
       {/* Empty state */}
       {positioned.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center">
             <Compass className="w-12 h-12 text-stone-700 mx-auto mb-2" />
             <p className="text-stone-500 text-sm">No locations discovered yet</p>
@@ -90,7 +153,7 @@ export default function CampaignMap({ campaign, locations, npcs, quests }) {
       )}
 
       {/* Legend */}
-      <div className="absolute top-3 left-3 flex flex-col gap-1.5 text-xs bg-stone-900/80 backdrop-blur rounded-lg px-3 py-2 border border-stone-700/50">
+      <div className="absolute top-3 left-3 flex flex-col gap-1.5 text-xs bg-stone-900/80 backdrop-blur rounded-lg px-3 py-2 border border-stone-700/50 z-10">
         <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-amber-600 border border-amber-300" /> Current</div>
         <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-amber-800/80 border border-amber-500/60" /> Discovered</div>
         <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-stone-800 border border-stone-600/50" /> Unknown</div>
@@ -98,7 +161,7 @@ export default function CampaignMap({ campaign, locations, npcs, quests }) {
 
       {/* Detail panel */}
       {selected && (
-        <div className="absolute inset-x-0 bottom-0 md:inset-y-0 md:left-auto md:right-0 md:w-80 bg-card border-t md:border-t-0 md:border-l border-amber-900/30 overflow-y-auto safe-bottom max-h-[55vh] md:max-h-none">
+        <div className="absolute inset-x-0 bottom-0 md:inset-y-0 md:left-auto md:right-0 md:w-80 bg-card border-t md:border-t-0 md:border-l border-amber-900/30 overflow-y-auto safe-bottom max-h-[55vh] md:max-h-none z-30">
           <div className="sticky top-0 bg-card/95 backdrop-blur border-b border-border px-4 py-3 flex items-center justify-between z-10">
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-lg">{TYPE_ICONS[selected.type?.toLowerCase()] || '📍'}</span>
@@ -109,6 +172,23 @@ export default function CampaignMap({ campaign, locations, npcs, quests }) {
             </button>
           </div>
           <div className="p-4 space-y-4">
+            {/* Location illustration */}
+            <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-border bg-stone-900">
+              {locImages[selected.id] || selected.image ? (
+                <Image src={locImages[selected.id] || selected.image} alt={selected.name} fittingType="fill" className="w-full h-full" />
+              ) : (
+                <button
+                  onClick={() => generateLocImage(selected)}
+                  disabled={generatingLoc === selected.id}
+                  className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:text-amber-200 transition-colors"
+                >
+                  {generatingLoc === selected.id
+                    ? <><Loader2 className="w-5 h-5 animate-spin" /><span className="text-xs">Painting…</span></>
+                    : <><Sparkles className="w-5 h-5" /><span className="text-xs">Generate illustration</span></>}
+                </button>
+              )}
+            </div>
+
             {selected.type && <span className="text-xs text-amber-500 capitalize">{selected.type}</span>}
             {selected.description
               ? <p className="text-sm text-foreground/90 leading-relaxed">{selected.description}</p>
@@ -119,13 +199,31 @@ export default function CampaignMap({ campaign, locations, npcs, quests }) {
             {relatedNpcs.length > 0 && (
               <div>
                 <h4 className="text-xs uppercase text-amber-600 font-semibold mb-2 flex items-center gap-1"><Users className="w-3 h-3" /> NPCs Here</h4>
-                <ul className="space-y-1.5">
-                  {relatedNpcs.map(n => (
-                    <li key={n.id} className="text-sm">
-                      <span className="text-amber-200">{n.name}</span>
-                      {n.description && <p className="text-xs text-muted-foreground">{n.description.slice(0, 80)}</p>}
-                    </li>
-                  ))}
+                <ul className="space-y-2">
+                  {relatedNpcs.map(n => {
+                    const portrait = npcPortraits[n.id] || n.portrait;
+                    const loadingNpc = generatingLoc === 'npc-' + n.id;
+                    return (
+                      <li key={n.id} className="flex items-start gap-2">
+                        <button
+                          onClick={() => !portrait && generateNpcPortrait(n)}
+                          disabled={loadingNpc}
+                          className="relative w-11 h-11 rounded-md overflow-hidden border border-amber-900/40 bg-stone-800 flex-shrink-0 flex items-center justify-center hover:border-amber-600/60 transition-colors"
+                          aria-label={portrait ? n.name : `Generate portrait for ${n.name}`}
+                        >
+                          {portrait
+                            ? <Image src={portrait} alt={n.name} fittingType="fill" className="w-full h-full" />
+                            : loadingNpc
+                              ? <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+                              : <Sparkles className="w-4 h-4 text-muted-foreground" />}
+                        </button>
+                        <div className="min-w-0">
+                          <span className="text-sm text-amber-200">{n.name}</span>
+                          {n.description && <p className="text-xs text-muted-foreground line-clamp-2">{n.description.slice(0, 80)}</p>}
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )}

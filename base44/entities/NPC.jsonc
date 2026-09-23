@@ -41,6 +41,9 @@
       "type": "number",
       "default": 0
     },
+    "portrait": {
+      "type": "string"
+    },
     "interactions": {
       "type": "array",
       "items": {

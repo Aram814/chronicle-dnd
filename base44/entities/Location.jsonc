@@ -30,6 +30,9 @@
     "notes": {
       "type": "string"
     },
+    "image": {
+      "type": "string"
+    },
     "members": {
       "type": "array",
       "items": {
