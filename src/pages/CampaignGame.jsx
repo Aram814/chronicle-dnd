@@ -133,7 +133,7 @@ export default function CampaignGame() {
       }
 
       const [msgs, npcList, questList, locList] = await Promise.all([
-        base44.entities.Message.filter({ campaign_id: id }),
+        base44.entities.Message.filter({ campaign_id: id }, 'created_date'),
         base44.entities.NPC.filter({ campaign_id: id }),
         base44.entities.Quest.filter({ campaign_id: id }),
         base44.entities.Location.filter({ campaign_id: id })
