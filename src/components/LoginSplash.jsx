@@ -38,7 +38,7 @@ export default function LoginSplash({ children, footer }) {
           <div className="flex items-center justify-center gap-3 mt-3">
             <span className="h-px w-10 bg-gradient-to-r from-transparent to-amber-600/70" />
             <span
-              className="font-body text-sm md:text-base font-semibold text-amber-100 tracking-[0.2em] uppercase"
+              className="font-display text-sm md:text-base font-semibold text-amber-100 tracking-[0.2em] uppercase"
               style={{ textShadow: '0 1px 4px rgba(0,0,0,0.95), 0 0 12px rgba(0,0,0,0.75)' }}
             >
               AI Dungeon Master for TTRPG Campaigns
