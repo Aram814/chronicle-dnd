@@ -30,17 +30,20 @@ export default function LoginSplash({ children, footer }) {
         {/* Branding */}
         <div className="text-center mb-8 select-none">
           <h1
-            className="font-serif text-4xl md:text-5xl font-bold tracking-wider text-amber-200"
-            style={{ textShadow: '0 2px 10px rgba(0,0,0,0.9), 0 0 24px rgba(180,120,40,0.25)' }}
+            className="font-display text-4xl md:text-5xl font-extrabold tracking-wider text-amber-50"
+            style={{ textShadow: '0 2px 6px rgba(0,0,0,0.95), 0 0 18px rgba(0,0,0,0.8), 0 0 36px rgba(180,120,40,0.35)' }}
           >
             CRITICAL CHRONICLES
           </h1>
           <div className="flex items-center justify-center gap-3 mt-3">
-            <span className="h-px w-10 bg-gradient-to-r from-transparent to-amber-700/60" />
-            <span className="font-serif text-sm md:text-base text-amber-400 tracking-[0.25em] uppercase">
+            <span className="h-px w-10 bg-gradient-to-r from-transparent to-amber-600/70" />
+            <span
+              className="font-body text-sm md:text-base font-semibold text-amber-100 tracking-[0.2em] uppercase"
+              style={{ textShadow: '0 1px 4px rgba(0,0,0,0.95), 0 0 12px rgba(0,0,0,0.75)' }}
+            >
               AI Dungeon Master for TTRPG Campaigns
             </span>
-            <span className="h-px w-10 bg-gradient-to-l from-transparent to-amber-700/60" />
+            <span className="h-px w-10 bg-gradient-to-l from-transparent to-amber-600/70" />
           </div>
         </div>
 
