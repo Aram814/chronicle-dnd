@@ -12,7 +12,7 @@ const TYPE_ICONS = {
   wilderness: '🌲', road: '🛤️', region: '🗺️',
 };
 
-export default function CampaignMap({ campaign, locations, npcs, monsters, quests }) {
+export default function CampaignMap({ campaign, locations, npcs, monsters, quests, players }) {
   const [selectedId, setSelectedId] = useState(null);
   const [mapImage, setMapImage] = useState(campaign?.map_image || null);
   const [generatingMap, setGeneratingMap] = useState(false);
@@ -26,6 +26,19 @@ export default function CampaignMap({ campaign, locations, npcs, monsters, quest
   const revealedPoints = positioned
     .filter(l => l.discovered || l.name.toLowerCase() === currentName)
     .map(l => ({ id: l.id, x: l.normX, y: l.normY }));
+
+  // NPC / monster counts per location name (lowercased), for presence badges.
+  const entitiesByLoc = useMemo(() => {
+    const map = {};
+    const add = (key, field) => {
+      if (!key) return;
+      map[key] = map[key] || { npcs: 0, monsters: 0 };
+      map[key][field]++;
+    };
+    for (const n of (npcs || [])) add((n.location || '').toLowerCase(), 'npcs');
+    for (const m of (monsters || [])) add((m.location || '').toLowerCase(), 'monsters');
+    return map;
+  }, [npcs, monsters]);
 
   const relatedNpcs = selected ? (npcs || []).filter(n =>
     n.location && n.location.toLowerCase() === selected.name.toLowerCase()
@@ -129,6 +142,9 @@ export default function CampaignMap({ campaign, locations, npcs, monsters, quest
         const isCurrent = l.name.toLowerCase() === currentName;
         const isDiscovered = l.discovered;
         const isSelected = l.id === selectedId;
+        const counts = entitiesByLoc[(l.name || '').toLowerCase()] || { npcs: 0, monsters: 0 };
+        const showParty = isCurrent && (players?.length || 0) > 0;
+        const hasPresence = showParty || counts.npcs > 0 || counts.monsters > 0;
         return (
           <button
             key={l.id}
@@ -152,6 +168,13 @@ export default function CampaignMap({ campaign, locations, npcs, monsters, quest
               {isDiscovered
                 ? <MapPin className="w-4 h-4 text-amber-100" />
                 : <span className="text-stone-400 text-sm font-bold">?</span>}
+              {hasPresence && (
+                <div className="absolute -top-2 left-1/2 -translate-x-1/2 flex gap-0.5">
+                  {showParty && <span className="min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center border border-sky-400 bg-sky-900 text-sky-100">{players.length}</span>}
+                  {counts.npcs > 0 && <span className="min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center border border-emerald-400 bg-emerald-900 text-emerald-100">{counts.npcs}</span>}
+                  {counts.monsters > 0 && <span className="min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center border border-red-400 bg-red-900 text-red-100">{counts.monsters}</span>}
+                </div>
+              )}
             </span>
             {isDiscovered && (
               <span className={`text-xs font-serif px-1.5 py-0.5 rounded bg-stone-900/80 whitespace-nowrap ${
@@ -178,6 +201,9 @@ export default function CampaignMap({ campaign, locations, npcs, monsters, quest
         <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-amber-600 border border-amber-300" /> Current</div>
         <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-amber-800/80 border border-amber-500/60" /> Discovered</div>
         <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-stone-800 border border-stone-600/50" /> Unknown</div>
+        <div className="flex items-center gap-1.5 pt-1 border-t border-stone-700/50 mt-1"><span className="min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center border border-sky-400 bg-sky-900 text-sky-100">P</span> Party</div>
+        <div className="flex items-center gap-1.5"><span className="min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center border border-emerald-400 bg-emerald-900 text-emerald-100">N</span> NPCs</div>
+        <div className="flex items-center gap-1.5"><span className="min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center border border-red-400 bg-red-900 text-red-100">M</span> Creatures</div>
       </div>
 
       {/* Detail panel */}

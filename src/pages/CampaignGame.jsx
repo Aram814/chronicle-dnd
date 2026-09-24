@@ -876,7 +876,7 @@ export default function CampaignGame() {
           <div className="absolute inset-0 bg-black/60" onClick={() => setLeftPanel(null)} />
           <div className="relative w-80 bg-card border-r border-border overflow-y-auto max-h-full safe-top safe-bottom">
             <button onClick={() => setLeftPanel(null)} aria-label="Close panel" className="absolute top-2 right-2 p-1 text-muted-foreground z-10"><X className="w-5 h-5" /></button>
-            <LeftSidebarContent character={character} campaign={campaign} panel={leftPanel} npcs={npcs} monsters={monsters} quests={quests} locations={locations} onRecategorizeNpc={recategorizeToMonster} onRecategorizeMonster={recategorizeToNpc} />
+            <LeftSidebarContent character={character} campaign={campaign} panel={leftPanel} npcs={npcs} monsters={monsters} quests={quests} locations={locations} players={players} onRecategorizeNpc={recategorizeToMonster} onRecategorizeMonster={recategorizeToNpc} />
           </div>
         </div>
       )}
@@ -976,14 +976,14 @@ function LeftSidebar({ character, campaign, panel, setPanel, npcs, monsters, que
       </div>
       {panel && (
         <div className="border-t border-border p-3 max-h-[50vh] overflow-y-auto hidden md:block">
-          <LeftSidebarContent character={character} campaign={campaign} panel={panel} npcs={npcs} monsters={monsters} quests={quests} locations={locations} onRecategorizeNpc={onRecategorizeNpc} onRecategorizeMonster={onRecategorizeMonster} />
+          <LeftSidebarContent character={character} campaign={campaign} panel={panel} npcs={npcs} monsters={monsters} quests={quests} locations={locations} players={players} onRecategorizeNpc={onRecategorizeNpc} onRecategorizeMonster={onRecategorizeMonster} />
         </div>
       )}
     </div>
   );
 }
 
-function LeftSidebarContent({ character, campaign, panel, npcs, monsters, quests, locations, onRecategorizeNpc, onRecategorizeMonster }) {
+function LeftSidebarContent({ character, campaign, panel, npcs, monsters, quests, locations, players, onRecategorizeNpc, onRecategorizeMonster }) {
   if (panel === 'sheet' && character) {
     const scores = character.ability_scores || {};
     return (
@@ -1083,7 +1083,7 @@ function LeftSidebarContent({ character, campaign, panel, npcs, monsters, quests
     return <Bestiary monsters={monsters} onRecategorize={onRecategorizeMonster} />;
   }
   if (panel === 'map') {
-    return <MapPanel campaign={campaign} locations={locations} />;
+    return <MapPanel campaign={campaign} locations={locations} players={players} npcs={npcs} monsters={monsters} />;
   }
   return null;
 }
