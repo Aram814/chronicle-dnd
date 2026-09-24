@@ -82,7 +82,10 @@ export function buildQuestContext(quests) {
   let text = "QUESTS:\n";
   for (const q of quests) {
     text += `- [${q.type || "side"}] ${q.name} (${q.status}): ${q.description || ""}\n`;
-    if (q.objectives && q.objectives.length) text += `  Objectives: ${q.objectives.join("; ")}\n`;
+    if (q.objectives && q.objectives.length) {
+      const objs = q.objectives.map((o) => (typeof o === "string" ? { text: o, done: false } : o || {}));
+      text += `  Objectives: ${objs.map((o) => `${o.done ? "[x]" : "[ ]"} ${o.text || ""}`).join("; ")}\n`;
+    }
   }
   return text;
 }

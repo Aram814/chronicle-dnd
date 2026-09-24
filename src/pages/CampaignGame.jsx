@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import {
   Send, Heart, Shield, Swords, MapPin, Scroll, Users, BookOpen,
-  Dices, Bookmark, X, Menu, Star, Crosshair, Pencil, Skull, Wand2, Backpack, ScrollText
+  Dices, Bookmark, X, Menu, Star, Crosshair, Pencil, Skull, Wand2, Backpack, ScrollText, Check
 } from 'lucide-react';
 import ChatMessage from '@/components/ChatMessage';
 import DiceRoller from '@/components/DiceRoller';
@@ -21,6 +21,7 @@ import RelationshipTracker from '@/components/RelationshipTracker';
 import Bestiary from '@/components/Bestiary';
 import MapPanel from '@/components/MapPanel';
 import CharacterAvatar from '@/components/CharacterAvatar';
+import { normalizeObjectives, questProgress } from '@/lib/questProgress';
 
 export default function CampaignGame() {
   const { id } = useParams();
@@ -707,6 +708,32 @@ export default function CampaignGame() {
 
   const saveStory = () => setConfirmSaveStory(true);
 
+  const toggleObjective = useCallback(async (quest, index) => {
+    const next = normalizeObjectives(quest.objectives).map((o, i) =>
+      i === index ? { ...o, done: !o.done } : o
+    );
+    setQuests((prev) => prev.map((q) => (q.id === quest.id ? { ...q, objectives: next } : q)));
+    try {
+      await base44.entities.Quest.update(quest.id, { objectives: next });
+    } catch (e) {
+      setQuests((prev) => prev.map((q) => (q.id === quest.id ? { ...q, objectives: quest.objectives } : q)));
+      toast({ title: 'Failed to update objective', variant: 'destructive' });
+    }
+  }, []);
+
+  const addObjective = useCallback(async (quest, text) => {
+    const t = (text || '').trim();
+    if (!t) return;
+    const next = [...normalizeObjectives(quest.objectives), { text: t, done: false }];
+    setQuests((prev) => prev.map((q) => (q.id === quest.id ? { ...q, objectives: next } : q)));
+    try {
+      await base44.entities.Quest.update(quest.id, { objectives: next });
+    } catch (e) {
+      setQuests((prev) => prev.map((q) => (q.id === quest.id ? { ...q, objectives: quest.objectives } : q)));
+      toast({ title: 'Failed to add objective', variant: 'destructive' });
+    }
+  }, []);
+
   const doSaveStory = async () => {
     setConfirmSaveStory(false);
     setLoading(true);
@@ -788,7 +815,7 @@ export default function CampaignGame() {
       <div className="flex-1 flex overflow-hidden">
         {/* Left sidebar - desktop */}
         <div className="hidden md:flex w-64 border-r border-border bg-card/40 flex-col">
-          <LeftSidebar character={character} campaign={campaign} panel={leftPanel} setPanel={setLeftPanel} npcs={npcs} monsters={monsters} quests={quests} locations={locations} players={players} me={me} onRecategorizeNpc={recategorizeToMonster} onRecategorizeMonster={recategorizeToNpc} />
+          <LeftSidebar character={character} campaign={campaign} panel={leftPanel} setPanel={setLeftPanel} npcs={npcs} monsters={monsters} quests={quests} locations={locations} players={players} me={me} onRecategorizeNpc={recategorizeToMonster} onRecategorizeMonster={recategorizeToNpc} onToggleObjective={toggleObjective} onAddObjective={addObjective} />
         </div>
 
         {/* Center chat */}
@@ -879,7 +906,7 @@ export default function CampaignGame() {
           <div className="absolute inset-0 bg-black/60" onClick={() => setLeftPanel(null)} />
           <div className="relative w-80 bg-card border-r border-border overflow-y-auto max-h-full safe-top safe-bottom">
             <button onClick={() => setLeftPanel(null)} aria-label="Close panel" className="absolute top-2 right-2 p-1 text-muted-foreground z-10"><X className="w-5 h-5" /></button>
-            <LeftSidebarContent character={character} campaign={campaign} panel={leftPanel} npcs={npcs} monsters={monsters} quests={quests} locations={locations} players={players} onRecategorizeNpc={recategorizeToMonster} onRecategorizeMonster={recategorizeToNpc} />
+            <LeftSidebarContent character={character} campaign={campaign} panel={leftPanel} npcs={npcs} monsters={monsters} quests={quests} locations={locations} players={players} onRecategorizeNpc={recategorizeToMonster} onRecategorizeMonster={recategorizeToNpc} onToggleObjective={toggleObjective} onAddObjective={addObjective} />
           </div>
         </div>
       )}
@@ -926,7 +953,7 @@ export default function CampaignGame() {
   );
 }
 
-function LeftSidebar({ character, campaign, panel, setPanel, npcs, monsters, quests, locations, players, me, onRecategorizeNpc, onRecategorizeMonster }) {
+function LeftSidebar({ character, campaign, panel, setPanel, npcs, monsters, quests, locations, players, me, onRecategorizeNpc, onRecategorizeMonster, onToggleObjective, onAddObjective }) {
   const partyMembers = (players || []).filter(p => p && (!character || p.id !== character.id));
   return (
     <div className="flex flex-col h-full">
@@ -979,14 +1006,14 @@ function LeftSidebar({ character, campaign, panel, setPanel, npcs, monsters, que
       </div>
       {panel && (
         <div className="border-t border-border p-3 max-h-[50vh] overflow-y-auto hidden md:block">
-          <LeftSidebarContent character={character} campaign={campaign} panel={panel} npcs={npcs} monsters={monsters} quests={quests} locations={locations} players={players} onRecategorizeNpc={onRecategorizeNpc} onRecategorizeMonster={onRecategorizeMonster} />
+          <LeftSidebarContent character={character} campaign={campaign} panel={panel} npcs={npcs} monsters={monsters} quests={quests} locations={locations} players={players} onRecategorizeNpc={onRecategorizeNpc} onRecategorizeMonster={onRecategorizeMonster} onToggleObjective={onToggleObjective} onAddObjective={onAddObjective} />
         </div>
       )}
     </div>
   );
 }
 
-function LeftSidebarContent({ character, campaign, panel, npcs, monsters, quests, locations, players, onRecategorizeNpc, onRecategorizeMonster }) {
+function LeftSidebarContent({ character, campaign, panel, npcs, monsters, quests, locations, players, onRecategorizeNpc, onRecategorizeMonster, onToggleObjective, onAddObjective }) {
   if (panel === 'sheet' && character) {
     const scores = character.ability_scores || {};
     return (
@@ -1065,16 +1092,49 @@ function LeftSidebarContent({ character, campaign, panel, npcs, monsters, quests
       <div className="space-y-2">
         <h4 className="font-serif text-amber-200 text-sm">Quest Journal</h4>
         {quests.length === 0 ? <p className="text-xs text-muted-foreground">No quests yet</p> : (
-          quests.map(q => (
-            <div key={q.id} className="bg-background/50 border border-border rounded p-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-foreground">{q.name}</span>
-                <span className={`text-xs px-1.5 py-0.5 rounded ${q.status === 'completed' ? 'bg-emerald-900/40 text-emerald-300' : q.status === 'failed' ? 'bg-red-900/40 text-red-300' : 'bg-amber-900/40 text-amber-300'}`}>{q.status}</span>
+          quests.map(q => {
+            const progress = questProgress(q);
+            const objs = normalizeObjectives(q.objectives);
+            return (
+              <div key={q.id} className="bg-background/50 border border-border rounded p-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-foreground">{q.name}</span>
+                  <span className={`text-xs px-1.5 py-0.5 rounded ${q.status === 'completed' ? 'bg-emerald-900/40 text-emerald-300' : q.status === 'failed' ? 'bg-red-900/40 text-red-300' : 'bg-amber-900/40 text-amber-300'}`}>{q.status}</span>
+                </div>
+                {q.type === 'main' && <span className="text-xs text-amber-500">Main Quest</span>}
+                {q.description && <p className="text-xs text-muted-foreground mt-1">{q.description}</p>}
+
+                {objs.length > 0 && (
+                  <div className="mt-2">
+                    <div className="flex items-center justify-between text-[10px] mb-1">
+                      <span className="uppercase tracking-wide text-muted-foreground">Progress</span>
+                      <span className="text-amber-300">{progress.done}/{progress.total} · {progress.percent}%</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-amber-600 to-amber-400 transition-all duration-500" style={{ width: `${progress.percent}%` }} />
+                    </div>
+                  </div>
+                )}
+
+                {objs.length > 0 && (
+                  <ul className="mt-2 space-y-1">
+                    {objs.map((o, i) => (
+                      <li key={i}>
+                        <button onClick={() => onToggleObjective?.(q, i)} className="w-full flex items-start gap-1.5 text-left">
+                          <span className={`mt-0.5 w-3.5 h-3.5 rounded border flex-shrink-0 flex items-center justify-center ${o.done ? 'bg-emerald-600 border-emerald-600' : 'border-border'}`}>
+                            {o.done && <Check className="w-2.5 h-2.5 text-white" />}
+                          </span>
+                          <span className={`text-xs ${o.done ? 'line-through text-muted-foreground' : 'text-foreground'}`}>{o.text}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <ObjectiveAdd onAdd={(text) => onAddObjective?.(q, text)} />
               </div>
-              {q.type === 'main' && <span className="text-xs text-amber-500">Main Quest</span>}
-              {q.description && <p className="text-xs text-muted-foreground mt-1">{q.description}</p>}
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     );
@@ -1112,8 +1172,23 @@ function RightSidebar({ campaign, character, quests, npcs }) {
       <div>
         <h4 className="text-xs uppercase text-amber-600 font-semibold mb-1">Active Quests</h4>
         {activeQuests.length === 0 ? <p className="text-xs text-muted-foreground">No active quests</p> : (
-          <ul className="space-y-1">
-            {activeQuests.map(q => <li key={q.id} className="text-xs text-foreground">{q.name}</li>)}
+          <ul className="space-y-2">
+            {activeQuests.map(q => {
+              const p = questProgress(q);
+              return (
+                <li key={q.id}>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-foreground">{q.name}</span>
+                    {p.total > 0 && <span className="text-muted-foreground">{p.percent}%</span>}
+                  </div>
+                  {p.total > 0 && (
+                    <div className="h-1 rounded-full bg-muted overflow-hidden mt-1">
+                      <div className="h-full bg-gradient-to-r from-amber-600 to-amber-400 transition-all duration-500" style={{ width: `${p.percent}%` }} />
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
@@ -1145,6 +1220,27 @@ function MobileNavButton({ active, onClick, icon, label }) {
     <button onClick={onClick} aria-label={label} aria-pressed={active} className={`flex items-center gap-1 px-3 py-2.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${active ? 'bg-amber-900/40 text-amber-200 border border-amber-800/50' : 'text-muted-foreground hover:bg-muted/50'}`}>
       {icon} {label}
     </button>
+  );
+}
+
+function ObjectiveAdd({ onAdd }) {
+  const [text, setText] = useState('');
+  const submit = () => {
+    if (!text.trim()) return;
+    onAdd(text);
+    setText('');
+  };
+  return (
+    <div className="mt-2 flex gap-1">
+      <input
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
+        placeholder="Add objective…"
+        className="flex-1 text-xs bg-background border border-border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-700/50"
+      />
+      <button onClick={submit} className="text-xs px-2 py-1 rounded bg-amber-900/40 text-amber-300 hover:bg-amber-800/50 border border-amber-900/40">Add</button>
+    </div>
   );
 }
 
