@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import {
   ChevronDown, Heart, Frown, Meh, Smile, Angry, Sparkles, Loader2,
-  Search, MapPin, Flag, Skull, ArrowRightLeft
+  Search, MapPin, Flag, Skull, ArrowRightLeft, Users
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Image } from '@/components/ui/image';
 
 const DISPOSITION_BANDS = [
-  { min: 75, label: 'Devoted', color: 'text-rose-300', bar: 'bg-rose-500' },
-  { min: 25, label: 'Friendly', color: 'text-emerald-300', bar: 'bg-emerald-500' },
-  { min: -24, label: 'Neutral', color: 'text-muted-foreground', bar: 'bg-amber-500' },
-  { min: -74, label: 'Unfriendly', color: 'text-orange-300', bar: 'bg-orange-500' },
-  { min: -100, label: 'Hostile', color: 'text-red-400', bar: 'bg-red-500' }
+  { min: 75, label: 'Devoted', color: 'text-rose-300', bar: 'bg-rose-500', tag: 'bg-rose-900/40 text-rose-300' },
+  { min: 25, label: 'Friendly', color: 'text-emerald-300', bar: 'bg-emerald-500', tag: 'bg-emerald-900/30 text-emerald-300' },
+  { min: -24, label: 'Neutral', color: 'text-muted-foreground', bar: 'bg-amber-500', tag: 'bg-muted text-muted-foreground' },
+  { min: -74, label: 'Unfriendly', color: 'text-orange-300', bar: 'bg-orange-500', tag: 'bg-orange-900/40 text-orange-300' },
+  { min: -100, label: 'Hostile', color: 'text-red-400', bar: 'bg-red-500', tag: 'bg-red-900/40 text-red-300' }
 ];
 
 function bandFor(disposition) {
@@ -58,7 +58,7 @@ export default function RelationshipTracker({ npcs, onRecategorize }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h4 className="font-serif text-amber-200 text-sm">Relationships</h4>
+        <h4 className="font-serif text-amber-200 text-sm flex items-center gap-1.5"><Users className="w-4 h-4" /> NPCs</h4>
         <span className="text-xs text-muted-foreground">{list.length}</span>
       </div>
 
@@ -116,40 +116,31 @@ export default function RelationshipTracker({ npcs, onRecategorize }) {
                   aria-expanded={isOpen}
                 >
                   <span className="text-sm text-foreground flex items-center gap-1.5 min-w-0">
-                    <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${band.color}`} />
                     <span className={`truncate ${isDead ? 'line-through' : ''}`}>{n.name}</span>
                   </span>
                   <span className="flex items-center gap-1 flex-shrink-0">
-                    <span className={`text-xs ${band.color}`}>{band.label}</span>
+                    {n.relationship && <span className="text-[10px] text-amber-300/80 capitalize">{n.relationship}</span>}
                     <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                   </span>
                 </button>
 
                 {/* Tags */}
                 <div className="flex flex-wrap gap-1 mt-1">
+                  {!isDead && (
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5 ${band.tag}`}>
+                      <Icon className="w-2.5 h-2.5" />{band.label}
+                    </span>
+                  )}
                   {isDead && <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-900/40 text-red-300 flex items-center gap-0.5"><Skull className="w-2.5 h-2.5" />Dead</span>}
                   {isHostile && !isDead && <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-900/40 text-orange-300">Hostile</span>}
                   {n.location && <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground flex items-center gap-0.5"><MapPin className="w-2.5 h-2.5" />{n.location}</span>}
                   {n.faction && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-300 flex items-center gap-0.5"><Flag className="w-2.5 h-2.5" />{n.faction}</span>}
                 </div>
-
-                {/* Disposition meter */}
-                <div className="mt-2 relative h-2 rounded-full bg-muted overflow-hidden">
-                  <div className={`absolute top-0 bottom-0 ${band.bar}`} style={{ left: `${left}%`, width: `${width}%` }} />
-                  <div className="absolute top-0 bottom-0 left-1/2 w-px bg-border" />
-                </div>
-                <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5">
-                  <span>-100</span>
-                  <span className={band.color}>{disp > 0 ? `+${disp}` : disp}</span>
-                  <span>+100</span>
-                </div>
               </div>
             </div>
 
-            {n.relationship && <p className="text-xs text-amber-600 mt-1.5">{n.relationship}</p>}
-
             {isOpen && (
-              <div className="mt-2 pt-2 border-t border-border space-y-1.5 max-h-48 overflow-y-auto">
+              <div className="mt-2 pt-2 border-t border-border space-y-2 max-h-56 overflow-y-auto">
                 {n.description && <p className="text-xs text-foreground/80 leading-snug">{n.description}</p>}
                 {n.personality && (
                   <p className="text-xs text-muted-foreground leading-snug"><span className="text-amber-600/80">Personality:</span> {n.personality}</p>
@@ -157,6 +148,22 @@ export default function RelationshipTracker({ npcs, onRecategorize }) {
                 {n.known_info && (
                   <p className="text-xs text-muted-foreground leading-snug"><span className="text-amber-600/80">Known:</span> {n.known_info}</p>
                 )}
+
+                {/* Disposition meter */}
+                <div>
+                  <div className="flex items-center justify-between text-[10px] mb-1">
+                    <span className="uppercase tracking-wide text-muted-foreground">Disposition</span>
+                    <span className={band.color}>{disp > 0 ? `+${disp}` : disp}</span>
+                  </div>
+                  <div className="relative h-2 rounded-full bg-muted overflow-hidden">
+                    <div className={`absolute top-0 bottom-0 ${band.bar}`} style={{ left: `${left}%`, width: `${width}%` }} />
+                    <div className="absolute top-0 bottom-0 left-1/2 w-px bg-border" />
+                  </div>
+                  <div className="flex justify-between text-[9px] text-muted-foreground mt-0.5">
+                    <span>-100</span><span>0</span><span>+100</span>
+                  </div>
+                </div>
+
                 <p className="text-[10px] uppercase tracking-wide text-muted-foreground pt-1">Interaction Log</p>
                 {interactions.length === 0 ? (
                   <p className="text-xs text-muted-foreground">No logged interactions yet.</p>
@@ -174,7 +181,7 @@ export default function RelationshipTracker({ npcs, onRecategorize }) {
                   <button
                     onClick={() => handleMove(n)}
                     disabled={moving === n.id}
-                    className="touch-target mt-2 w-full flex items-center justify-center gap-1.5 text-xs text-red-300 hover:text-red-200 border border-red-900/40 hover:bg-red-950/30 rounded py-1.5 transition-colors disabled:opacity-50"
+                    className="touch-target mt-1 w-full flex items-center justify-center gap-1.5 text-xs text-red-300 hover:text-red-200 border border-red-900/40 hover:bg-red-950/30 rounded py-1.5 transition-colors disabled:opacity-50"
                   >
                     {moving === n.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRightLeft className="w-3.5 h-3.5" />}
                     Move to Bestiary
