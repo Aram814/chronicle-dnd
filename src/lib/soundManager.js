@@ -27,7 +27,20 @@ class SoundEngine {
     this.sfxBus.connect(this.master);
     this.musicBus = this.ctx.createGain();
     this.musicBus.gain.value = 0.5;
+    // Spatial feedback delay for ambient depth (music path only).
+    this.musicDelay = this.ctx.createDelay(2.0);
+    this.musicDelay.delayTime.value = 0.55;
+    this.musicFeedback = this.ctx.createGain();
+    this.musicFeedback.gain.value = 0.4;
+    const delayFilter = this.ctx.createBiquadFilter();
+    delayFilter.type = 'lowpass';
+    delayFilter.frequency.value = 1600;
     this.musicBus.connect(this.master);
+    this.musicBus.connect(delayFilter);
+    delayFilter.connect(this.musicDelay);
+    this.musicDelay.connect(this.musicFeedback);
+    this.musicFeedback.connect(delayFilter);
+    this.musicDelay.connect(this.master);
   }
 
   resume() {
@@ -144,31 +157,59 @@ class SoundEngine {
   }
 
   // --- Ambient music ---
+  // A dark-fantasy pad: a detuned three-voice drone (root/fifth/octave) with a
+  // slow filter sweep and per-voice amplitude LFOs, washed through a feedback
+  // delay for spatial depth, with sparse minor-pentatonic melodic tones and
+  // occasional harmony. All synthesized — no audio files.
 
   startMusic() {
     this.resume();
     if (!this.ctx || this.musicNodes || this.muted) return;
     const now = this.ctx.currentTime;
-    const drone1 = this.ctx.createOscillator();
-    drone1.type = 'sine';
-    drone1.frequency.value = 55; // A1
-    const drone2 = this.ctx.createOscillator();
-    drone2.type = 'sine';
-    drone2.frequency.value = 82.41; // E2
-    const lfo = this.ctx.createOscillator();
-    lfo.frequency.value = 0.08;
-    const lfoGain = this.ctx.createGain();
-    lfoGain.gain.value = 0.06;
-    const dg = this.ctx.createGain();
-    dg.gain.value = 0.12;
-    lfo.connect(lfoGain).connect(dg.gain);
-    drone1.connect(dg);
-    drone2.connect(dg);
-    dg.connect(this.musicBus);
-    drone1.start(now);
-    drone2.start(now);
-    lfo.start(now);
-    this.musicNodes = { drone1, drone2, lfo, dg };
+
+    // Slow filter sweep gives the drone a breathing, evolving character.
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(450, now);
+    filter.frequency.linearRampToValueAtTime(1300, now + 22);
+    filter.frequency.linearRampToValueAtTime(450, now + 44);
+    filter.Q.value = 2.5;
+    const filterLfo = this.ctx.createOscillator();
+    filterLfo.frequency.value = 0.022;
+    const filterLfoGain = this.ctx.createGain();
+    filterLfoGain.gain.value = 380;
+    filterLfo.connect(filterLfoGain).connect(filter.frequency);
+
+    const droneGain = this.ctx.createGain();
+    droneGain.gain.value = 0.10;
+    filter.connect(droneGain).connect(this.musicBus);
+
+    const voices = [
+      { freq: 55, type: 'sine', detune: 0 },      // A1 root
+      { freq: 82.41, type: 'sine', detune: -5 },  // E2 fifth
+      { freq: 110, type: 'triangle', detune: 6 }   // A2 octave (triangle for harmonics)
+    ];
+    const oscs = voices.map(v => {
+      const o = this.ctx.createOscillator();
+      o.type = v.type;
+      o.frequency.value = v.freq;
+      o.detune.value = v.detune;
+      // Independent slow amplitude LFO per voice — a living, unmechanical pad.
+      const lfo = this.ctx.createOscillator();
+      lfo.frequency.value = 0.04 + Math.random() * 0.07;
+      const lfoGain = this.ctx.createGain();
+      lfoGain.gain.value = 0.035;
+      const vg = this.ctx.createGain();
+      vg.gain.value = 0.5;
+      lfo.connect(lfoGain).connect(vg.gain);
+      o.connect(vg).connect(filter);
+      o.start(now);
+      lfo.start(now);
+      return { o, lfo };
+    });
+
+    filterLfo.start(now);
+    this.musicNodes = { oscs, filter, filterLfo, droneGain };
     this.scheduleTone();
   }
 
@@ -176,20 +217,29 @@ class SoundEngine {
     this.toneTimer = setTimeout(() => {
       if (!this.ctx || !this.musicNodes || this.muted) return;
       const now = this.ctx.currentTime;
-      const scale = [261.63, 311.13, 349.23, 415.30, 466.16]; // C minor pentatonic
-      const f = scale[Math.floor(Math.random() * scale.length)];
-      const o = this.ctx.createOscillator();
-      o.type = 'sine';
-      o.frequency.value = f;
-      const g = this.ctx.createGain();
-      g.gain.setValueAtTime(0, now);
-      g.gain.linearRampToValueAtTime(0.035, now + 1.5);
-      g.gain.linearRampToValueAtTime(0, now + 4);
-      o.connect(g).connect(this.musicBus);
-      o.start(now);
-      o.stop(now + 4.5);
+      // A minor pentatonic across two octaves — dark, modal, no wrong notes.
+      const scale = [220, 261.63, 293.66, 329.63, 392, 440, 523.25, 587.33];
+      const playTone = (freq, delay, dur, gain) => {
+        const o = this.ctx.createOscillator();
+        o.type = 'sine';
+        o.frequency.value = freq;
+        const g = this.ctx.createGain();
+        const s = now + delay;
+        g.gain.setValueAtTime(0, s);
+        g.gain.linearRampToValueAtTime(gain, s + dur * 0.25);
+        g.gain.linearRampToValueAtTime(0, s + dur);
+        o.connect(g).connect(this.musicBus);
+        o.start(s);
+        o.stop(s + dur + 0.1);
+      };
+      const idx = Math.floor(Math.random() * scale.length);
+      playTone(scale[idx], 0, 5 + Math.random() * 3, 0.04);
+      // Occasional harmony — a fourth/fifth above, ~40% of the time.
+      if (Math.random() < 0.4) {
+        playTone(scale[(idx + 2) % scale.length], 0.3 + Math.random() * 0.5, 4 + Math.random() * 2, 0.025);
+      }
       this.scheduleTone();
-    }, 8000 + Math.random() * 12000);
+    }, 5000 + Math.random() * 8000);
   }
 
   stopMusic() {
@@ -197,9 +247,8 @@ class SoundEngine {
     clearTimeout(this.toneTimer);
     this.toneTimer = null;
     try {
-      this.musicNodes.drone1.stop();
-      this.musicNodes.drone2.stop();
-      this.musicNodes.lfo.stop();
+      this.musicNodes.oscs.forEach(({ o, lfo }) => { o.stop(); lfo.stop(); });
+      this.musicNodes.filterLfo.stop();
     } catch (e) { /* already stopped */ }
     this.musicNodes = null;
   }
