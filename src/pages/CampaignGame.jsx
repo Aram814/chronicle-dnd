@@ -658,6 +658,53 @@ export default function CampaignGame() {
     }
   };
 
+  // Move an NPC record into the Bestiary (Monster entity) — fixes creatures
+  // the DM mistakenly filed as NPCs. Preserves portrait, interactions, status.
+  const recategorizeToMonster = async (npc) => {
+    try {
+      await base44.entities.Monster.create({
+        campaign_id: id, name: npc.name, description: npc.description,
+        monster_type: npc.faction || 'Creature', location: npc.location,
+        is_hostile: npc.is_hostile ?? true,
+        status: npc.status === 'dead' ? 'dead' : 'alive',
+        portrait: npc.portrait, interactions: npc.interactions, members: allMemberIds
+      });
+      await base44.entities.NPC.delete(npc.id);
+      const [npcList, monsterList] = await Promise.all([
+        base44.entities.NPC.filter({ campaign_id: id }),
+        base44.entities.Monster.filter({ campaign_id: id })
+      ]);
+      setNpcs(npcList || []);
+      setMonsters(monsterList || []);
+      toast({ title: 'Moved to Bestiary', description: `${npc.name} is now tracked as a creature.` });
+    } catch (e) {
+      toast({ title: 'Failed to move', variant: 'destructive' });
+    }
+  };
+
+  // Reverse: move a Monster back into the NPC roster.
+  const recategorizeToNpc = async (monster) => {
+    try {
+      await base44.entities.NPC.create({
+        campaign_id: id, name: monster.name, description: monster.description,
+        location: monster.location, faction: monster.monster_type,
+        is_hostile: monster.is_hostile ?? false,
+        status: monster.status === 'dead' ? 'dead' : 'alive',
+        portrait: monster.portrait, interactions: monster.interactions, members: allMemberIds
+      });
+      await base44.entities.Monster.delete(monster.id);
+      const [npcList, monsterList] = await Promise.all([
+        base44.entities.NPC.filter({ campaign_id: id }),
+        base44.entities.Monster.filter({ campaign_id: id })
+      ]);
+      setNpcs(npcList || []);
+      setMonsters(monsterList || []);
+      toast({ title: 'Moved to NPCs', description: `${monster.name} is now tracked as an NPC.` });
+    } catch (e) {
+      toast({ title: 'Failed to move', variant: 'destructive' });
+    }
+  };
+
   const saveStory = () => setConfirmSaveStory(true);
 
   const doSaveStory = async () => {
@@ -738,7 +785,7 @@ export default function CampaignGame() {
       <div className="flex-1 flex overflow-hidden">
         {/* Left sidebar - desktop */}
         <div className="hidden md:flex w-64 border-r border-border bg-card/40 flex-col">
-          <LeftSidebar character={character} campaign={campaign} panel={leftPanel} setPanel={setLeftPanel} npcs={npcs} monsters={monsters} quests={quests} locations={locations} players={players} me={me} />
+          <LeftSidebar character={character} campaign={campaign} panel={leftPanel} setPanel={setLeftPanel} npcs={npcs} monsters={monsters} quests={quests} locations={locations} players={players} me={me} onRecategorizeNpc={recategorizeToMonster} onRecategorizeMonster={recategorizeToNpc} />
         </div>
 
         {/* Center chat */}
@@ -829,7 +876,7 @@ export default function CampaignGame() {
           <div className="absolute inset-0 bg-black/60" onClick={() => setLeftPanel(null)} />
           <div className="relative w-80 bg-card border-r border-border overflow-y-auto max-h-full safe-top safe-bottom">
             <button onClick={() => setLeftPanel(null)} aria-label="Close panel" className="absolute top-2 right-2 p-1 text-muted-foreground z-10"><X className="w-5 h-5" /></button>
-            <LeftSidebarContent character={character} campaign={campaign} panel={leftPanel} npcs={npcs} monsters={monsters} quests={quests} locations={locations} />
+            <LeftSidebarContent character={character} campaign={campaign} panel={leftPanel} npcs={npcs} monsters={monsters} quests={quests} locations={locations} onRecategorizeNpc={recategorizeToMonster} onRecategorizeMonster={recategorizeToNpc} />
           </div>
         </div>
       )}
@@ -876,7 +923,7 @@ export default function CampaignGame() {
   );
 }
 
-function LeftSidebar({ character, campaign, panel, setPanel, npcs, monsters, quests, locations, players, me }) {
+function LeftSidebar({ character, campaign, panel, setPanel, npcs, monsters, quests, locations, players, me, onRecategorizeNpc, onRecategorizeMonster }) {
   const partyMembers = (players || []).filter(p => p && (!character || p.id !== character.id));
   return (
     <div className="flex flex-col h-full">
@@ -929,14 +976,14 @@ function LeftSidebar({ character, campaign, panel, setPanel, npcs, monsters, que
       </div>
       {panel && (
         <div className="border-t border-border p-3 max-h-[50vh] overflow-y-auto hidden md:block">
-          <LeftSidebarContent character={character} campaign={campaign} panel={panel} npcs={npcs} monsters={monsters} quests={quests} locations={locations} />
+          <LeftSidebarContent character={character} campaign={campaign} panel={panel} npcs={npcs} monsters={monsters} quests={quests} locations={locations} onRecategorizeNpc={onRecategorizeNpc} onRecategorizeMonster={onRecategorizeMonster} />
         </div>
       )}
     </div>
   );
 }
 
-function LeftSidebarContent({ character, campaign, panel, npcs, monsters, quests, locations }) {
+function LeftSidebarContent({ character, campaign, panel, npcs, monsters, quests, locations, onRecategorizeNpc, onRecategorizeMonster }) {
   if (panel === 'sheet' && character) {
     const scores = character.ability_scores || {};
     return (
@@ -1030,10 +1077,10 @@ function LeftSidebarContent({ character, campaign, panel, npcs, monsters, quests
     );
   }
   if (panel === 'npcs') {
-    return <RelationshipTracker npcs={npcs} />;
+    return <RelationshipTracker npcs={npcs} onRecategorize={onRecategorizeNpc} />;
   }
   if (panel === 'monsters') {
-    return <Bestiary monsters={monsters} />;
+    return <Bestiary monsters={monsters} onRecategorize={onRecategorizeMonster} />;
   }
   if (panel === 'map') {
     return <MapPanel campaign={campaign} locations={locations} />;

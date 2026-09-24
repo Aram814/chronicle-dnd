@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { ChevronDown, Heart, Frown, Meh, Smile, Angry, Sparkles, Loader2 } from 'lucide-react';
+import {
+  ChevronDown, Heart, Frown, Meh, Smile, Angry, Sparkles, Loader2,
+  Search, MapPin, Flag, Skull, ArrowRightLeft
+} from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Image } from '@/components/ui/image';
 
@@ -23,10 +26,17 @@ function dispositionIcon(disposition) {
   return Angry;
 }
 
-export default function RelationshipTracker({ npcs }) {
+export default function RelationshipTracker({ npcs, onRecategorize }) {
   const [expanded, setExpanded] = useState(null);
-  const [portraits, setPortraits] = useState({}); // npcId -> portrait url override
+  const [portraits, setPortraits] = useState({});
   const [generating, setGenerating] = useState(null);
+  const [query, setQuery] = useState('');
+  const [moving, setMoving] = useState(null);
+
+  const list = npcs || [];
+  const filtered = query.trim()
+    ? list.filter(n => (n.name || '').toLowerCase().includes(query.toLowerCase()))
+    : list;
 
   const generatePortrait = async (npc) => {
     setGenerating(npc.id);
@@ -39,19 +49,36 @@ export default function RelationshipTracker({ npcs }) {
     } catch (e) { /* ignore */ } finally { setGenerating(null); }
   };
 
-  if (!npcs || npcs.length === 0) {
-    return (
-      <div className="space-y-2">
-        <h4 className="font-serif text-amber-200 text-sm">Relationships</h4>
-        <p className="text-xs text-muted-foreground">No NPCs discovered yet.</p>
-      </div>
-    );
-  }
+  const handleMove = async (npc) => {
+    if (!onRecategorize) return;
+    setMoving(npc.id);
+    try { await onRecategorize(npc); } finally { setMoving(null); }
+  };
 
   return (
     <div className="space-y-2">
-      <h4 className="font-serif text-amber-200 text-sm">Relationships</h4>
-      {npcs.map(n => {
+      <div className="flex items-center justify-between">
+        <h4 className="font-serif text-amber-200 text-sm">Relationships</h4>
+        <span className="text-xs text-muted-foreground">{list.length}</span>
+      </div>
+
+      {list.length > 3 && (
+        <div className="relative">
+          <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-2 top-1/2 -translate-y-1/2" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search NPCs…"
+            className="w-full pl-7 pr-2 py-1.5 text-xs bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-amber-700/50"
+          />
+        </div>
+      )}
+
+      {list.length === 0 ? (
+        <p className="text-xs text-muted-foreground">No NPCs discovered yet.</p>
+      ) : filtered.length === 0 ? (
+        <p className="text-xs text-muted-foreground">No matches.</p>
+      ) : filtered.map(n => {
         const disp = n.disposition || 0;
         const band = bandFor(disp);
         const Icon = dispositionIcon(disp);
@@ -62,12 +89,12 @@ export default function RelationshipTracker({ npcs }) {
         const width = half;
         const portrait = portraits[n.id] || n.portrait;
         const isLoading = generating === n.id;
-        const hostile = n.is_hostile || n.status === 'hostile' || n.status === 'dead';
+        const isDead = n.status === 'dead';
+        const isHostile = n.is_hostile;
 
         return (
-          <div key={n.id} className="bg-background/50 border border-border rounded p-2">
+          <div key={n.id} className={`bg-background/50 border rounded p-2 ${isDead ? 'border-red-900/40 opacity-70' : 'border-border'}`}>
             <div className="flex items-start gap-2">
-              {/* Portrait / generate button */}
               <button
                 onClick={() => !portrait && generatePortrait(n)}
                 disabled={isLoading}
@@ -78,7 +105,7 @@ export default function RelationshipTracker({ npcs }) {
                   ? <Image src={portrait} alt={n.name} fittingType="fill" className="w-full h-full" />
                   : isLoading
                     ? <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
-                    : <Sparkles className={`w-4 h-4 ${hostile ? 'text-red-400/70' : 'text-muted-foreground'}`} />}
+                    : <Sparkles className={`w-4 h-4 ${isHostile ? 'text-red-400/70' : 'text-muted-foreground'}`} />}
               </button>
 
               <div className="flex-1 min-w-0">
@@ -90,7 +117,7 @@ export default function RelationshipTracker({ npcs }) {
                 >
                   <span className="text-sm text-foreground flex items-center gap-1.5 min-w-0">
                     <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${band.color}`} />
-                    <span className="truncate">{n.name}</span>
+                    <span className={`truncate ${isDead ? 'line-through' : ''}`}>{n.name}</span>
                   </span>
                   <span className="flex items-center gap-1 flex-shrink-0">
                     <span className={`text-xs ${band.color}`}>{band.label}</span>
@@ -98,12 +125,17 @@ export default function RelationshipTracker({ npcs }) {
                   </span>
                 </button>
 
+                {/* Tags */}
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {isDead && <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-900/40 text-red-300 flex items-center gap-0.5"><Skull className="w-2.5 h-2.5" />Dead</span>}
+                  {isHostile && !isDead && <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-900/40 text-orange-300">Hostile</span>}
+                  {n.location && <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground flex items-center gap-0.5"><MapPin className="w-2.5 h-2.5" />{n.location}</span>}
+                  {n.faction && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-300 flex items-center gap-0.5"><Flag className="w-2.5 h-2.5" />{n.faction}</span>}
+                </div>
+
                 {/* Disposition meter */}
                 <div className="mt-2 relative h-2 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className={`absolute top-0 bottom-0 ${band.bar}`}
-                    style={{ left: `${left}%`, width: `${width}%` }}
-                  />
+                  <div className={`absolute top-0 bottom-0 ${band.bar}`} style={{ left: `${left}%`, width: `${width}%` }} />
                   <div className="absolute top-0 bottom-0 left-1/2 w-px bg-border" />
                 </div>
                 <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5">
@@ -117,11 +149,15 @@ export default function RelationshipTracker({ npcs }) {
             {n.relationship && <p className="text-xs text-amber-600 mt-1.5">{n.relationship}</p>}
 
             {isOpen && (
-              <div className="mt-2 pt-2 border-t border-border space-y-1.5 max-h-40 overflow-y-auto">
-                {n.description && (
-                  <p className="text-xs text-foreground/80 leading-snug">{n.description}</p>
+              <div className="mt-2 pt-2 border-t border-border space-y-1.5 max-h-48 overflow-y-auto">
+                {n.description && <p className="text-xs text-foreground/80 leading-snug">{n.description}</p>}
+                {n.personality && (
+                  <p className="text-xs text-muted-foreground leading-snug"><span className="text-amber-600/80">Personality:</span> {n.personality}</p>
                 )}
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Interaction Log</p>
+                {n.known_info && (
+                  <p className="text-xs text-muted-foreground leading-snug"><span className="text-amber-600/80">Known:</span> {n.known_info}</p>
+                )}
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground pt-1">Interaction Log</p>
                 {interactions.length === 0 ? (
                   <p className="text-xs text-muted-foreground">No logged interactions yet.</p>
                 ) : (
@@ -133,6 +169,16 @@ export default function RelationshipTracker({ npcs }) {
                       <span className="text-muted-foreground ml-1">{it.summary}</span>
                     </div>
                   ))
+                )}
+                {onRecategorize && (
+                  <button
+                    onClick={() => handleMove(n)}
+                    disabled={moving === n.id}
+                    className="touch-target mt-2 w-full flex items-center justify-center gap-1.5 text-xs text-red-300 hover:text-red-200 border border-red-900/40 hover:bg-red-950/30 rounded py-1.5 transition-colors disabled:opacity-50"
+                  >
+                    {moving === n.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRightLeft className="w-3.5 h-3.5" />}
+                    Move to Bestiary
+                  </button>
                 )}
               </div>
             )}
