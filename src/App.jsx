@@ -29,6 +29,7 @@ const StoryRecap = lazy(() => import('@/pages/StoryRecap'));
 const InvitePlayers = lazy(() => import('@/pages/InvitePlayers'));
 const JoinCampaign = lazy(() => import('@/pages/JoinCampaign'));
 const CampaignMapPage = lazy(() => import('@/pages/CampaignMapPage'));
+const PartyInventory = lazy(() => import('@/pages/PartyInventory'));
 const Characters = lazy(() => import('@/pages/Characters'));
 const Stories = lazy(() => import('@/pages/Stories'));
 const Settings = lazy(() => import('@/pages/Settings'));
@@ -109,6 +110,7 @@ const AuthenticatedApp = () => {
           <Route path="/story-recap" element={<PageWrapper><StoryRecap /></PageWrapper>} />
           <Route path="/campaign/:id/invite" element={<PageWrapper><InvitePlayers /></PageWrapper>} />
           <Route path="/campaign/:id/map" element={<PageWrapper><CampaignMapPage /></PageWrapper>} />
+          <Route path="/campaign/:id/inventory" element={<PageWrapper><PartyInventory /></PageWrapper>} />
           <Route path="/join" element={<PageWrapper><JoinCampaign /></PageWrapper>} />
         </Route>
         <Route path="*" element={<LazyPageNotFound />} />

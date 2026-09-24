@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import {
   Send, Heart, Shield, Swords, MapPin, Scroll, Users, BookOpen,
-  Dices, Bookmark, X, Menu, Star, Crosshair, Pencil, Skull, Wand2
+  Dices, Bookmark, X, Menu, Star, Crosshair, Pencil, Skull, Wand2, Backpack
 } from 'lucide-react';
 import ChatMessage from '@/components/ChatMessage';
 import DiceRoller from '@/components/DiceRoller';
@@ -704,6 +704,9 @@ export default function CampaignGame() {
             <SoundToggle />
             <Link to={`/campaign/${id}/invite`} aria-label="Invite players" className="p-3 text-muted-foreground hover:text-amber-300 hover:bg-accent rounded-lg transition-all" title="Invite Players">
               <Users className="w-5 h-5" />
+            </Link>
+            <Link to={`/campaign/${id}/inventory`} aria-label="Party inventory" className="p-3 text-muted-foreground hover:text-amber-300 hover:bg-accent rounded-lg transition-all" title="Party Inventory">
+              <Backpack className="w-5 h-5" />
             </Link>
             <button onClick={() => setDiceOpen(true)} aria-label="Open dice roller" className="p-3 text-muted-foreground hover:text-amber-300 hover:bg-accent rounded-lg transition-all" title="Dice Roller">
               <Dices className="w-5 h-5" />
